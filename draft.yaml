@@ -1,0 +1,51 @@
+models:
+    TblPersona:
+        id: id
+        Nombre: string
+        Apellido: string
+        UserName: string foreign:tbl_solicitud_he.username
+        cod_fiscalia: bigInteger
+        id_escalafon: bigInteger
+    TblFiscalia:
+        id: id foreign:tbl_persona.cod_fiscalia
+        gls_fiscalia: string
+    TblSolicitudHe:
+        id: id foreign:tbl_seguimiento_solicitud.id_solicitud_he
+        username: string
+        tipo_trabajo: bigInteger
+        fecha: date
+        hrs_inicial: time
+        hrs_final: time
+        id_estado: bigInteger foreign:tbl_estado.id
+        tipo_solicitud: char
+        fecha_evento: date
+        hrs_inicio: time
+        hrs_fin: time
+        id_tipoCompensacion: bigInteger
+        min_25: bigInteger
+        min_50: bigInteger
+        total_min: bigInteger
+    TblEstado:
+        id: id
+        gls_estado: string
+    TblEscalafon:
+        id: id
+        gls_escalafon: string
+    TblTipoCompensacion:
+        id: id foreign:tbl_solicitud_he.id_tipoCompensacion
+        gls_tipoCompensacion: bigInteger
+    TblSeguimientoSolicitud:
+        id: id
+        id_solicitud_he: bigInteger
+        username: string
+        id_estado: bigInteger foreign:tbl_estado.id
+    TblBolsonTiempo:
+        id: id
+        id_solicitud: bigInteger foreign:tbl_solicitud_he.id
+        tiempo: bigInteger
+        estado: char
+    TblLider:
+        id: string primary
+        username: string
+        cod_fiscalia: bigInteger
+        activo: char
