@@ -1,0 +1,88 @@
+<?php
+
+namespace App\Filament\Resources;
+
+use App\Filament\Resources\TblPersonaResource\Pages;
+use App\Filament\Resources\TblPersonaResource\RelationManagers;
+use App\Models\TblPersona;
+use Filament\Forms;
+use Filament\Forms\Form;
+use Filament\Resources\Resource;
+use Filament\Tables;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
+
+class TblPersonaResource extends Resource
+{
+    protected static ?string $model = TblPersona::class;
+
+    protected static ?string $navigationIcon = 'heroicon-o-user';
+
+    public static function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                Forms\Components\TextInput::make('Nombre')
+                    ->required()
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('Apellido')
+                    ->required()
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('UserName')
+                    ->required()
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('cod_fiscalia')
+                    ->numeric()
+                    ->required(),
+                Forms\Components\TextInput::make('id_escalafon')
+                    ->numeric()
+                    ->required(),
+            ]);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('Nombre')
+                    ->sortable()
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('Apellido')
+                    ->sortable()
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('UserName')
+                    ->sortable()
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('cod_fiscalia')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('id_escalafon')
+                    ->sortable(),
+            ])
+            ->filters([
+                // Agrega filtros si es necesario
+            ])
+            ->actions([
+                Tables\Actions\EditAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\DeleteBulkAction::make(),
+            ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            // Define relaciones si es necesario
+        ];
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => Pages\ListTblPersonas::route('/'),
+            'create' => Pages\CreateTblPersona::route('/create'),
+            'edit' => Pages\EditTblPersona::route('/{record}/edit'),
+        ];
+    }
+}
