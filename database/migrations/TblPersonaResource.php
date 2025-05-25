@@ -1,5 +1,5 @@
 <?php
-
+// archivo tbl_persona_resource.php
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\TblPersonaResource\Pages;
@@ -108,5 +108,15 @@ class TblPersonaResource extends Resource
             'create' => Pages\CreateTblPersona::route('/create'),
             'edit' => Pages\EditTblPersona::route('/{record}/edit'),
         ];
+    }
+
+    public static function getModelLabel(): string
+    {
+        return 'Persona';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'Personas';
     }
 }

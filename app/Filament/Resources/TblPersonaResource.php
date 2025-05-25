@@ -1,5 +1,5 @@
 <?php
-
+// archivo tbl_persona_resource.php
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\TblPersonaResource\Pages;
@@ -19,6 +19,21 @@ use Filament\Tables\Columns\TextColumn;
 
 class TblPersonaResource extends Resource
 {
+
+    protected static ?string $navigationLabel = 'Personas';
+    protected static ?string $navigationGroup = 'Gestión de usuarios'; // puedes poner otro nombre o quitarla si no la usas
+
+    public static function getModelLabel(): string
+    {
+        return 'Persona';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'Personas';
+    }
+
+
     protected static ?string $model = TblPersona::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-user';
