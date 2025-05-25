@@ -18,7 +18,6 @@ return new class extends Migration
             $table->string('Nombre');
             $table->string('Apellido');
             $table->string('UserName');
-            $table->foreign('UserName')->references('username')->on('tbl_solicitud_he');
             $table->bigInteger('cod_fiscalia');
             $table->bigInteger('id_escalafon');
             $table->timestamps();

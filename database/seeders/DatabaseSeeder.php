@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\DB;
 
 use App\Models\User;
 use App\Models\TblFiscalia;
+use App\Models\TblEscalafon;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -20,7 +21,10 @@ class DatabaseSeeder extends Seeder
         //     'id'=>501,
         //     'gls_fiscalia' => 'Fiscalía de Valparaíso',
         // ]);
-
+        TblEscalafon::create([
+            'gls_escalafon' => 'TESNICO',
+        ]);
+        
         $fiscalias = [
             'Fiscalia de Valparaiso',
             'Fiscalia de Viña del Mar',
@@ -43,8 +47,11 @@ class DatabaseSeeder extends Seeder
 
 
         User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            'name' => 'Cristian',
+            'email' => 'crojasm@minpublico.cl',
+            'password' => bcrypt('1234'),
         ]);
+
+        
     }
 }
