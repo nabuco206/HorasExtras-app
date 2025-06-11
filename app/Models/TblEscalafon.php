@@ -14,6 +14,7 @@ class TblEscalafon extends Model
      *
      * @var array
      */
+    protected $table = 'tbl_escalafons';
     protected $fillable = [
         'gls_escalafon',
     ];
