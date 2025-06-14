@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use App\Models\TblFiscalia;
 use App\Models\TblEscalafon;
+use App\Models\TblPersona;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -36,6 +37,7 @@ class DatabaseSeeder extends Seeder
             'Fiscalia de San Antonio',
             'Fiscalia de Casablanca',
         ];
+       
         DB::table('tbl_fiscalias')->truncate();
         foreach ($fiscalias as $fiscalia) {
             TblFiscalia::create([
@@ -44,12 +46,21 @@ class DatabaseSeeder extends Seeder
         }
         
 
+         TblPersona::create([
+            'Nombre' => 'CristianCRM',
+            'Apellido' => 'Rojas',
+            'UserName' => 'crojasm',
+            'cod_fiscalia' => 1,
+            'id_escalafon' => 1,
+        ]);
 
-
-        User::factory()->create([
-            'name' => 'Cristian',
+        // DB::table('users')->truncate();
+        User::create([
+            'name' => 'crojasm',
             'email' => 'crojasm@minpublico.cl',
             'password' => bcrypt('1234'),
+            'persona_id' => 1, // Asegúrate de tener este campo en la migración
+            'rol' => 1, 
         ]);
 
         

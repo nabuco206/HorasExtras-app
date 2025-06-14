@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\User;
 
 class TblPersona extends Model
 {
@@ -22,6 +23,19 @@ class TblPersona extends Model
         'cod_fiscalia',
         'id_escalafon',
     ];
+
+    protected static function booted()
+    {
+        static::created(function ($persona) {
+            User::create([
+                'name' => $persona->UserName,
+                'email' => $persona->UserName . '@minpublico.cl',
+                'password' => bcrypt('1234'),
+                'persona_id' => $persona->id,
+                'rol' => 1,
+            ]);
+        });
+    }
 
     /**
      * The attributes that should be cast to native types.
