@@ -12,24 +12,27 @@ return new class extends Migration
     public function up(): void
     {
         Schema::disableForeignKeyConstraints();
-
+              
         Schema::create('tbl_solicitud_hes', function (Blueprint $table) {
             $table->id()->foreign('tbl_seguimiento_solicitud.id_solicitud_he');
             $table->string('username');
-            $table->bigInteger('tipo_trabajo');
+            // $table->foreign('username')->references('name')->on('users');
+            $table->bigInteger('id_tipo_trabajo');
+            $table->foreign('id_tipo_trabajo')->references('id')->on('tbl_tipo_trabajo');
             $table->date('fecha');
             $table->time('hrs_inicial');
             $table->time('hrs_final');
-            $table->bigInteger('id_estado');
-            $table->foreign('id_estado')->references('id')->on('tbl_estado');
+            $table->bigInteger('id_estado')->default(0);
+            $table->foreign('id_estado')->references('id')->on('tbl_estados');
             $table->char('tipo_solicitud');
-            $table->date('fecha_evento');
-            $table->time('hrs_inicio');
-            $table->time('hrs_fin');
+            $table->date('fecha_evento')->nullable();
+            $table->time('hrs_inicio')->nullable();
+            $table->time('hrs_fin')->nullable();
             $table->bigInteger('id_tipoCompensacion');
-            $table->bigInteger('min_25');
-            $table->bigInteger('min_50');
-            $table->bigInteger('total_min');
+            $table->foreign('id_tipoCompensacion')->references('id')->on('tbl_tipo_compensacions');
+            $table->bigInteger('min_25')->nullable();
+            $table->bigInteger('min_50')->nullable();
+            $table->bigInteger('total_min')->nullable();
             $table->timestamps();
         });
 

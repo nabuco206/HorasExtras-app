@@ -13,18 +13,11 @@ return new class extends Migration
     {
         Schema::disableForeignKeyConstraints();
 
-        Schema::create('users', function (Blueprint $table) {
+         Schema::create('tbl_tipo_trabajo', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('email');
-            $table->string('password');
-            $table->unsignedBigInteger('persona_id');
-            // $table->foreign('persona_id')->references('id')->on('tbl_persona');
-            $table->integer('rol');
+            $table->string('gls_tipo_trabajo');
             $table->timestamps();
         });
-
-        
 
         Schema::enableForeignKeyConstraints();
     }
@@ -34,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('tbl_tipo_trabajo');
     }
 };

@@ -18,7 +18,7 @@ return new class extends Migration
             $table->bigInteger('id_solicitud_he');
             $table->string('username');
             $table->bigInteger('id_estado');
-            $table->foreign('id_estado')->references('id')->on('tbl_estado');
+            $table->foreign('id_estado')->references('id')->on('tbl_estados');
             $table->timestamps();
         });
 

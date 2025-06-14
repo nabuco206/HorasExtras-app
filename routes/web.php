@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 use App\Http\Controllers\SolicitudHeController;
+use App\Http\Controllers\SistemaController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -12,7 +13,7 @@ Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
-Route::view('sistema', 'sistema.menu')
+Route::get('sistema', [SistemaController::class, 'menu'])
     ->middleware(['auth', 'verified'])
     ->name('sistema');    
 

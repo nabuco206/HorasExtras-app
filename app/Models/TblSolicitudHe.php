@@ -17,7 +17,7 @@ class TblSolicitudHe extends Model
      */
     protected $fillable = [
         'username',
-        'tipo_trabajo',
+        'id_tipo_trabajo',
         'fecha',
         'hrs_inicial',
         'hrs_final',
