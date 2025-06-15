@@ -30,6 +30,7 @@ return new class extends Migration
             $table->time('hrs_fin')->nullable();
             $table->bigInteger('id_tipoCompensacion');
             $table->foreign('id_tipoCompensacion')->references('id')->on('tbl_tipo_compensacions');
+            $table->bigInteger('min_reales')->nullable();
             $table->bigInteger('min_25')->nullable();
             $table->bigInteger('min_50')->nullable();
             $table->bigInteger('total_min')->nullable();

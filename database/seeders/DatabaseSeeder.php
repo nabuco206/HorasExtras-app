@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\TblFiscalia;
 use App\Models\TblEscalafon;
 use App\Models\TblPersona;
+use App\Models\TblFeriado;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -17,6 +18,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Deshabilita claves foráneas (solo para SQLite)
+        DB::statement('PRAGMA foreign_keys = OFF;');
+
         // User::factory(10)->create();
         // TblFiscalia::factory(10)->create([
         //     'id'=>501,
@@ -77,27 +81,63 @@ class DatabaseSeeder extends Seeder
         ]);
 
         DB::table('tbl_tipo_compensacions')->insert([
-            'id' => 0,
-            'gls_tipoCompensacion' => 'HE',
-            // agrega otros campos si existen
+            [
+                'id' => 0,
+                'gls_tipoCompensacion' => 'Compensación en Hrs',
+            ],
+            [
+                'id' => 1,
+                'gls_tipoCompensacion' => 'Pago',
+            ]
         ]);
+       
 
         DB::table('tbl_estados')->insert([
+            [
             'id' => 0,
             'gls_estado' => 'Ingreso',
-            // agrega otros campos si existen
+            ],
+            [
+            'id' => 1,
+            'gls_estado' => 'Aprobado',
+            ],
         ]);
 
         DB::table('tbl_tipo_trabajo')->insert([
+            [
             'id' => 0,
             'gls_tipo_trabajo' => 'EIVG',
-            // agrega otros campos si existen
-        ]);
-         DB::table('tbl_tipo_trabajo')->insert([
+            ],
+            [
             'id' => 1,
-            'gls_tipo_trabajo' => 'REZAGADOS',
-            // agrega otros campos si existen
+            'gls_tipo_trabajo' => 'Causas Rezagadas',
+            ],   
         ]);
+         
+
+
+        $feriados = [
+            ['fecha' => '01-01', 'descripcion' => 'Año Nuevo'],
+            ['fecha' => '04-18', 'descripcion' => 'Viernes Santo'],
+            ['fecha' => '04-19', 'descripcion' => 'Sábado Santo'],
+            ['fecha' => '05-01', 'descripcion' => 'Día Nacional del Trabajo'],
+            ['fecha' => '05-21', 'descripcion' => 'Día de las Glorias Navales'],
+            ['fecha' => '06-20', 'descripcion' => 'Día Nacional de los Pueblos Indígenas'],
+            ['fecha' => '06-29', 'descripcion' => 'San Pedro y San Pablo'],
+            ['fecha' => '07-16', 'descripcion' => 'Día de la Virgen del Carmen'],
+            ['fecha' => '08-15', 'descripcion' => 'Asunción de la Virgen'],
+            ['fecha' => '09-18', 'descripcion' => 'Independencia Nacional'],
+            ['fecha' => '09-19', 'descripcion' => 'Día de las Glorias del Ejército'],
+            ['fecha' => '10-12', 'descripcion' => 'Encuentro de Dos Mundos'],
+            ['fecha' => '10-31', 'descripcion' => 'Día de las Iglesias Evangélicas y'],
+            ['fecha' => '11-01', 'descripcion' => 'Día de Todos los Santos'],
+            ['fecha' => '12-08', 'descripcion' => 'Inmaculada Concepción'],
+            ['fecha' => '12-25', 'descripcion' => 'Navidad'],
+        ];
+
+        foreach ($feriados as $feriado) {
+            TblFeriado::create($feriado);
+        }
 
         
 

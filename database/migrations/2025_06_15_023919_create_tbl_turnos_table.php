@@ -11,15 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::disableForeignKeyConstraints();
-
-         Schema::create('tbl_tipo_trabajo', function (Blueprint $table) {
+        Schema::create('tbl_turnos', function (Blueprint $table) {
             $table->id();
-            $table->string('gls_tipo_trabajo');
+            $table->string('nombre')->nullable();
+            $table->time('hora_inicio');
+            $table->time('hora_fin');
+            $table->string('dias')->default('1,2,3,4,5'); // 1=Lunes, 7=Domingo, separados por coma
             $table->timestamps();
         });
-
-        Schema::enableForeignKeyConstraints();
     }
 
     /**
@@ -27,8 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::disableForeignKeyConstraints();
-        Schema::dropIfExists('tbl_tipo_trabajo');
-        Schema::enableForeignKeyConstraints();
+        Schema::dropIfExists('tbl_turnos');
     }
 };

@@ -11,15 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::disableForeignKeyConstraints();
-
-         Schema::create('tbl_tipo_trabajo', function (Blueprint $table) {
+        Schema::create('tbl_feriados', function (Blueprint $table) {
             $table->id();
-            $table->string('gls_tipo_trabajo');
+            $table->string('fecha', 5)->unique(); // formato MM-DD
+            $table->string('descripcion')->nullable();
             $table->timestamps();
         });
-
-        Schema::enableForeignKeyConstraints();
     }
 
     /**
@@ -27,8 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::disableForeignKeyConstraints();
-        Schema::dropIfExists('tbl_tipo_trabajo');
-        Schema::enableForeignKeyConstraints();
+        Schema::dropIfExists('tbl_feriados');
     }
 };

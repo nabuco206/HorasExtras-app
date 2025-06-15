@@ -27,6 +27,7 @@ class TblSolicitudHe extends Model
         'hrs_inicio',
         'hrs_fin',
         'id_tipoCompensacion',
+        'min_reales',
         'min_25',
         'min_50',
         'total_min',
