@@ -22,9 +22,8 @@ return new class extends Migration
             $table->foreign('cod_fiscalia')->references('id')->on('tbl_fiscalias');
             $table->bigInteger('id_escalafon');
             $table->foreign('id_escalafon')->references('id')->on('tbl_escalafons');
-             $table->unsignedBigInteger('id_turno')->default(0)->after('id_escalafon');
-            // Si quieres relación foránea, descomenta la siguiente línea:
-            // $table->foreign('id_turno')->references('id')->on('tbl_turnos');
+            $table->unsignedBigInteger('id_turno')->default(0)->after('id_escalafon');
+        
             $table->timestamps();
         });
 

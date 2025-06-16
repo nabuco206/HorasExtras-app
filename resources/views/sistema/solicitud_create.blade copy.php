@@ -3,7 +3,7 @@
 @include('partials.settings-heading')
 @section('content')
 <div class="container mt-4">
-    <h1 class="mb-4">Nueva Solicitud de Horas Extraaaaa</h1>
+    <h1 class="mb-4">Nueva Solicitud de Horas Extra</h1>
 
     @if ($errors->any())
         <div class="alert alert-danger">

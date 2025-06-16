@@ -1,3 +1,55 @@
+@php
+    $groups = [
+        'Platform' => [
+            [
+                'name' => 'Dashboard',
+                'icon' => 'home',
+                'url' => Route::has('dashboard') ? route('dashboard') : '#',
+                'current' => Route::has('dashboard') && request()->routeIs('dashboard')
+            ],
+            [
+                'name' => 'Ingreso Horas Extraordinarias',
+                'icon' => 'inbox-arrow-down',
+                'url' => Route::has('ingreso_he') ? route('ingreso_he') : '#',
+                'current' => Route::has('ingreso_he') && request()->routeIs('ingreso_he')
+            ],
+             [
+                'name' => 'Ingreso Horas test',
+                'icon' => 'inbox-arrow-down',
+                'url' => Route::has('sistema.profile') ? route('sistema.profile') : '#',
+                'current' => Route::has('sistema.profile') && request()->routeIs('sistema.profile')
+            ],
+        ],
+        'Administración' => [
+            [
+                'name' => 'Usuarios',
+                'icon' => 'user-circle',
+                'iconsubmenu' => 'bars-3',
+                'iconTrailing' => true,
+                
+                'submenu' => [
+                    [
+                        'name' => 'Listado',
+                        'url' => Route::has('users.index') ? route('users.index') : '#',
+                        'current' => Route::has('users.index') && request()->routeIs('users.index')
+                    ],
+                    [
+                        'name' => 'Crear',
+                        'url' => Route::has('users.create') ? route('users.create') : '#',
+                        'current' => Route::has('users.create') && request()->routeIs('users.create')
+                    ]
+                ]
+            ],
+            [
+                'name' => 'Configuración',
+                'icon' => 'cog',
+                'url' => Route::has('settings') ? route('settings') : '#',
+                'current' => Route::has('settings') && request()->routeIs('settings.*')
+            ]
+        ]
+    ];
+@endphp
+
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
     <head>
@@ -12,22 +64,81 @@
             </a>
 
             <flux:navlist variant="outline">
-                <flux:navlist.group :heading="__('Platform')" class="grid">
-                    <flux:navlist.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>{{ __('Dashboard') }}</flux:navlist.item>
-                </flux:navlist.group>
+                @foreach ($groups as $group => $links)
+                    <flux:navlist.group :heading="$group" class="grid">
+                        @foreach ($links as $link)
+                            @if(isset($link['submenu']))
+                                <flux:dropdown position="right" class="w-full" :close-on-click="false">
+                                    <flux:navlist.item 
+                                        :active="collect($link['submenu'])->contains(fn($sub) => $sub['current'])"
+                                        as="button"
+                                        class="w-full hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                                        icon="{{ $link['icon'] }}" 
+                                        >
+                                        <div class="flex justify-between items-center w-full">
+                                            <span>{{ $link['name'] }}</span>
+                                            <div class="flex items-center gap-1">
+                                                @if(!empty($link['iconTrailing']))
+                                                    <flux:icon name="{{ $link['iconsubmenu'] }}" class="w-4 h-4 text-zinc-500" />
+                                                @endif
+                                                <!-- <flux:icon name="bars-3" variant="micro" /> -->
+                                            </div>
+                                        </div>
+                                    </flux:navlist.item>
+                                    
+                                    <flux:menu slot="dropdown" class="ml-2 w-48 border-l-2 border-zinc-200 dark:border-zinc-700">
+                                        @foreach($link['submenu'] as $subitem)
+                                            <flux:menu.item 
+                                                :href="$subitem['url']" 
+                                                :active="$subitem['current']"
+                                                wire:navigate
+                                                class="pl-4 hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                                            >
+                                                {{ $subitem['name'] }}
+                                            </flux:menu.item>
+                                        @endforeach
+                                    </flux:menu>
+                                </flux:dropdown>
+                            @else
+                                @if(!empty($link['iconTrailing']))
+                                    <flux:navlist.item 
+                                        :href="$link['url']" 
+                                        :current="$link['current']" 
+                                        wire:navigate
+                                    >
+                                        <div class="flex justify-between items-center w-full">
+                                            <span>{{ $link['name'] }}</span>
+                                            <flux:icon name="{{ $link['icon'] }}" class="w-4 h-4 text-zinc-500" />
+                                        </div>
+                                    </flux:navlist.item>
+                                @else
+                                    <flux:navlist.item 
+                                        :icon="$link['icon']" 
+                                        :href="$link['url']" 
+                                        :current="$link['current']" 
+                                        wire:navigate
+                                    >
+                                        {{ $link['name'] }}
+                                    </flux:navlist.item>
+                                @endif
+                            @endif
+                        @endforeach
+                    </flux:navlist.group>
+                @endforeach
             </flux:navlist>
+
 
             <flux:spacer />
 
-            <flux:navlist variant="outline">
+            <!-- <flux:navlist variant="outline">
                 <flux:navlist.item icon="folder-git-2" href="https://github.com/laravel/livewire-starter-kit" target="_blank">
-                {{ __('Repository') }}
+                    {{ __('Repository') }}
                 </flux:navlist.item>
 
                 <flux:navlist.item icon="book-open-text" href="https://laravel.com/docs/starter-kits" target="_blank">
-                {{ __('Documentation') }}
+                    {{ __('Documentation') }}
                 </flux:navlist.item>
-            </flux:navlist>
+            </flux:navlist> -->
 
             <!-- Desktop User Menu -->
             <flux:dropdown position="bottom" align="start">
@@ -39,22 +150,22 @@
 
                 <flux:menu class="w-[220px]">
                     <flux:menu.radio.group>
-                        <div class="p-0 text-sm font-normal">
-                            <div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                                <span class="relative flex h-8 w-8 shrink-0 overflow-hidden rounded-lg">
-                                    <span
-                                        class="flex h-full w-full items-center justify-center rounded-lg bg-neutral-200 text-black dark:bg-neutral-700 dark:text-white"
-                                    >
-                                        {{ auth()->user()->initials() }}
+                        @if(auth()->check())
+                            <div class="p-0 text-sm font-normal">
+                                <div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                                    <span class="relative flex h-8 w-8 shrink-0 overflow-hidden rounded-lg">
+                                        <span class="flex h-full w-full items-center justify-center rounded-lg bg-neutral-200 text-black dark:bg-neutral-700 dark:text-white">
+                                            {{ auth()->user()->initials() }}
+                                        </span>
                                     </span>
-                                </span>
 
-                                <div class="grid flex-1 text-left text-sm leading-tight">
-                                    <span class="truncate font-semibold">{{ auth()->user()->name }}</span>
-                                    <span class="truncate text-xs">{{ auth()->user()->email }}</span>
+                                    <div class="grid flex-1 text-left text-sm leading-tight">
+                                        <span class="truncate font-semibold">{{ auth()->user()->name }}</span>
+                                        <span class="truncate text-xs">{{ auth()->user()->email }}</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        @endif
                     </flux:menu.radio.group>
 
                     <flux:menu.separator />
@@ -89,22 +200,22 @@
 
                 <flux:menu>
                     <flux:menu.radio.group>
-                        <div class="p-0 text-sm font-normal">
-                            <div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                                <span class="relative flex h-8 w-8 shrink-0 overflow-hidden rounded-lg">
-                                    <span
-                                        class="flex h-full w-full items-center justify-center rounded-lg bg-neutral-200 text-black dark:bg-neutral-700 dark:text-white"
-                                    >
-                                        {{ auth()->user()->initials() }}
+                        @if(auth()->check())
+                            <div class="p-0 text-sm font-normal">
+                                <div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                                    <span class="relative flex h-8 w-8 shrink-0 overflow-hidden rounded-lg">
+                                        <span class="flex h-full w-full items-center justify-center rounded-lg bg-neutral-200 text-black dark:bg-neutral-700 dark:text-white">
+                                            {{ auth()->user()->initials() }}
+                                        </span>
                                     </span>
-                                </span>
 
-                                <div class="grid flex-1 text-left text-sm leading-tight">
-                                    <span class="truncate font-semibold">{{ auth()->user()->name }}</span>
-                                    <span class="truncate text-xs">{{ auth()->user()->email }}</span>
+                                    <div class="grid flex-1 text-left text-sm leading-tight">
+                                        <span class="truncate font-semibold">{{ auth()->user()->name }}</span>
+                                        <span class="truncate text-xs">{{ auth()->user()->email }}</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        @endif
                     </flux:menu.radio.group>
 
                     <flux:menu.separator />

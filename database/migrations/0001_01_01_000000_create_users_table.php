@@ -20,7 +20,8 @@ return new class extends Migration
             $table->string('password');
             $table->unsignedBigInteger('persona_id');
             // $table->foreign('persona_id')->references('id')->on('tbl_persona');
-            $table->integer('rol');
+            $table->bigInteger('id_rol')->default(0);
+            $table->foreign('id_rol')->references('id')->on('tbl_rol');
             $table->timestamps();
         });
 

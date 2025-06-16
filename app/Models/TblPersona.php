@@ -32,7 +32,7 @@ class TblPersona extends Model
                 'email' => $persona->UserName . '@minpublico.cl',
                 'password' => bcrypt('1234'),
                 'persona_id' => $persona->id,
-                'rol' => 1,
+                'id_rol' => 0,
             ]);
         });
     }

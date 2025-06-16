@@ -13,11 +13,9 @@ return new class extends Migration
     {
         Schema::disableForeignKeyConstraints();
 
-        Schema::create('tbl_fiscalias', function (Blueprint $table) {
-            $table->id()->foreign('tbl_persona.cod_fiscalia');
-            $table->string('gls_fiscalia');
-            $table->bigInteger('cod_fiscalia')->default(0);
-            $table->timestamps();
+        Schema::create('tbl_rol', function (Blueprint $table) {
+            $table->id();
+            $table->string('gls_rol');
         });
 
         Schema::enableForeignKeyConstraints();
@@ -28,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tbl_fiscalias');
+        Schema::dropIfExists('tbl_rol');
     }
 };

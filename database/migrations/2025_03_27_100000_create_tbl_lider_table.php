@@ -10,12 +10,14 @@ return new class extends Migration
     {
         Schema::create('tbl_lider', function (Blueprint $table) {
             $table->id();
-            $table->string('username')->unique();
-            $table->unsignedBigInteger('persona_id');
-            $table->foreign('persona_id')->references('id')->on('tbl_personas');
-            // ...agrega otros campos si es necesario...
+            $table->string('username');
+            $table->foreign('username')->references('name')->on('users');
+            $table->bigInteger('id_fiscalia');
+            $table->foreign('id_fiscalia')->references('id')->on('tbl_fiscalia');
+            $table->char('activo');
+        
             $table->timestamps();
-        });
+        }); 
     }
 
     public function down(): void

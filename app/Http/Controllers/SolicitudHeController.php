@@ -8,6 +8,7 @@ use App\Models\TblTipoTrabajo;
 use App\Models\TblFeriado;
 use Carbon\Carbon;
 use App\Services\SolicitudHeService;
+use App\Models\TblSeguimientoSolicitud;
 
 class SolicitudHeController extends Controller
 {
@@ -62,6 +63,12 @@ class SolicitudHeController extends Controller
         $data['username'] = strstr(auth()->user()->email, '@', true);
 
         $solicitud = TblSolicitudHe::create($data);
+        
+        TblSeguimientoSolicitud::create([
+                'id_solicitud_he' => $solicitud->id,
+                'username'        => auth()->user()->name, // o el campo correcto de usuario
+                'id_estado'       => 0, // o el estado inicial correspondiente (por ejemplo, 0 para "Ingreso")
+            ]);
 
         return redirect()
                         ->route('sistema')

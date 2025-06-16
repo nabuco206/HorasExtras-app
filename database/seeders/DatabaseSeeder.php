@@ -69,15 +69,15 @@ class DatabaseSeeder extends Seeder
             'name' => 'crojasm',
             'email' => 'crojasm@minpublico.cl',
             'password' => bcrypt('1234'),
-            'persona_id' => 1, // Asegúrate de tener este campo en la migración
-            'rol' => 1, 
+            'persona_id' => 1, 
+            'id_rol' => 0, 
         ]);
          User::create([
             'name' => 'persona01',
             'email' => 'persona01@minpublico.cl',
             'password' => bcrypt('1234'),
-            'persona_id' => 1, // Asegúrate de tener este campo en la migración
-            'rol' => 1, 
+            'persona_id' => 1, 
+            'id_rol' => 0, 
         ]);
 
         DB::table('tbl_tipo_compensacions')->insert([
@@ -140,7 +140,7 @@ class DatabaseSeeder extends Seeder
         }
 
         
-
+        // $this->call(TblSolicitudHeSeeder::class);
         
     }
 }
