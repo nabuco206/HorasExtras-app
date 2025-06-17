@@ -15,11 +15,31 @@ Al clonar :
     npm run dev
     npm run build 
     php artisan serve
-    
-    
-    
-    
 
-php artisan serve
+
+
+    🔁 Ahora puedes descargar los últimos cambios desde GitHub con:
+
+        bash
+        Copiar
+        Editar
+        git pull origin master
+        Si tu rama no es master (por ejemplo, main), reemplaza master por el nombre correcto:
+        
+        bash
+        Copiar
+        Editar
+        git pull origin main
+        🔍 Ver en qué rama estás:
+        Antes de hacer pull, puedes confirmar tu rama actual con:
+
+bash
+Copiar
+Editar
+git branch
+    
+    
+    
+    
 
 http://127.0.0.1:8000/admin/login
