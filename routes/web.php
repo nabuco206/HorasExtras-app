@@ -19,8 +19,8 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('settings/profile', 'settings.profile')->name('settings.profile');
     Volt::route('settings/password', 'settings.password')->name('settings.password');
     Volt::route('settings/appearance', 'settings.appearance')->name('settings.appearance');
-    // Volt::route('sistema/solicitud', 'sistema.solicitud')->name('sistema.solicitud_create');
-    // Volt::route('sistema/solicitud', 'sistema.solicitud_create')->name('sistema.solicitud_create');
+    Volt::route('sistema/ingreso-he', 'sistema.ingreso-he')->name('sistema.ingreso-he');
+    // Volt::route('sistema/solicitud', 'sistema.ingreso-hesolicitud_create')->name('sistema.solicitud_create');
 });
 
 

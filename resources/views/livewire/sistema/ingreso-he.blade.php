@@ -32,7 +32,7 @@ new class extends Component {
     public function saveSolicitud(): void
     {
         $validated = $this->validate([
-            'username' => ['required', 'string'],
+            // 'username' => ['required', 'string'],
             'id_tipo_trabajo' => ['required', 'integer', 'exists:tbl_tipo_trabajo,id'],
             'fecha' => ['required', 'date'],
             'hrs_inicial' => ['required'],
@@ -60,7 +60,7 @@ new class extends Component {
 
     <x-sistema.layout :heading="__('Ingreso Hora Extra')">
         <form wire:submit="saveSolicitud" class="my-6 w-full space-y-6" enctype="multipart/form-data">
-            <flux:input wire:model="username" :label="__('Usuario')" type="text" required readonly />
+            <flux:input wire:model="username" type="hidden" required readonly />
             <flux:select wire:model="id_tipo_trabajo" :label="__('Tipo de Trabajo')" required>
                 <option value="">Seleccione...</option>
                 @foreach($tipos_trabajo as $tipo)

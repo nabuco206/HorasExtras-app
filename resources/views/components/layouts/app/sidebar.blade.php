@@ -10,8 +10,8 @@
             [
                 'name' => 'Ingreso Horas Extraordinarias',
                 'icon' => 'inbox-arrow-down',
-                'url' => Route::has('ingreso_he') ? route('ingreso_he') : '#',
-                'current' => Route::has('ingreso_he') && request()->routeIs('ingreso_he')
+                'url' => Route::has('sistema.ingreso-he') ? route('sistema.ingreso-he') : '#',
+                'current' => Route::has('sistema.ingreso-he') && request()->routeIs('sistema.ingreso-he')
             ],
              [
                 'name' => 'Ingreso Horas test',

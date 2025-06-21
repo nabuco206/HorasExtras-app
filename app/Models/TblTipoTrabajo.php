@@ -12,4 +12,8 @@ class TblTipoTrabajo extends Model
     protected $table = 'tbl_tipo_trabajo'; // Asegúrate que el nombre coincide con tu tabla
     // Si tu tabla no tiene timestamps, agrega:
     // public $timestamps = false;
+    protected $fillable = [
+        'gls_tipo_trabajo',
+    ];
+
 }
