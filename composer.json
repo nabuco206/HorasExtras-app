@@ -17,6 +17,7 @@
         "livewire/volt": "^1.7.0"
     },
     "require-dev": {
+        "barryvdh/laravel-debugbar": "^3.15",
         "fakerphp/faker": "^1.23",
         "jasonmccreary/laravel-test-assertions": "^2.7",
         "laravel-shift/blueprint": "^2.11",

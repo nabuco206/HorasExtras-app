@@ -15,7 +15,7 @@ class SolicitudHeController extends Controller
     public function create()
     {
         $tiposTrabajo = TblTipoTrabajo::all();
-        return view('sistema.solicitud_create', compact('tiposTrabajo'));
+        // return view('sistema.solicitud_create', compact('tiposTrabajo'));
     }
 
     public function store(Request $request, SolicitudHeService $servicio)
@@ -60,7 +60,7 @@ class SolicitudHeController extends Controller
 
         $data = $request->all();
         $data = array_merge($data, $resultados);
-        $data['username'] = strstr(auth()->user()->email, '@', true);
+        $data['username'] = auth()->user()->name; // Usar el nombre completo del usuario
 
         $solicitud = TblSolicitudHe::create($data);
         

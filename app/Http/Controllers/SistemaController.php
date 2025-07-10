@@ -12,6 +12,6 @@ class SistemaController extends Controller
     {
         $solicitudes = TblSolicitudHe::orderBy('created_at', 'desc')->get();
         $tiposTrabajo = TblTipoTrabajo::all();
-        return view('sistema.ingreso_he', compact('solicitudes', 'tiposTrabajo'));
+        // return view('sistema.ingreso_he', compact('solicitudes', 'tiposTrabajo'));
     }
 }

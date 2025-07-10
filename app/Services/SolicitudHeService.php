@@ -3,68 +3,262 @@
 namespace App\Services;
 
 use App\Models\TblFeriado;
+use App\Models\TblTurno;
+use App\Models\TblConfigHorasExtras;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
+use Exception;
 
 class SolicitudHeService
 {
+    /**
+     * Calcula el porcentaje de horas extras basado en configuración de base de datos
+     * 
+     * @param string $fecha Fecha en formato Y-m-d
+     * @param string $horaInicio Hora en formato H:i
+     * @param string $horaFin Hora en formato H:i
+     * @param int $id_turno ID del turno (opcional)
+     * @return array Resultado con minutos calculados
+     * @throws Exception Si hay errores de validación
+     */
     public function calculaPorcentaje($fecha, $horaInicio, $horaFin, $id_turno = 0)
     {
-        echo "Fecha: $fecha, Hora Inicio: $horaInicio, Hora Fin: $horaFin\n";
-
-        $fechaObj = Carbon::parse($fecha);
-        $horaInicioObj = Carbon::createFromFormat('H:i', $horaInicio);
-        $horaFinObj = Carbon::createFromFormat('H:i', $horaFin);
-
-        $diferenciaMin = $horaInicioObj->diffInMinutes($horaFinObj);
-        echo "Diferencia en minutos: $diferenciaMin\n";
-
+        try {
+            // 1. VALIDAR ENTRADA
+            $this->validarEntrada($fecha, $horaInicio, $horaFin, $id_turno);
+            
+            // 2. PARSEAR FECHAS Y HORAS
+            $fechaObj = Carbon::parse($fecha);
+            $horaInicioObj = Carbon::createFromFormat('H:i', $horaInicio);
+            $horaFinObj = Carbon::createFromFormat('H:i', $horaFin);
+            
+            // 3. CALCULAR DIFERENCIA EN MINUTOS
+            $diferenciaMin = $horaInicioObj->diffInMinutes($horaFinObj);
+            
+            // 4. DETERMINAR CONTEXTO
+            $contexto = $this->determinarContexto($fechaObj, $id_turno);
+            
+            // 5. CALCULAR MINUTOS POR PORCENTAJE
+            $resultado = $this->calcularMinutosPorPorcentaje(
+                $horaInicioObj, 
+                $horaFinObj, 
+                $contexto
+            );
+            
+            // 6. AGREGAR INFORMACIÓN ADICIONAL
+            $resultado['min_reales'] = $diferenciaMin;
+            $resultado['fecha'] = $fecha;
+            $resultado['contexto'] = $contexto;
+            
+            // 7. LOGGING
+            $this->logResultado($fecha, $horaInicio, $horaFin, $resultado);
+            
+            return $resultado;
+            
+        } catch (Exception $e) {
+            Log::error('Error en calculaPorcentaje', [
+                'fecha' => $fecha,
+                'horaInicio' => $horaInicio,
+                'horaFin' => $horaFin,
+                'id_turno' => $id_turno,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
+    }
+    
+    /**
+     * Validar datos de entrada
+     */
+    private function validarEntrada($fecha, $horaInicio, $horaFin, $id_turno)
+    {
+        $validator = Validator::make([
+            'fecha' => $fecha,
+            'hora_inicio' => $horaInicio,
+            'hora_fin' => $horaFin,
+            'id_turno' => $id_turno
+        ], [
+            'fecha' => 'required|date',
+            'hora_inicio' => 'required|date_format:H:i',
+            'hora_fin' => 'required|date_format:H:i|after:hora_inicio',
+            'id_turno' => 'integer|min:0'
+        ]);
+        
+        if ($validator->fails()) {
+            throw new Exception('Datos de entrada inválidos: ' . $validator->errors()->first());
+        }
+    }
+    
+    /**
+     * Determinar el contexto (feriado, fin de semana, día laboral)
+     */
+    private function determinarContexto(Carbon $fechaObj, int $id_turno): array
+    {
         $mmdd = $fechaObj->format('m-d');
         $esFeriado = TblFeriado::where('fecha', $mmdd)->exists();
         $diaSemana = $fechaObj->dayOfWeekIso; // 1 = Lunes, 7 = Domingo
-
-        $min_25 = 0;
-        $min_50 = 0;
-
-        if ($id_turno == 0) {
-            // Feriado o fin de semana: todo al 50%
-            if ($esFeriado || in_array($diaSemana, [6, 7])) {
-                $min_50 = $diferenciaMin * 0.5;
-                echo "Feriado o fin de semana: Minutos al 50%: $min_50\n";
-            } else {
-                $inicio = $horaInicioObj->hour * 60 + $horaInicioObj->minute;
-                $fin = $horaFinObj->hour * 60 + $horaFinObj->minute;
-
-                $inicio_25 = 18 * 60; // 18:00
-                $fin_25 = 21 * 60;    // 21:00
-
-                // Minutos al 25% (entre 18:00 y 21:00)
-                if ($inicio < $fin_25 && $fin > $inicio_25) {
-                    $min_25 = max(0, min($fin, $fin_25) - max($inicio, $inicio_25));
-                    $min_25 *= 0.25;
+        $esFinSemana = in_array($diaSemana, [6, 7]);
+        
+        $turno = null;
+        if ($id_turno > 0) {
+            $turno = TblTurno::find($id_turno);
+        }
+        
+        return [
+            'es_feriado' => $esFeriado,
+            'es_fin_semana' => $esFinSemana,
+            'dia_semana' => $diaSemana,
+            'turno' => $turno,
+            'fecha_obj' => $fechaObj
+        ];
+    }
+    
+    /**
+     * Calcular minutos por porcentaje basado en configuración
+     */
+    private function calcularMinutosPorPorcentaje(Carbon $horaInicio, Carbon $horaFin, array $contexto): array
+    {
+        $configuraciones = TblConfigHorasExtras::activo()->ordenado()->get();
+        
+        $resultado = [
+            'min_25' => 0,
+            'min_50' => 0,
+            'min_100' => 0,
+            'total_min' => 0,
+            'detalles' => []
+        ];
+        
+        $inicio = $horaInicio->hour * 60 + $horaInicio->minute;
+        $fin = $horaFin->hour * 60 + $horaFin->minute;
+        $diferenciaMin = $horaInicio->diffInMinutes($horaFin);
+        
+        foreach ($configuraciones as $config) {
+            if (!$config->aplicaParaDia($contexto['dia_semana'], $contexto['es_feriado'])) {
+                continue;
+            }
+            
+            $minutosCalculados = $this->calcularMinutosParaConfiguracion(
+                $inicio, 
+                $fin, 
+                $config, 
+                $contexto
+            );
+            
+            if ($minutosCalculados > 0) {
+                $porcentaje = $config->porcentaje;
+                $minutosConPorcentaje = $minutosCalculados * ($porcentaje / 100);
+                
+                // Categorizar por porcentaje
+                switch ($porcentaje) {
+                    case 25:
+                        $resultado['min_25'] += $minutosConPorcentaje;
+                        break;
+                    case 50:
+                        $resultado['min_50'] += $minutosConPorcentaje;
+                        break;
+                    case 100:
+                        $resultado['min_100'] += $minutosConPorcentaje;
+                        break;
                 }
-
-                // Minutos al 50% después de las 21:00
-                if ($fin > $fin_25) {
-                    $min_50 = max(0, $fin - max($inicio, $fin_25));
-                    $min_50 *= 0.5;
-                }
-
-                // Minutos al 50% antes de las 18:00
-                if ($inicio < $inicio_25) {
-                    $min_50 += max(0, min($fin, $inicio_25) - $inicio);
-                }
+                
+                $resultado['detalles'][] = [
+                    'configuracion' => $config->descripcion,
+                    'minutos_reales' => $minutosCalculados,
+                    'porcentaje' => $porcentaje,
+                    'minutos_con_porcentaje' => $minutosConPorcentaje
+                ];
             }
         }
-
-        $total_min = $diferenciaMin + $min_25 + $min_50;
-
-        echo "Minutos al 25%: $min_25, Minutos al 50%: $min_50, el total: $total_min\n";
-
-        return [
-            'min_reales' => $diferenciaMin,
-            'min_25' => $min_25,
-            'min_50' => $min_50,
-            'total_min' => $total_min,
-        ];
+        
+        $resultado['total_min'] = $diferenciaMin + $resultado['min_25'] + $resultado['min_50'] + $resultado['min_100'];
+        
+        return $resultado;
+    }
+    
+    /**
+     * Calcular minutos para una configuración específica
+     */
+    private function calcularMinutosParaConfiguracion(int $inicio, int $fin, TblConfigHorasExtras $config, array $contexto): int
+    {
+        // Si es feriado o fin de semana y la configuración aplica para todo el día
+        if (($contexto['es_feriado'] && $config->aplica_feriados) || 
+            ($contexto['es_fin_semana'] && $config->aplica_fines_semana)) {
+            if (!$config->hora_inicio && !$config->hora_fin) {
+                return $fin - $inicio; // Todo el período
+            }
+        }
+        
+        // Si tiene horarios específicos definidos
+        if ($config->hora_inicio && $config->hora_fin) {
+            $configInicio = Carbon::createFromFormat('H:i', $config->hora_inicio->format('H:i'));
+            $configFin = Carbon::createFromFormat('H:i', $config->hora_fin->format('H:i'));
+            
+            $configInicioMin = $configInicio->hour * 60 + $configInicio->minute;
+            $configFinMin = $configFin->hour * 60 + $configFin->minute;
+            
+            // Calcular intersección
+            $interseccionInicio = max($inicio, $configInicioMin);
+            $interseccionFin = min($fin, $configFinMin);
+            
+            return max(0, $interseccionFin - $interseccionInicio);
+        }
+        
+        return 0;
+    }
+    
+    /**
+     * Logging del resultado
+     */
+    private function logResultado($fecha, $horaInicio, $horaFin, array $resultado)
+    {
+        Log::info('Cálculo de horas extras realizado', [
+            'fecha' => $fecha,
+            'hora_inicio' => $horaInicio,
+            'hora_fin' => $horaFin,
+            'min_reales' => $resultado['min_reales'],
+            'min_25' => $resultado['min_25'],
+            'min_50' => $resultado['min_50'],
+            'total_min' => $resultado['total_min'],
+            'contexto' => $resultado['contexto']['es_feriado'] ? 'feriado' : 
+                          ($resultado['contexto']['es_fin_semana'] ? 'fin_semana' : 'laboral')
+        ]);
+    }
+    
+    /**
+     * Obtener configuraciones activas para administración
+     */
+    public function obtenerConfiguraciones()
+    {
+        return TblConfigHorasExtras::activo()->ordenado()->get();
+    }
+    
+    /**
+     * Actualizar configuración
+     */
+    public function actualizarConfiguracion(array $datos)
+    {
+        $validator = Validator::make($datos, [
+            'id' => 'required|exists:tbl_config_horas_extras,id',
+            'porcentaje' => 'required|numeric|min:0|max:200',
+            'hora_inicio' => 'nullable|date_format:H:i',
+            'hora_fin' => 'nullable|date_format:H:i|after:hora_inicio',
+            'activo' => 'boolean'
+        ]);
+        
+        if ($validator->fails()) {
+            throw new Exception('Datos inválidos para actualización: ' . $validator->errors()->first());
+        }
+        
+        $config = TblConfigHorasExtras::findOrFail($datos['id']);
+        $config->update($datos);
+        
+        Log::info('Configuración de horas extras actualizada', [
+            'id' => $config->id,
+            'clave' => $config->clave,
+            'cambios' => $datos
+        ]);
+        
+        return $config;
     }
 }

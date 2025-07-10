@@ -11,6 +11,13 @@ class TblSolicitudHe extends Model
     use HasFactory;
 
     /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'tbl_solicitud_hes';
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var array
@@ -57,6 +64,37 @@ class TblSolicitudHe extends Model
 
     public function idEstado(): BelongsTo
     {
-        return $this->belongsTo(TblEstado::class);
+        return $this->belongsTo(TblEstado::class, 'id_estado');
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'username', 'name');
+    }
+
+    public function tipoTrabajo(): BelongsTo
+    {
+        return $this->belongsTo(TblTipoTrabajo::class, 'id_tipo_trabajo');
+    }
+
+    public function tipoCompensacion(): BelongsTo
+    {
+        return $this->belongsTo(TblTipoCompensacion::class, 'id_tipoCompensacion');
+    }
+
+    /**
+     * Debug method to check if username is accessible
+     */
+    public function hasUsername(): bool
+    {
+        return isset($this->attributes['username']);
+    }
+
+    /**
+     * Get username safely
+     */
+    public function getUsername(): ?string
+    {
+        return $this->attributes['username'] ?? null;
     }
 }

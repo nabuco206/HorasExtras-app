@@ -17,7 +17,18 @@ class TblTipoTrabajoResource extends Resource
 {
     protected static ?string $model = TblTipoTrabajo::class;
 
+    protected static ?string $navigationLabel = 'Tipo de Trabajo';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+
+    public static function getModelLabel(): string
+    {
+        return 'Tipo de Trabajo';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'Tipos de Trabajo';
+    }
 
     public static function form(Form $form): Form
     {

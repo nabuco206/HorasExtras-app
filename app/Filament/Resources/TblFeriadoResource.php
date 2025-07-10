@@ -17,7 +17,18 @@ class TblFeriadoResource extends Resource
 {
     protected static ?string $model = TblFeriado::class;
 
+    protected static ?string $navigationLabel = 'Feriados';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+
+    public static function getModelLabel(): string
+    {
+        return 'Feriado';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'Feriados';
+    }
 
     public static function form(Form $form): Form
     {

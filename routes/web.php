@@ -24,9 +24,6 @@ Route::middleware(['auth'])->group(function () {
 });
 
 
-Route::view('dashboard', 'dashboard')
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');  
 
 Route::get('sistema/ingreso_he', [SistemaController::class, 'menu'])
     ->middleware(['auth', 'verified'])

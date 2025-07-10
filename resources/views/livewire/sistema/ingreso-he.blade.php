@@ -13,6 +13,7 @@ new class extends Component {
     public string $fecha = '';
     public string $hrs_inicial = '';
     public string $hrs_final = '';
+    public bool $propone_pago = false;
     public $tipos_trabajo = [];
     public $solicitudes = [];
 
@@ -24,6 +25,7 @@ new class extends Component {
         $this->username = Auth::user()->name;
         $this->tipos_trabajo = TblTipoTrabajo::all();
         $this->solicitudes = \App\Models\TblSolicitudHe::orderByDesc('id')->get();
+        $this->propone_pago = false;
     }
 
     /**
@@ -34,13 +36,15 @@ new class extends Component {
         $validated = $this->validate([
             // 'username' => ['required', 'string'],
             'id_tipo_trabajo' => ['required', 'integer', 'exists:tbl_tipo_trabajo,id'],
-            'fecha' => ['required', 'date'],
-            'hrs_inicial' => ['required'],
-            'hrs_final' => ['required'],
+            'fecha' => ['required', 'date', 'before_or_equal:today'], // No permite fechas futuras
+            'hrs_inicial' => ['required', 'date_format:H:i'],
+            'hrs_final' => ['required', 'date_format:H:i', 'after:hrs_inicial'],
+            'propone_pago' => ['boolean'],
         ]);
 
         $validated['tipo_solicitud'] = 0;
-        $validated['id_tipoCompensacion'] = 0;
+        $validated['id_tipoCompensacion'] = $this->propone_pago ? 1 : 0;
+        $validated['username'] = Auth::user()->name; // Asegurar que el username esté presente
         
 
         \App\Models\TblSolicitudHe::create($validated);
@@ -59,70 +63,142 @@ new class extends Component {
     <!-- </div> -->
 
     <x-sistema.layout :heading="__('Ingreso Hora Extra')">
-        <form wire:submit="saveSolicitud" class="my-6 w-full space-y-6" enctype="multipart/form-data">
-            <flux:input wire:model="username" type="hidden" required readonly />
-            <flux:select wire:model="id_tipo_trabajo" :label="__('Tipo de Trabajo')" required>
-                <option value="">Seleccione...</option>
-                @foreach($tipos_trabajo as $tipo)
-                    <option value="{{ $tipo->id }}">{{ $tipo->gls_tipo_trabajo }}</option>
-                @endforeach
-            </flux:select>
-            <div class="flex gap-4">
-                <flux:input wire:model="fecha" :label="__('Fecha')" type="date" class="flex-1" required />
-                <flux:input wire:model="hrs_inicial" :label="__('Hora Ingreso')" type="time" class="flex-1" required />
-                <flux:input wire:model="hrs_final" :label="__('Hora Salida')" type="time" class="flex-1" required />
+        <!-- Formulario -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6 mb-8 max-w-6xl">
+            <form wire:submit="saveSolicitud" class="w-full space-y-6" enctype="multipart/form-data">
+                    <flux:input wire:model="username" type="hidden" required readonly />
+                    <div class="flex gap-4 items-end">
+                        <flux:select wire:model="id_tipo_trabajo" :label="__('Tipo de Trabajo')" class="flex-1 max-w-md" required>
+                            <option value="">Seleccione...</option>
+                            @foreach($tipos_trabajo as $tipo)
+                                <option value="{{ $tipo->id }}">{{ $tipo->gls_tipo_trabajo }}</option>
+                            @endforeach
+                        </flux:select>
+                        <flux:input wire:model="fecha" :label="__('Fecha')" type="date" class="flex-1" required />
+                        <flux:input wire:model="hrs_inicial" :label="__('Hora Ingreso')" type="time" class="flex-1" required />
+                        <flux:input wire:model="hrs_final" :label="__('Hora Salida')" type="time" class="flex-1" required />
+                        <div class="flex items-end">
+                            <flux:checkbox wire:model="propone_pago" :label="__('Propone Pago')" />
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-center gap-4">
+                        <flux:button variant="primary" type="submit" class="px-8">{{ __('Ingresar') }}</flux:button>
+                        <x-action-message class="me-3" on="profile-updated">
+                            {{ __('Guardado !!!.') }}
+                        </x-action-message> 
+                    </div>
+                </form>
             </div>
-            <div class="flex items-center gap-4">
-                <div class="flex items-center justify-end">
-                    <flux:button variant="primary" type="submit" class="w-full">{{ __('Ingresar') }}</flux:button>
-                </div>
-                <x-action-message class="me-3" on="profile-updated">
-                    {{ __('Guardado !!!.') }}
-                </x-action-message>
-            </div>
-        </form>
 
-        <div class="my-8">
-            <h2 class="text-xl font-semibold">{{ __('Solicitudes Ingresadas') }}</h2>
-            <div class="mt-4 overflow-x-auto rounded-lg border bg-white shadow-sm">
-                <table class="min-w-full w-full divide-y divide-gray-200 text-xs md:text-sm">
-                    <thead class="bg-gray-100">
-                        <tr>
-                            <th class="px-2 py-2 md:px-4 md:py-3 text-left font-semibold uppercase tracking-wider">ID</th>
-                            <th class="px-2 py-2 md:px-4 md:py-3 text-left font-semibold uppercase tracking-wider">{{ __('Usuario') }}</th>
-                            <th class="px-2 py-2 md:px-4 md:py-3 text-left font-semibold uppercase tracking-wider">{{ __('Tipo de Trabajo') }}</th>
-                            <th class="px-2 py-2 md:px-4 md:py-3 text-left font-semibold uppercase tracking-wider">{{ __('Fecha') }}</th>
-                            <th class="px-2 py-2 md:px-4 md:py-3 text-left font-semibold uppercase tracking-wider">{{ __('Hora Ingreso') }}</th>
-                            <th class="px-2 py-2 md:px-4 md:py-3 text-left font-semibold uppercase tracking-wider">{{ __('Hora Salida') }}</th>
-                            <th class="px-2 py-2 md:px-4 md:py-3 text-left font-semibold uppercase tracking-wider hidden md:table-cell">{{ __('Tipo Solicitud') }}</th>
-                            <th class="px-2 py-2 md:px-4 md:py-3 text-left font-semibold uppercase tracking-wider hidden md:table-cell">{{ __('Tipo Compensación') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        @foreach($solicitudes as $loopIndex => $solicitud)
-                            <tr class="@if($loopIndex % 2 == 0) bg-gray-50 @endif hover:bg-blue-50 transition-colors">
-                                <td class="whitespace-nowrap px-2 py-2 md:px-4 md:py-3">{{ $solicitud->id }}</td>
-                                <td class="whitespace-nowrap px-2 py-2 md:px-4 md:py-3">{{ $solicitud->username }}</td>
-                                <td class="whitespace-nowrap px-2 py-2 md:px-4 md:py-3">
-                                    @php
-                                        $tipo = $tipos_trabajo->firstWhere('id', $solicitud->id_tipo_trabajo);
-                                    @endphp
-                                    {{ $tipo ? $tipo->gls_tipo_trabajo : '-' }}
-                                </td>
-                                <td class="whitespace-nowrap px-2 py-2 md:px-4 md:py-3">
-                                    @php
-                                        $fecha = \Carbon\Carbon::parse($solicitud->fecha)->format('d/m/Y');
-                                    @endphp
-                                    {{ $fecha }}
-                                </td>
-                                <td class="whitespace-nowrap px-2 py-2 md:px-4 md:py-3">{{ $solicitud->hrs_inicial }}</td>
-                                <td class="whitespace-nowrap px-2 py-2 md:px-4 md:py-3">{{ $solicitud->hrs_final }}</td>
-                                <td class="whitespace-nowrap px-2 py-2 md:px-4 md:py-3 hidden md:table-cell">{{ $solicitud->tipo_solicitud }}</td>
-                                <td class="whitespace-nowrap px-2 py-2 md:px-4 md:py-3 hidden md:table-cell">{{ $solicitud->id_tipoCompensacion }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-neutral-200 dark:border-neutral-700 w-full">
+                <div class="p-6 border-b border-neutral-200 dark:border-neutral-700">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Solicitudes Ingresadas</h3>
+                </div>
+                
+                <div class="p-6">
+                    <div class="w-full overflow-x-auto">
+                        <table class="w-full text-xs text-left rtl:text-right text-gray-500 dark:text-gray-400 min-w-max">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600">
+                                <tr>
+                                    <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">#</th>
+                                    <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Usuario</th>
+                                    <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Tipo Trabajo</th>
+                                    <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Fecha</th>
+                                    <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Hora Inicial</th>
+                                    <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Hora Final</th>
+                                    <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Estado</th>
+                                    <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Tipo Solicitud</th>
+                                    <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Fecha Evento</th>
+                                    <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Hora Inicio</th>
+                                    <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Hora Fin</th>
+                                    <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Compensación</th>
+                                    <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Min. Reales</th>
+                                    <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Min. 25%</th>
+                                    <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Min. 50%</th>
+                                    <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Total Min.</th>
+                                    <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Creado</th>
+                                    <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Actualizado</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
+                                @forelse ($solicitudes as $solicitud)
+                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <td class="px-2 py-2 text-center font-medium text-gray-900 dark:text-white whitespace-nowrap">{{ $solicitud->id }}</td>
+                                        <td class="px-2 py-2 text-center whitespace-nowrap">
+                                            <span class="max-w-20 block truncate" title="{{ $solicitud->username ?? '-' }}">{{ $solicitud->username ?? '-' }}</span>
+                                        </td>
+                                        <td class="px-2 py-2 text-center whitespace-nowrap">
+                                            @php
+                                                $tipo = $tipos_trabajo->firstWhere('id', $solicitud->id_tipo_trabajo);
+                                            @endphp
+                                            <span class="max-w-24 block truncate" title="{{ $tipo ? $tipo->gls_tipo_trabajo : '-' }}">
+                                                {{ $tipo ? $tipo->gls_tipo_trabajo : '-' }}
+                                            </span>
+                                        </td>
+                                        <td class="px-2 py-2 text-center whitespace-nowrap">{{ $solicitud->fecha ? \Carbon\Carbon::parse($solicitud->fecha)->format('d/m/Y') : '-' }}</td>
+                                        <td class="px-2 py-2 text-center whitespace-nowrap">{{ $solicitud->hrs_inicial ?? '-' }}</td>
+                                        <td class="px-2 py-2 text-center whitespace-nowrap">{{ $solicitud->hrs_final ?? '-' }}</td>
+                                        <td class="px-2 py-2 text-center whitespace-nowrap">
+                                            @if($solicitud->id_estado == 1)
+                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
+                                                    Pendiente
+                                                </span>
+                                            @elseif($solicitud->id_estado == 2)
+                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                                                    Aprobada
+                                                </span>
+                                            @elseif($solicitud->id_estado == 3)
+                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
+                                                    Rechazada
+                                                </span>
+                                            @else
+                                                <span>{{ $solicitud->id_estado ?? '-' }}</span>
+                                            @endif
+                                        </td>
+                                        <td class="px-2 py-2 text-center whitespace-nowrap">
+                                            <span class="max-w-24 block truncate" title="{{ $solicitud->tipo_solicitud ?? '-' }}">{{ $solicitud->tipo_solicitud ?? '-' }}</span>
+                                        </td>
+                                        <td class="px-2 py-2 text-center whitespace-nowrap">{{ $solicitud->fecha_evento ? \Carbon\Carbon::parse($solicitud->fecha_evento)->format('d/m/Y') : '-' }}</td>
+                                        <td class="px-2 py-2 text-center whitespace-nowrap">{{ $solicitud->hrs_inicio ?? '-' }}</td>
+                                        <td class="px-2 py-2 text-center whitespace-nowrap">{{ $solicitud->hrs_fin ?? '-' }}</td>
+                                        <td class="px-2 py-2 text-center whitespace-nowrap">
+                                            @if($solicitud->id_tipoCompensacion == 1)
+                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"/>
+                                                    </svg>
+                                                    Dinero
+                                                </span>
+                                            @elseif($solicitud->id_tipoCompensacion == 2)
+                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                                                    </svg>
+                                                    Tiempo
+                                                </span>
+                                            @else
+                                                <span>{{ $solicitud->id_tipoCompensacion ?? '-' }}</span>
+                                            @endif
+                                        </td>
+                                        <td class="px-2 py-2 text-center whitespace-nowrap">{{ $solicitud->min_reales ?? '-' }}</td>
+                                        <td class="px-2 py-2 text-center whitespace-nowrap">{{ $solicitud->min_25 ?? '-' }}</td>
+                                        <td class="px-2 py-2 text-center whitespace-nowrap">{{ $solicitud->min_50 ?? '-' }}</td>
+                                        <td class="px-2 py-2 text-center font-semibold whitespace-nowrap">{{ $solicitud->total_min ?? '-' }}</td>
+                                        <td class="px-2 py-2 text-center whitespace-nowrap">{{ $solicitud->created_at ? $solicitud->created_at->format('d/m/Y H:i') : '-' }}</td>
+                                        <td class="px-2 py-2 text-center whitespace-nowrap">{{ $solicitud->updated_at ? $solicitud->updated_at->format('d/m/Y H:i') : '-' }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="18" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                                            No hay solicitudes registradas
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </x-sistema.layout>
