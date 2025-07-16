@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::disableForeignKeyConstraints();
+        
 
         Schema::create('tbl_liders', function (Blueprint $table) {
             $table->string('id')->primary();
@@ -21,7 +21,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::enableForeignKeyConstraints();
+        
     }
 
     /**

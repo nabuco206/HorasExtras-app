@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::disableForeignKeyConstraints();
+        
 
          Schema::create('tbl_tipo_trabajo', function (Blueprint $table) {
             $table->id();
@@ -19,7 +19,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::enableForeignKeyConstraints();
+        
     }
 
     /**
@@ -27,8 +27,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::disableForeignKeyConstraints();
+        
         Schema::dropIfExists('tbl_tipo_trabajo');
-        Schema::enableForeignKeyConstraints();
+        
     }
 };

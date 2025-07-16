@@ -13,7 +13,7 @@ class EditTblTipoTrabajo extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            // Actions\DeleteAction::make(), // Comentado: Se usa flag_activo en lugar de eliminar
         ];
     }
 }

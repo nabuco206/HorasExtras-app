@@ -11,14 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::disableForeignKeyConstraints();
+        
 
         Schema::create('tbl_rol', function (Blueprint $table) {
             $table->id();
             $table->string('gls_rol');
         });
 
-        Schema::enableForeignKeyConstraints();
+        
     }
 
     /**

@@ -52,9 +52,10 @@ class TblSolicitudHe extends Model
         'id_estado' => 'integer',
         'fecha_evento' => 'date',
         'id_tipoCompensacion' => 'integer',
-        'min_25' => 'integer',
-        'min_50' => 'integer',
-        'total_min' => 'integer',
+        'min_reales' => 'decimal:2',
+        'min_25' => 'decimal:2',
+        'min_50' => 'decimal:2',
+        'total_min' => 'decimal:2',
     ];
 
     public function tblSeguimientoSolicitud(): BelongsTo

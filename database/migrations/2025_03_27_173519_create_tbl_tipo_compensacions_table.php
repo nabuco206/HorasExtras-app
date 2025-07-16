@@ -11,15 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::disableForeignKeyConstraints();
+        
 
         Schema::create('tbl_tipo_compensacions', function (Blueprint $table) {
-            $table->id()->foreign('tbl_solicitud_he.id_tipoCompensacion');
-            $table->bigInteger('gls_tipoCompensacion');
+            $table->id();
+            $table->string('gls_tipoCompensacion', 255);
             $table->timestamps();
         });
 
-        Schema::enableForeignKeyConstraints();
+        
     }
 
     /**

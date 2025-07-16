@@ -26,7 +26,7 @@ class TblTipoCompensacion extends Model
      */
     protected $casts = [
         'id' => 'integer',
-        'gls_tipoCompensacion' => 'integer',
+        'gls_tipoCompensacion' => 'string',
     ];
 
     public function tblSolicitudHe(): BelongsTo

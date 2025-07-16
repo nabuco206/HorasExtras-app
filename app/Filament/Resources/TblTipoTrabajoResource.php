@@ -37,7 +37,13 @@ class TblTipoTrabajoResource extends Resource
                 Forms\Components\TextInput::make('gls_tipo_trabajo')
                     ->label('Tipo de Trabajo')
                     ->required()
-                    ->maxLength(255),
+                    ->maxLength(255)
+                    ->helperText('Ingrese el nombre del tipo de trabajo'),
+                    
+                Forms\Components\Toggle::make('flag_activo')
+                    ->label('Estado Activo')
+                    ->default(true)
+                    ->helperText('Indica si el tipo de trabajo está activo en el sistema'),
             ]);
     }
 
@@ -45,20 +51,75 @@ class TblTipoTrabajoResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('id')->sortable()->label('ID'),
-                Tables\Columns\TextColumn::make('gls_tipo_trabajo')->label('Tipo de Trabajo')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('created_at')->dateTime('d/m/Y H:i')->label('Creado')->sortable(),
-                Tables\Columns\TextColumn::make('updated_at')->dateTime('d/m/Y H:i')->label('Actualizado')->sortable(),
+                Tables\Columns\TextColumn::make('id')
+                    ->label('ID')
+                    ->sortable(),
+                    
+                Tables\Columns\TextColumn::make('gls_tipo_trabajo')
+                    ->label('Tipo de Trabajo')
+                    ->searchable()
+                    ->sortable(),
+                    
+                Tables\Columns\IconColumn::make('flag_activo')
+                    ->label('Estado')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('danger'),
+                    
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Creado')
+                    ->dateTime('d/m/Y H:i')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                    
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->label('Actualizado')
+                    ->dateTime('d/m/Y H:i')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Tables\Filters\TernaryFilter::make('flag_activo')
+                    ->label('Estado')
+                    ->trueLabel('Solo activos')
+                    ->falseLabel('Solo inactivos')
+                    ->native(false),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('toggle_active')
+                    ->label(fn ($record) => $record->flag_activo ? 'Desactivar' : 'Activar')
+                    ->icon(fn ($record) => $record->flag_activo ? 'heroicon-o-eye-slash' : 'heroicon-o-eye')
+                    ->color(fn ($record) => $record->flag_activo ? 'warning' : 'success')
+                    ->action(function ($record) {
+                        $record->update(['flag_activo' => !$record->flag_activo]);
+                    })
+                    ->requiresConfirmation()
+                    ->modalHeading(fn ($record) => $record->flag_activo ? 'Desactivar Tipo de Trabajo' : 'Activar Tipo de Trabajo')
+                    ->modalDescription(fn ($record) => $record->flag_activo 
+                        ? '¿Está seguro de que desea desactivar este tipo de trabajo?' 
+                        : '¿Está seguro de que desea activar este tipo de trabajo?'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\BulkAction::make('activate')
+                        ->label('Activar seleccionados')
+                        ->icon('heroicon-o-eye')
+                        ->color('success')
+                        ->action(function ($records) {
+                            $records->each(fn ($record) => $record->update(['flag_activo' => true]));
+                        })
+                        ->requiresConfirmation(),
+                    Tables\Actions\BulkAction::make('deactivate')
+                        ->label('Desactivar seleccionados')
+                        ->icon('heroicon-o-eye-slash')
+                        ->color('warning')
+                        ->action(function ($records) {
+                            $records->each(fn ($record) => $record->update(['flag_activo' => false]));
+                        })
+                        ->requiresConfirmation(),
                 ]),
             ]);
     }

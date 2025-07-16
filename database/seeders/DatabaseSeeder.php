@@ -8,6 +8,9 @@ use App\Models\TblFiscalia;
 use App\Models\TblEscalafon;
 use App\Models\TblPersona;
 use App\Models\TblFeriado;
+use App\Models\TblTipoCompensacion;
+use App\Models\TblEstado;
+use App\Models\TblTipoTrabajo;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -18,8 +21,8 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Deshabilita claves foráneas (solo para SQLite)
-        DB::statement('PRAGMA foreign_keys = OFF;');
+        // Comentado para PostgreSQL
+        // DB::statement('PRAGMA foreign_keys = OFF;');
 
         // User::factory(10)->create();
         // TblFiscalia::factory(10)->create([
@@ -54,6 +57,7 @@ class DatabaseSeeder extends Seeder
             'UserName' => 'crojasm',
             'cod_fiscalia' => 501,
             'id_escalafon' => 1,
+            'flag_lider' => true,
         ]);
 
         TblPersona::create([
@@ -62,6 +66,7 @@ class DatabaseSeeder extends Seeder
             'UserName' => 'persona01',
             'cod_fiscalia' => 501,
             'id_escalafon' => 1,
+            'flag_lider' => false,
         ]);
 
         DB::table('users')->truncate();
@@ -76,42 +81,39 @@ class DatabaseSeeder extends Seeder
             'name' => 'persona01',
             'email' => 'persona01@minpublico.cl',
             'password' => bcrypt('1234'),
-            'persona_id' => 1, 
+            'persona_id' => 2, // Cambiado de 1 a 2
             'id_rol' => 0, 
         ]);
 
-        DB::table('tbl_tipo_compensacions')->insert([
-            [
-                'id' => 0,
-                'gls_tipoCompensacion' => 'Compensación en Hrs',
-            ],
-            [
-                'id' => 1,
-                'gls_tipoCompensacion' => 'Pago',
-            ]
+        TblTipoCompensacion::create([
+            'id' => 0,
+            'gls_tipoCompensacion' => 'Compensación en Hrs',
+        ]);
+        
+        TblTipoCompensacion::create([
+            'id' => 1,
+            'gls_tipoCompensacion' => 'Pago',
         ]);
        
 
-        DB::table('tbl_estados')->insert([
-            [
+        TblEstado::create([
             'id' => 0,
             'gls_estado' => 'Ingreso',
-            ],
-            [
+        ]);
+        
+        TblEstado::create([
             'id' => 1,
             'gls_estado' => 'Aprobado',
-            ],
         ]);
 
-        DB::table('tbl_tipo_trabajo')->insert([
-            [
+        TblTipoTrabajo::create([
             'id' => 0,
             'gls_tipo_trabajo' => 'EIVG',
-            ],
-            [
+        ]);
+        
+        TblTipoTrabajo::create([
             'id' => 1,
             'gls_tipo_trabajo' => 'Causas Rezagadas',
-            ],   
         ]);
          
 
@@ -141,6 +143,9 @@ class DatabaseSeeder extends Seeder
 
         
         // $this->call(TblSolicitudHeSeeder::class);
+        
+        // Crear personas con flag_lider
+        $this->call(TblPersonaSeeder::class);
         
     }
 }

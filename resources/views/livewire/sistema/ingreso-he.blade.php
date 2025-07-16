@@ -46,6 +46,34 @@ new class extends Component {
         $validated['id_tipoCompensacion'] = $this->propone_pago ? 1 : 0;
         $validated['username'] = Auth::user()->name; // Asegurar que el username esté presente
         
+        // Aplicar el cálculo automático de porcentajes usando SolicitudHeService
+        try {
+            $solicitudHeService = app(\App\Services\SolicitudHeService::class);
+            $resultado = $solicitudHeService->calculaPorcentaje(
+                $this->fecha,
+                $this->hrs_inicial,
+                $this->hrs_final
+            );
+            
+            // Agregar los campos calculados
+            $validated['fecha_evento'] = $this->fecha;
+            $validated['hrs_inicio'] = $this->hrs_inicial;
+            $validated['hrs_fin'] = $this->hrs_final;
+            $validated['min_reales'] = $resultado['min_reales'];
+            $validated['min_25'] = $resultado['min_25'];
+            $validated['min_50'] = $resultado['min_50'];
+            $validated['total_min'] = $resultado['total_min'];
+            
+        } catch (\Exception $e) {
+            // Si hay error en el cálculo, usar valores por defecto
+            $validated['fecha_evento'] = $this->fecha;
+            $validated['hrs_inicio'] = $this->hrs_inicial;
+            $validated['hrs_fin'] = $this->hrs_final;
+            $validated['min_reales'] = 0;
+            $validated['min_25'] = 0;
+            $validated['min_50'] = 0;
+            $validated['total_min'] = 0;
+        }
 
         \App\Models\TblSolicitudHe::create($validated);
 

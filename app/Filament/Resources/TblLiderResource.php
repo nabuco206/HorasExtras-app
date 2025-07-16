@@ -8,6 +8,8 @@ use App\Models\TblFiscalia;
 use App\Models\TblPersona;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -34,26 +36,40 @@ class TblLiderResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('persona_id')
-                    ->label('Persona')
-                    ->required()
-                    ->relationship('persona', 'Nombre')
-                    ->getOptionLabelFromRecordUsing(fn (TblPersona $record) => "{$record->Nombre} {$record->Apellido}")
-                    ->searchable(['Nombre', 'Apellido', 'UserName'])
-                    ->preload()
-                    ->helperText('El nombre de usuario se asignará automáticamente'),
-                    
                 Forms\Components\Select::make('cod_fiscalia')
                     ->label('Fiscalía')
                     ->required()
                     ->relationship('fiscalia', 'gls_fiscalia')
-                    ->preload(),
+                    ->preload()
+                    ->live()
+                    ->afterStateUpdated(fn (Set $set) => $set('persona_id', null))
+                    ->helperText('Seleccione primero la fiscalía para ver las personas habilitadas'),
+                    
+                Forms\Components\Select::make('persona_id')
+                    ->label('Persona')
+                    ->required()
+                    ->options(function (Get $get) {
+                        $fiscaliaId = $get('cod_fiscalia');
+                        if (!$fiscaliaId) {
+                            return [];
+                        }
+                        
+                        return TblPersona::where('flag_lider', true)
+                            ->where('flag_activo', true)
+                            ->where('cod_fiscalia', $fiscaliaId)
+                            ->get()
+                            ->mapWithKeys(function ($record) {
+                                return [$record->id => "{$record->Nombre} {$record->Apellido}"];
+                            });
+                    })
+                    ->searchable()
+                    ->helperText('Solo se muestran personas habilitadas como líderes y activas en la fiscalía seleccionada'),
                     
                 Forms\Components\TextInput::make('gls_unidad')
                     ->label('Unidad')
                     ->maxLength(255),
                     
-                Forms\Components\Toggle::make('activo')
+                Forms\Components\Toggle::make('flag_activo')
                     ->label('Estado Activo')
                     ->default(true)
                     ->helperText('Indica si el líder está activo en el sistema'),
@@ -89,7 +105,7 @@ class TblLiderResource extends Resource
                     ->searchable()
                     ->sortable(),
                     
-                Tables\Columns\IconColumn::make('activo')
+                Tables\Columns\IconColumn::make('flag_activo')
                     ->label('Estado')
                     ->boolean()
                     ->trueIcon('heroicon-o-check-circle')
@@ -104,10 +120,37 @@ class TblLiderResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('toggle_active')
+                    ->label(fn ($record) => $record->flag_activo ? 'Desactivar' : 'Activar')
+                    ->icon(fn ($record) => $record->flag_activo ? 'heroicon-o-eye-slash' : 'heroicon-o-eye')
+                    ->color(fn ($record) => $record->flag_activo ? 'warning' : 'success')
+                    ->action(function ($record) {
+                        $record->update(['flag_activo' => !$record->flag_activo]);
+                    })
+                    ->requiresConfirmation()
+                    ->modalHeading(fn ($record) => $record->flag_activo ? 'Desactivar Líder' : 'Activar Líder')
+                    ->modalDescription(fn ($record) => $record->flag_activo 
+                        ? '¿Está seguro de que desea desactivar este líder?' 
+                        : '¿Está seguro de que desea activar este líder?'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\BulkAction::make('activate')
+                        ->label('Activar seleccionados')
+                        ->icon('heroicon-o-eye')
+                        ->color('success')
+                        ->action(function ($records) {
+                            $records->each(fn ($record) => $record->update(['flag_activo' => true]));
+                        })
+                        ->requiresConfirmation(),
+                    Tables\Actions\BulkAction::make('deactivate')
+                        ->label('Desactivar seleccionados')
+                        ->icon('heroicon-o-eye-slash')
+                        ->color('warning')
+                        ->action(function ($records) {
+                            $records->each(fn ($record) => $record->update(['flag_activo' => false]));
+                        })
+                        ->requiresConfirmation(),
                 ]),
             ]);
     }

@@ -9,11 +9,35 @@ class TblTipoTrabajo extends Model
 {
     use HasFactory;
 
-    protected $table = 'tbl_tipo_trabajo'; // Asegúrate que el nombre coincide con tu tabla
-    // Si tu tabla no tiene timestamps, agrega:
-    // public $timestamps = false;
+    protected $table = 'tbl_tipo_trabajo';
+    
     protected $fillable = [
         'gls_tipo_trabajo',
+        'flag_activo',
     ];
 
+    protected $casts = [
+        'flag_activo' => 'boolean',
+    ];
+
+    /**
+     * Verifica si el tipo de trabajo está activo
+     *
+     * @return bool
+     */
+    public function estaActivo(): bool
+    {
+        return $this->flag_activo === true;
+    }
+
+    /**
+     * Scope para obtener solo los tipos de trabajo activos
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeActivos($query)
+    {
+        return $query->where('flag_activo', true);
+    }
 }

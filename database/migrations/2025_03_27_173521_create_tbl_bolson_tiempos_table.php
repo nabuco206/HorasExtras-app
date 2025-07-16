@@ -11,18 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::disableForeignKeyConstraints();
+        
 
         Schema::create('tbl_bolson_tiempos', function (Blueprint $table) {
             $table->id();
             $table->bigInteger('id_solicitud');
-            $table->foreign('id_solicitud')->references('id')->on('tbl_solicitud_he');
+//             // $table->foreign('id_solicitud')->references('id')->on('tbl_solicitud_he'); // Temporalmente comentado
             $table->bigInteger('tiempo');
             $table->char('estado');
             $table->timestamps();
         });
 
-        Schema::enableForeignKeyConstraints();
+        
     }
 
     /**

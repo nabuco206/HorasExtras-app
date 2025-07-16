@@ -73,6 +73,14 @@ class TblPersonaResource extends Resource
                     )
                     ->searchable()
                     ->required(),
+                Forms\Components\Toggle::make('flag_lider')
+                    ->label('Puede ser Líder')
+                    ->default(false)
+                    ->helperText('Indica si la persona puede ser asignada como líder'),
+                Forms\Components\Toggle::make('flag_activo')
+                    ->label('Estado Activo')
+                    ->default(true)
+                    ->helperText('Indica si la persona está activa en el sistema'),
             ]);
     }
 
@@ -97,15 +105,67 @@ class TblPersonaResource extends Resource
                     ->label('Escalafón')
                     ->sortable()
                     ->searchable(),
+                Tables\Columns\IconColumn::make('flag_lider')
+                    ->label('Líder')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-star')
+                    ->falseIcon('heroicon-o-minus')
+                    ->trueColor('warning')
+                    ->falseColor('gray'),
+                Tables\Columns\IconColumn::make('flag_activo')
+                    ->label('Estado')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('danger'),
             ])
             ->filters([
-                // Agrega filtros si es necesario
+                Tables\Filters\TernaryFilter::make('flag_lider')
+                    ->label('Puede ser Líder')
+                    ->trueLabel('Solo personas que pueden ser líderes')
+                    ->falseLabel('Solo personas que NO pueden ser líderes')
+                    ->native(false),
+                Tables\Filters\TernaryFilter::make('flag_activo')
+                    ->label('Estado')
+                    ->trueLabel('Solo activos')
+                    ->falseLabel('Solo inactivos')
+                    ->native(false),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('toggle_active')
+                    ->label(fn ($record) => $record->flag_activo ? 'Desactivar' : 'Activar')
+                    ->icon(fn ($record) => $record->flag_activo ? 'heroicon-o-eye-slash' : 'heroicon-o-eye')
+                    ->color(fn ($record) => $record->flag_activo ? 'warning' : 'success')
+                    ->action(function ($record) {
+                        $record->update(['flag_activo' => !$record->flag_activo]);
+                    })
+                    ->requiresConfirmation()
+                    ->modalHeading(fn ($record) => $record->flag_activo ? 'Desactivar Persona' : 'Activar Persona')
+                    ->modalDescription(fn ($record) => $record->flag_activo 
+                        ? '¿Está seguro de que desea desactivar esta persona?' 
+                        : '¿Está seguro de que desea activar esta persona?'),
             ])
             ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('activate')
+                        ->label('Activar seleccionados')
+                        ->icon('heroicon-o-eye')
+                        ->color('success')
+                        ->action(function ($records) {
+                            $records->each(fn ($record) => $record->update(['flag_activo' => true]));
+                        })
+                        ->requiresConfirmation(),
+                    Tables\Actions\BulkAction::make('deactivate')
+                        ->label('Desactivar seleccionados')
+                        ->icon('heroicon-o-eye-slash')
+                        ->color('warning')
+                        ->action(function ($records) {
+                            $records->each(fn ($record) => $record->update(['flag_activo' => false]));
+                        })
+                        ->requiresConfirmation(),
+                ]),
             ]);
     }
 

@@ -41,7 +41,7 @@ class TblLider extends Model
         'persona_id',
         'cod_fiscalia',
         'gls_unidad',
-        'activo',
+        'flag_activo',
     ];
 
     /**
@@ -52,6 +52,7 @@ class TblLider extends Model
     protected $casts = [
         'cod_fiscalia' => 'integer',
         'persona_id' => 'integer',
+        'flag_activo' => 'boolean',
     ];
 
     /**
@@ -68,5 +69,26 @@ class TblLider extends Model
     public function persona(): BelongsTo
     {
         return $this->belongsTo(TblPersona::class, 'persona_id', 'id');
+    }
+
+    /**
+     * Verifica si el líder está activo
+     *
+     * @return bool
+     */
+    public function estaActivo(): bool
+    {
+        return $this->flag_activo === true;
+    }
+
+    /**
+     * Scope para obtener solo los líderes activos
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeActivos($query)
+    {
+        return $query->where('flag_activo', true);
     }
 }

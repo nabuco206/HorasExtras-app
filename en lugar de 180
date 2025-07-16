@@ -1,0 +1,10 @@
+        clave        | hora_inicio | hora_fin | porcentaje 
+---------------------+-------------+----------+------------
+ he_25_post_jornada  | 18:00:00    | 21:00:00 |      25.00
+ he_50_post_nocturno | 21:00:00    | 23:59:00 |      50.00
+ he_50_madrugada     | 00:00:00    | 07:59:00 |      50.00
+ he_50_sabados       |             |          |      50.00
+ he_50_domingos      |             |          |      50.00
+ he_50_feriados      |             |          |      50.00
+(6 rows)
+

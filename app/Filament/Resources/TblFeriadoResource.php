@@ -47,41 +47,110 @@ class TblFeriadoResource extends Resource
             '11' => 'Noviembre',
             '12' => 'Diciembre',
         ];
+        
         return $form
             ->schema([
-                Forms\Components\Select::make('dia')
-                    ->label('Día')
-                    ->options($dias)
-                    ->required(),
                 Forms\Components\Select::make('mes')
                     ->label('Mes')
                     ->options($meses)
-                    ->required(),
+                    ->required()
+                    ->helperText('Seleccione el mes del feriado'),
+                    
+                Forms\Components\Select::make('dia')
+                    ->label('Día')
+                    ->options($dias)
+                    ->required()
+                    ->helperText('Seleccione el día del feriado'),
+                    
                 Forms\Components\TextInput::make('descripcion')
                     ->label('Descripción')
                     ->required()
-                    ->maxLength(255),
+                    ->maxLength(255)
+                    ->helperText('Descripción del feriado'),
+                    
+                Forms\Components\Toggle::make('flag_activo')
+                    ->label('Estado Activo')
+                    ->default(true)
+                    ->helperText('Indica si el feriado está activo en el sistema'),
             ])
-            ->columns(3);
+            ->columns(2);
     }
 
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('id')->sortable()->label('ID'),
-                Tables\Columns\TextColumn::make('fecha')->label('Fecha')->sortable(),
-                Tables\Columns\TextColumn::make('descripcion')->label('Descripción')->searchable()->sortable(),
+                Tables\Columns\TextColumn::make('id')
+                    ->label('ID')
+                    ->sortable(),
+                    
+                Tables\Columns\TextColumn::make('fecha')
+                    ->label('Fecha (MM/DD)')
+                    ->formatStateUsing(function ($state) {
+                        if (!$state) return '';
+                        $partes = explode('-', $state);
+                        if (count($partes) == 2) {
+                            return $partes[0] . '/' . $partes[1];
+                        }
+                        return $state;
+                    })
+                    ->sortable()
+                    ->searchable(),
+                    
+                Tables\Columns\TextColumn::make('descripcion')
+                    ->label('Descripción')
+                    ->searchable()
+                    ->sortable()
+                    ->wrap(),
+                    
+                Tables\Columns\IconColumn::make('flag_activo')
+                    ->label('Estado')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('danger'),
             ])
             ->filters([
-                //
+                Tables\Filters\TernaryFilter::make('flag_activo')
+                    ->label('Estado')
+                    ->trueLabel('Solo activos')
+                    ->falseLabel('Solo inactivos')
+                    ->native(false),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('toggle_active')
+                    ->label(fn ($record) => $record->flag_activo ? 'Desactivar' : 'Activar')
+                    ->icon(fn ($record) => $record->flag_activo ? 'heroicon-o-eye-slash' : 'heroicon-o-eye')
+                    ->color(fn ($record) => $record->flag_activo ? 'warning' : 'success')
+                    ->action(function ($record) {
+                        $record->update(['flag_activo' => !$record->flag_activo]);
+                    })
+                    ->requiresConfirmation()
+                    ->modalHeading(fn ($record) => $record->flag_activo ? 'Desactivar Feriado' : 'Activar Feriado')
+                    ->modalDescription(fn ($record) => $record->flag_activo 
+                        ? '¿Está seguro de que desea desactivar este feriado?' 
+                        : '¿Está seguro de que desea activar este feriado?'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\BulkAction::make('activate')
+                        ->label('Activar seleccionados')
+                        ->icon('heroicon-o-eye')
+                        ->color('success')
+                        ->action(function ($records) {
+                            $records->each(fn ($record) => $record->update(['flag_activo' => true]));
+                        })
+                        ->requiresConfirmation(),
+                    Tables\Actions\BulkAction::make('deactivate')
+                        ->label('Desactivar seleccionados')
+                        ->icon('heroicon-o-eye-slash')
+                        ->color('warning')
+                        ->action(function ($records) {
+                            $records->each(fn ($record) => $record->update(['flag_activo' => false]));
+                        })
+                        ->requiresConfirmation(),
                 ]),
             ]);
     }

@@ -60,12 +60,7 @@ class TblConfigHorasExtras extends Model
             return true;
         }
 
-        // Si es fin de semana (6=Sábado, 7=Domingo) y aplica para fines de semana
-        if (in_array($diaSemana, [6, 7]) && $this->aplica_fines_semana) {
-            return true;
-        }
-
-        // Si aplica para días específicos de la semana
+        // Si aplica para días específicos de la semana (ya no usamos aplica_fines_semana genérico)
         if ($this->dias_semana && in_array($diaSemana, $this->dias_semana)) {
             return true;
         }

@@ -21,12 +21,36 @@ class TblPersonaFactory extends Factory
      */
     public function definition(): array
     {
+        // Fiscalías válidas disponibles
+        $fiscalias = [501, 502, 504, 507, 5, 6, 7, 503, 515];
+        
         return [
-            'Nombre' => fake()->word(),
-            'Apellido' => fake()->word(),
-            'UserName' => TblSolicitudHe::factory()->create()->username,
-            'cod_fiscalia' => fake()->numberBetween(-100000, 100000),
-            'id_escalafon' => fake()->numberBetween(-100000, 100000),
+            'Nombre' => fake()->firstName(),
+            'Apellido' => fake()->lastName(),
+            'UserName' => fake()->unique()->userName(),
+            'cod_fiscalia' => fake()->randomElement($fiscalias),
+            'id_escalafon' => 1, // Usamos el escalafón que existe
+            'flag_lider' => fake()->boolean(30), // 30% de probabilidad de ser líder
         ];
+    }
+
+    /**
+     * Crear una persona que puede ser líder
+     */
+    public function puedeSerLider(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'flag_lider' => true,
+        ]);
+    }
+
+    /**
+     * Crear una persona que NO puede ser líder
+     */
+    public function noPuedeSerLider(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'flag_lider' => false,
+        ]);
     }
 }

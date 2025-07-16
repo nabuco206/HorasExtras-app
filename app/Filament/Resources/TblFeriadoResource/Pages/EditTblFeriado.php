@@ -12,7 +12,7 @@ class EditTblFeriado extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        $data['fecha'] = $data['dia'] . '-' . $data['mes'];
+        $data['fecha'] = $data['mes'] . '-' . $data['dia'];
         unset($data['dia'], $data['mes']);
         return $data;
     }
@@ -20,7 +20,7 @@ class EditTblFeriado extends EditRecord
     protected function mutateFormDataBeforeFill(array $data): array
     {
         if (isset($data['fecha']) && strpos($data['fecha'], '-') !== false) {
-            [$data['dia'], $data['mes']] = explode('-', $data['fecha']);
+            [$data['mes'], $data['dia']] = explode('-', $data['fecha']);
         }
         return $data;
     }
@@ -28,7 +28,7 @@ class EditTblFeriado extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            // Actions\DeleteAction::make(), // Comentado: Se usa flag_activo en lugar de eliminar
         ];
     }
 }

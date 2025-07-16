@@ -14,8 +14,8 @@ class TblConfigHorasExtrasSeeder extends Seeder
     {
         $configuraciones = [
             [
-                'clave' => 'he_25_laborales',
-                'descripcion' => 'Horas extras al 25% - Días laborales entre 18:00 y 21:00',
+                'clave' => 'he_25_post_jornada',
+                'descripcion' => 'Horas extras al 25% - Post jornada laboral (18:00 a 21:00)',
                 'hora_inicio' => '18:00',
                 'hora_fin' => '21:00',
                 'porcentaje' => 25.00,
@@ -26,8 +26,8 @@ class TblConfigHorasExtrasSeeder extends Seeder
                 'orden' => 1
             ],
             [
-                'clave' => 'he_50_laborales_noche',
-                'descripcion' => 'Horas extras al 50% - Días laborales después de 21:00',
+                'clave' => 'he_50_post_nocturno',
+                'descripcion' => 'Horas extras al 50% - Post jornada nocturno (21:00 en adelante)',
                 'hora_inicio' => '21:00',
                 'hora_fin' => '23:59',
                 'porcentaje' => 50.00,
@@ -38,16 +38,40 @@ class TblConfigHorasExtrasSeeder extends Seeder
                 'orden' => 2
             ],
             [
-                'clave' => 'he_50_laborales_madrugada',
-                'descripcion' => 'Horas extras al 50% - Días laborales antes de 18:00',
+                'clave' => 'he_50_madrugada',
+                'descripcion' => 'Horas extras al 50% - Madrugada (00:00 a 07:59)',
                 'hora_inicio' => '00:00',
-                'hora_fin' => '17:59',
+                'hora_fin' => '07:59',
                 'porcentaje' => 50.00,
                 'dias_semana' => [1, 2, 3, 4, 5], // Lunes a Viernes
                 'aplica_feriados' => false,
                 'aplica_fines_semana' => false,
                 'activo' => true,
                 'orden' => 3
+            ],
+            [
+                'clave' => 'he_50_sabados',
+                'descripcion' => 'Horas extras al 50% - Sábados (todo el día)',
+                'hora_inicio' => null,
+                'hora_fin' => null,
+                'porcentaje' => 50.00,
+                'dias_semana' => [6], // Solo sábados
+                'aplica_feriados' => false,
+                'aplica_fines_semana' => false,
+                'activo' => true,
+                'orden' => 4
+            ],
+            [
+                'clave' => 'he_50_domingos',
+                'descripcion' => 'Horas extras al 50% - Domingos (todo el día)',
+                'hora_inicio' => null,
+                'hora_fin' => null,
+                'porcentaje' => 50.00,
+                'dias_semana' => [7], // Solo domingos
+                'aplica_feriados' => false,
+                'aplica_fines_semana' => false,
+                'activo' => true,
+                'orden' => 5
             ],
             [
                 'clave' => 'he_50_feriados',
@@ -59,19 +83,7 @@ class TblConfigHorasExtrasSeeder extends Seeder
                 'aplica_feriados' => true,
                 'aplica_fines_semana' => false,
                 'activo' => true,
-                'orden' => 4
-            ],
-            [
-                'clave' => 'he_50_fines_semana',
-                'descripcion' => 'Horas extras al 50% - Fines de semana (todo el día)',
-                'hora_inicio' => null,
-                'hora_fin' => null,
-                'porcentaje' => 50.00,
-                'dias_semana' => null,
-                'aplica_feriados' => false,
-                'aplica_fines_semana' => true,
-                'activo' => true,
-                'orden' => 5
+                'orden' => 6
             ]
         ];
 

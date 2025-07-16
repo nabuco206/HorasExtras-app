@@ -11,18 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::disableForeignKeyConstraints();
+        
 
         Schema::create('tbl_seguimiento_solicituds', function (Blueprint $table) {
             $table->id();
             $table->bigInteger('id_solicitud_he');
             $table->string('username');
             $table->bigInteger('id_estado');
-            $table->foreign('id_estado')->references('id')->on('tbl_estados');
+//             $table->foreign('id_estado')->references('id')->on('tbl_estados');
             $table->timestamps();
         });
 
-        Schema::enableForeignKeyConstraints();
+        
     }
 
     /**

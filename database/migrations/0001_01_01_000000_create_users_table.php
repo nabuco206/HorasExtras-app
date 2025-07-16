@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::disableForeignKeyConstraints();
+        
 
         Schema::create('users', function (Blueprint $table) {
             $table->id();
@@ -19,15 +19,15 @@ return new class extends Migration
             $table->string('email');
             $table->string('password');
             $table->unsignedBigInteger('persona_id');
-            // $table->foreign('persona_id')->references('id')->on('tbl_persona');
+//             // $table->foreign('persona_id')->references('id')->on('tbl_persona');
             $table->bigInteger('id_rol')->default(0);
-            $table->foreign('id_rol')->references('id')->on('tbl_rol');
+//             // $table->foreign('id_rol')->references('id')->on('tbl_rol'); // Temporalmente comentado
             $table->timestamps();
         });
 
         
 
-        Schema::enableForeignKeyConstraints();
+        
     }
 
     /**

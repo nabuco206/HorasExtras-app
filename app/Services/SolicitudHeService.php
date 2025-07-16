@@ -33,7 +33,11 @@ class SolicitudHeService
             $horaInicioObj = Carbon::createFromFormat('H:i', $horaInicio);
             $horaFinObj = Carbon::createFromFormat('H:i', $horaFin);
             
-            // 3. CALCULAR DIFERENCIA EN MINUTOS
+            // 3. CALCULAR DIFERENCIA EN MINUTOS (manejo de cruce de medianoche)
+            if ($horaFinObj->lessThan($horaInicioObj)) {
+                // Si cruza medianoche, agregar 24 horas a la hora final
+                $horaFinObj->addDay();
+            }
             $diferenciaMin = $horaInicioObj->diffInMinutes($horaFinObj);
             
             // 4. DETERMINAR CONTEXTO
@@ -81,12 +85,27 @@ class SolicitudHeService
         ], [
             'fecha' => 'required|date',
             'hora_inicio' => 'required|date_format:H:i',
-            'hora_fin' => 'required|date_format:H:i|after:hora_inicio',
+            'hora_fin' => 'required|date_format:H:i',
             'id_turno' => 'integer|min:0'
         ]);
         
         if ($validator->fails()) {
             throw new Exception('Datos de entrada inválidos: ' . $validator->errors()->first());
+        }
+        
+        // Validación personalizada para horarios que cruzan medianoche
+        $inicio = \Carbon\Carbon::createFromFormat('H:i', $horaInicio);
+        $fin = \Carbon\Carbon::createFromFormat('H:i', $horaFin);
+        
+        // Si la hora de fin es menor que la de inicio, asumimos que cruza medianoche
+        if ($fin->lessThan($inicio)) {
+            // Esto está permitido para turnos nocturnos
+            return;
+        }
+        
+        // Para horarios normales, la hora fin debe ser mayor que la de inicio
+        if ($fin->lessThanOrEqualTo($inicio)) {
+            throw new Exception('La hora de fin debe ser posterior a la hora de inicio');
         }
     }
     
@@ -131,6 +150,12 @@ class SolicitudHeService
         
         $inicio = $horaInicio->hour * 60 + $horaInicio->minute;
         $fin = $horaFin->hour * 60 + $horaFin->minute;
+        
+        // Manejar cruce de medianoche
+        if ($fin < $inicio) {
+            $fin += 24 * 60; // Agregar 1440 minutos (24 horas)
+        }
+        
         $diferenciaMin = $horaInicio->diffInMinutes($horaFin);
         
         foreach ($configuraciones as $config) {
@@ -147,18 +172,19 @@ class SolicitudHeService
             
             if ($minutosCalculados > 0) {
                 $porcentaje = $config->porcentaje;
-                $minutosConPorcentaje = $minutosCalculados * ($porcentaje / 100);
+                // Calcular SOLO el recargo adicional (no incluir los minutos base)
+                $minutosRecargo = $minutosCalculados * ($porcentaje / 100);
                 
                 // Categorizar por porcentaje
                 switch ($porcentaje) {
                     case 25:
-                        $resultado['min_25'] += $minutosConPorcentaje;
+                        $resultado['min_25'] += $minutosRecargo;
                         break;
                     case 50:
-                        $resultado['min_50'] += $minutosConPorcentaje;
+                        $resultado['min_50'] += $minutosRecargo;
                         break;
                     case 100:
-                        $resultado['min_100'] += $minutosConPorcentaje;
+                        $resultado['min_100'] += $minutosRecargo;
                         break;
                 }
                 
@@ -166,11 +192,12 @@ class SolicitudHeService
                     'configuracion' => $config->descripcion,
                     'minutos_reales' => $minutosCalculados,
                     'porcentaje' => $porcentaje,
-                    'minutos_con_porcentaje' => $minutosConPorcentaje
+                    'minutos_recargo' => $minutosRecargo
                 ];
             }
         }
         
+        // Total = minutos reales + todos los recargos
         $resultado['total_min'] = $diferenciaMin + $resultado['min_25'] + $resultado['min_50'] + $resultado['min_100'];
         
         return $resultado;
@@ -181,9 +208,15 @@ class SolicitudHeService
      */
     private function calcularMinutosParaConfiguracion(int $inicio, int $fin, TblConfigHorasExtras $config, array $contexto): int
     {
-        // Si es feriado o fin de semana y la configuración aplica para todo el día
-        if (($contexto['es_feriado'] && $config->aplica_feriados) || 
-            ($contexto['es_fin_semana'] && $config->aplica_fines_semana)) {
+        // Si es feriado y la configuración aplica para feriados (todo el día)
+        if ($contexto['es_feriado'] && $config->aplica_feriados) {
+            if (!$config->hora_inicio && !$config->hora_fin) {
+                return $fin - $inicio; // Todo el período
+            }
+        }
+        
+        // Si es un día específico (sábado o domingo) y no tiene horarios definidos (todo el día)
+        if ($config->dias_semana && in_array($contexto['dia_semana'], $config->dias_semana)) {
             if (!$config->hora_inicio && !$config->hora_fin) {
                 return $fin - $inicio; // Todo el período
             }
@@ -197,9 +230,18 @@ class SolicitudHeService
             $configInicioMin = $configInicio->hour * 60 + $configInicio->minute;
             $configFinMin = $configFin->hour * 60 + $configFin->minute;
             
-            // Calcular intersección
-            $interseccionInicio = max($inicio, $configInicioMin);
-            $interseccionFin = min($fin, $configFinMin);
+            // Manejar cruce de medianoche en la configuración
+            if ($configFinMin < $configInicioMin) {
+                $configFinMin += 24 * 60;
+            }
+            
+            // Ajustar el rango de trabajo si cruza medianoche
+            $trabajoInicio = $inicio;
+            $trabajoFin = $fin;
+            
+            // Cálculo de intersección
+            $interseccionInicio = max($trabajoInicio, $configInicioMin);
+            $interseccionFin = min($trabajoFin, $configFinMin);
             
             return max(0, $interseccionFin - $interseccionInicio);
         }

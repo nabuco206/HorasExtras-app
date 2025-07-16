@@ -12,7 +12,7 @@ class CreateTblFeriado extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $data['fecha'] = $data['dia'] . '-' . $data['mes'];
+        $data['fecha'] = $data['mes'] . '-' . $data['dia'];
         unset($data['dia'], $data['mes']);
         return $data;
     }

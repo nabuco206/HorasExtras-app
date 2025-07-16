@@ -11,9 +11,9 @@ return new class extends Migration
         Schema::create('tbl_lider', function (Blueprint $table) {
             $table->id();
             $table->string('username');
-            $table->foreign('username')->references('name')->on('users');
+//             // $table->foreign('username')->references('name')->on('users'); // Temporalmente comentado
             $table->bigInteger('id_fiscalia');
-            $table->foreign('id_fiscalia')->references('id')->on('tbl_fiscalia');
+//             // $table->foreign('id_fiscalia')->references('id')->on('tbl_fiscalia'); // Temporalmente comentado
             $table->char('activo');
         
             $table->timestamps();

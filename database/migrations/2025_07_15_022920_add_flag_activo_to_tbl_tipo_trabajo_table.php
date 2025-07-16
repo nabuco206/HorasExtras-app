@@ -11,16 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        
-
-        Schema::create('tbl_fiscalias', function (Blueprint $table) {
-            $table->id()->foreign('tbl_persona.cod_fiscalia');
-            $table->string('gls_fiscalia');
-            $table->bigInteger('cod_fiscalia')->default(0);
-            $table->timestamps();
+        Schema::table('tbl_tipo_trabajo', function (Blueprint $table) {
+            $table->boolean('flag_activo')->default(true)->comment('Indica si el tipo de trabajo está activo en el sistema');
         });
-
-        
     }
 
     /**
@@ -28,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tbl_fiscalias');
+        Schema::table('tbl_tipo_trabajo', function (Blueprint $table) {
+            $table->dropColumn('flag_activo');
+        });
     }
 };
