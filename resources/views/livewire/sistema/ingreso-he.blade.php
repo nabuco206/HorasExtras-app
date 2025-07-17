@@ -2,6 +2,7 @@
 
 use App\Models\User;
 use App\Models\TblTipoTrabajo;
+use App\Models\TblEstado;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\Rule;
@@ -15,6 +16,7 @@ new class extends Component {
     public string $hrs_final = '';
     public bool $propone_pago = false;
     public $tipos_trabajo = [];
+    public $estados = [];
     public $solicitudes = [];
 
     /**
@@ -24,6 +26,7 @@ new class extends Component {
     {
         $this->username = Auth::user()->name;
         $this->tipos_trabajo = TblTipoTrabajo::all();
+        $this->estados = TblEstado::all();
         $this->solicitudes = \App\Models\TblSolicitudHe::orderByDesc('id')->get();
         $this->propone_pago = false;
     }
@@ -130,14 +133,12 @@ new class extends Component {
                             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600">
                                 <tr>
                                     <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">#</th>
-                                    <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Usuario</th>
                                     <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Tipo Trabajo</th>
                                     <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Fecha</th>
                                     <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Hora Inicial</th>
                                     <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Hora Final</th>
                                     <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Estado</th>
                                     <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Tipo Solicitud</th>
-                                    <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Fecha Evento</th>
                                     <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Hora Inicio</th>
                                     <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Hora Fin</th>
                                     <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Compensación</th>
@@ -145,17 +146,12 @@ new class extends Component {
                                     <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Min. 25%</th>
                                     <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Min. 50%</th>
                                     <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Total Min.</th>
-                                    <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Creado</th>
-                                    <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Actualizado</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
                                 @forelse ($solicitudes as $solicitud)
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
                                         <td class="px-2 py-2 text-center font-medium text-gray-900 dark:text-white whitespace-nowrap">{{ $solicitud->id }}</td>
-                                        <td class="px-2 py-2 text-center whitespace-nowrap">
-                                            <span class="max-w-20 block truncate" title="{{ $solicitud->username ?? '-' }}">{{ $solicitud->username ?? '-' }}</span>
-                                        </td>
                                         <td class="px-2 py-2 text-center whitespace-nowrap">
                                             @php
                                                 $tipo = $tipos_trabajo->firstWhere('id', $solicitud->id_tipo_trabajo);
@@ -168,18 +164,27 @@ new class extends Component {
                                         <td class="px-2 py-2 text-center whitespace-nowrap">{{ $solicitud->hrs_inicial ?? '-' }}</td>
                                         <td class="px-2 py-2 text-center whitespace-nowrap">{{ $solicitud->hrs_final ?? '-' }}</td>
                                         <td class="px-2 py-2 text-center whitespace-nowrap">
-                                            @if($solicitud->id_estado == 1)
-                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
-                                                    Pendiente
-                                                </span>
-                                            @elseif($solicitud->id_estado == 2)
-                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-                                                    Aprobada
-                                                </span>
-                                            @elseif($solicitud->id_estado == 3)
-                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
-                                                    Rechazada
-                                                </span>
+                                            @php
+                                                $estado = $estados->firstWhere('id', $solicitud->id_estado);
+                                            @endphp
+                                            @if($estado)
+                                                @if($estado->id == 1)
+                                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
+                                                        {{ $estado->gls_estado }}
+                                                    </span>
+                                                @elseif($estado->id == 2)
+                                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                                                        {{ $estado->gls_estado }}
+                                                    </span>
+                                                @elseif($estado->id == 3)
+                                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
+                                                        {{ $estado->gls_estado }}
+                                                    </span>
+                                                @else
+                                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                                                        {{ $estado->gls_estado }}
+                                                    </span>
+                                                @endif
                                             @else
                                                 <span>{{ $solicitud->id_estado ?? '-' }}</span>
                                             @endif
@@ -187,7 +192,6 @@ new class extends Component {
                                         <td class="px-2 py-2 text-center whitespace-nowrap">
                                             <span class="max-w-24 block truncate" title="{{ $solicitud->tipo_solicitud ?? '-' }}">{{ $solicitud->tipo_solicitud ?? '-' }}</span>
                                         </td>
-                                        <td class="px-2 py-2 text-center whitespace-nowrap">{{ $solicitud->fecha_evento ? \Carbon\Carbon::parse($solicitud->fecha_evento)->format('d/m/Y') : '-' }}</td>
                                         <td class="px-2 py-2 text-center whitespace-nowrap">{{ $solicitud->hrs_inicio ?? '-' }}</td>
                                         <td class="px-2 py-2 text-center whitespace-nowrap">{{ $solicitud->hrs_fin ?? '-' }}</td>
                                         <td class="px-2 py-2 text-center whitespace-nowrap">
@@ -205,20 +209,25 @@ new class extends Component {
                                                     </svg>
                                                     Tiempo
                                                 </span>
+                                            @elseif($solicitud->id_tipoCompensacion == 0)
+                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                                                    </svg>
+                                                    Tiempo
+                                                </span>
                                             @else
                                                 <span>{{ $solicitud->id_tipoCompensacion ?? '-' }}</span>
                                             @endif
                                         </td>
-                                        <td class="px-2 py-2 text-center whitespace-nowrap">{{ $solicitud->min_reales ?? '-' }}</td>
-                                        <td class="px-2 py-2 text-center whitespace-nowrap">{{ $solicitud->min_25 ?? '-' }}</td>
-                                        <td class="px-2 py-2 text-center whitespace-nowrap">{{ $solicitud->min_50 ?? '-' }}</td>
-                                        <td class="px-2 py-2 text-center font-semibold whitespace-nowrap">{{ $solicitud->total_min ?? '-' }}</td>
-                                        <td class="px-2 py-2 text-center whitespace-nowrap">{{ $solicitud->created_at ? $solicitud->created_at->format('d/m/Y H:i') : '-' }}</td>
-                                        <td class="px-2 py-2 text-center whitespace-nowrap">{{ $solicitud->updated_at ? $solicitud->updated_at->format('d/m/Y H:i') : '-' }}</td>
+                                        <td class="px-2 py-2 text-center whitespace-nowrap">{{ $solicitud->min_reales ? number_format($solicitud->min_reales, 0) : '-' }}</td>
+                                        <td class="px-2 py-2 text-center whitespace-nowrap">{{ $solicitud->min_25 ? number_format($solicitud->min_25, 0) : '-' }}</td>
+                                        <td class="px-2 py-2 text-center whitespace-nowrap">{{ $solicitud->min_50 ? number_format($solicitud->min_50, 0) : '-' }}</td>
+                                        <td class="px-2 py-2 text-center font-semibold whitespace-nowrap">{{ $solicitud->total_min ? number_format($solicitud->total_min, 0) : '-' }}</td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="18" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                                        <td colspan="15" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
                                             No hay solicitudes registradas
                                         </td>
                                     </tr>
