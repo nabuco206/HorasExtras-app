@@ -49,9 +49,9 @@ class DatabaseSeeder extends Seeder
         foreach ($fiscalias as $fiscalia) {
             TblFiscalia::create($fiscalia);
         }
-        
 
-         TblPersona::create([
+        TblPersona::truncate();
+        TblPersona::create([
             'Nombre' => 'CristianCRM',
             'Apellido' => 'Rojas',
             'UserName' => 'crojasm',
@@ -84,7 +84,8 @@ class DatabaseSeeder extends Seeder
             'persona_id' => 2, // Cambiado de 1 a 2
             'id_rol' => 0, 
         ]);
-
+        
+        TblTipoCompensacion::truncate();
         TblTipoCompensacion::create([
             'id' => 0,
             'gls_tipoCompensacion' => 'Compensación en Hrs',
@@ -94,8 +95,8 @@ class DatabaseSeeder extends Seeder
             'id' => 1,
             'gls_tipoCompensacion' => 'Pago',
         ]);
-       
 
+        TblEstado::truncate();
         TblEstado::create([
             'id' => 0,
             'gls_estado' => 'Ingreso',
@@ -105,7 +106,7 @@ class DatabaseSeeder extends Seeder
             'id' => 1,
             'gls_estado' => 'Aprobado',
         ]);
-
+        TblTipoTrabajo::truncate();
         TblTipoTrabajo::create([
             'id' => 0,
             'gls_tipo_trabajo' => 'EIVG',
@@ -136,7 +137,7 @@ class DatabaseSeeder extends Seeder
             ['fecha' => '12-08', 'descripcion' => 'Inmaculada Concepción'],
             ['fecha' => '12-25', 'descripcion' => 'Navidad'],
         ];
-
+        TblFeriado::truncate();
         foreach ($feriados as $feriado) {
             TblFeriado::create($feriado);
         }
