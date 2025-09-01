@@ -47,15 +47,15 @@ class TblSolicitudHe extends Model
      */
     protected $casts = [
         'id' => 'integer',
-        'tipo_trabajo' => 'integer',
+        'id_tipo_trabajo' => 'integer',
         'fecha' => 'date',
         'id_estado' => 'integer',
         'fecha_evento' => 'date',
         'id_tipoCompensacion' => 'integer',
-        'min_reales' => 'decimal:2',
-        'min_25' => 'decimal:2',
-        'min_50' => 'decimal:2',
-        'total_min' => 'decimal:2',
+        'min_reales' => 'integer',
+        'min_25' => 'integer',
+        'min_50' => 'integer',
+        'total_min' => 'integer',
     ];
 
     public function tblSeguimientoSolicitud(): BelongsTo

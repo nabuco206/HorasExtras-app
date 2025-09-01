@@ -37,13 +37,18 @@ new class extends Component {
     public function saveSolicitud(): void
     {
         $validated = $this->validate([
-            // 'username' => ['required', 'string'],
             'id_tipo_trabajo' => ['required', 'integer', 'exists:tbl_tipo_trabajo,id'],
             'fecha' => ['required', 'date', 'before_or_equal:today'], // No permite fechas futuras
             'hrs_inicial' => ['required', 'date_format:H:i'],
             'hrs_final' => ['required', 'date_format:H:i', 'after:hrs_inicial'],
             'propone_pago' => ['boolean'],
         ]);
+
+        // Validación adicional: no permitir cruce de medianoche
+        if ($this->hrs_final <= $this->hrs_inicial) {
+            session()->flash('error', 'La hora de salida debe ser mayor que la hora de ingreso y no puede cruzar las 00:00 hrs.');
+            return;
+        }
 
         $validated['tipo_solicitud'] = 0;
         $validated['id_tipoCompensacion'] = $this->propone_pago ? 1 : 0;
@@ -100,7 +105,7 @@ new class extends Component {
                     <flux:input wire:model="username" type="hidden" required readonly />
                     <div class="flex gap-4 items-end">
                         <flux:select wire:model="id_tipo_trabajo" :label="__('Tipo de Trabajo')" class="flex-1 max-w-md" required>
-                            <option value="">Seleccione...</option>
+                            <option value="">Seleccioneeeee...</option>
                             @foreach($tipos_trabajo as $tipo)
                                 <option value="{{ $tipo->id }}">{{ $tipo->gls_tipo_trabajo }}</option>
                             @endforeach

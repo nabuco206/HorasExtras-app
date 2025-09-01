@@ -43,7 +43,7 @@
         </div>
 
         <div class="mb-3">
-            <label class="form-label">Hora Inicial</label>
+            <label class="form-label">Hora Iniciallllllllll</label>
             <input type="time" name="hrs_inicial" id="hrs_inicial" class="form-control" value="{{ old('hrs_inicial') }}" required>
         </div>
 

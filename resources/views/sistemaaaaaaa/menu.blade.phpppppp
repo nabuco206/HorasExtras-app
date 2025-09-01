@@ -30,7 +30,7 @@
             <div id="alerta-error"></div>
 
             <form method="POST" action="{{ route('solicitud-hes.store') }}" class="mx-auto" style="max-width: 500px;">
-                <h5 class="text-center mb-3">Ingreso Trabajo Extraordinario</h5>
+                <h5 class="text-center mb-3">Ingreso Trabajo Extraordinariooooooo</h5>
                 @csrf
                 <input type="hidden" name="username" value="{{ strstr(auth()->user()->email, '@', true) }}">
                 <input type="hidden" name="tipo_solicitud" value="1">
