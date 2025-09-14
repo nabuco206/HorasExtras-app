@@ -15,9 +15,11 @@ class TblPersonaSeeder extends Seeder
     public function run(): void
     {
         // Obtener fiscalías disponibles
-        $fiscalias = TblFiscalia::pluck('id')->toArray();
-        
+        // $fiscalias = TblFiscalia::pluck('id')->toArray();
+        $fiscalias = TblFiscalia::pluck('cod_fiscalia')->toArray();
+
         // Crear algunos líderes
+
         TblPersona::create([
             'Nombre' => 'María',
             'Apellido' => 'González',
@@ -25,6 +27,8 @@ class TblPersonaSeeder extends Seeder
             'cod_fiscalia' => 501, // Fiscalia de Valparaiso
             'id_escalafon' => 1,
             'flag_lider' => true,
+            'password' => bcrypt('1234'),
+            'id_rol' => 0,
         ]);
 
         TblPersona::create([
@@ -34,6 +38,8 @@ class TblPersonaSeeder extends Seeder
             'cod_fiscalia' => 502, // Fiscalia de Viña del Mar
             'id_escalafon' => 1,
             'flag_lider' => true,
+            'password' => bcrypt('1234'),
+            'id_rol' => 0,
         ]);
 
         TblPersona::create([
@@ -43,6 +49,8 @@ class TblPersonaSeeder extends Seeder
             'cod_fiscalia' => 504, // Fiscalia de Quilpue
             'id_escalafon' => 1,
             'flag_lider' => true,
+            'password' => bcrypt('1234'),
+            'id_rol' => 0,
         ]);
 
         // Crear algunas personas regulares
@@ -53,6 +61,8 @@ class TblPersonaSeeder extends Seeder
             'cod_fiscalia' => 501, // Fiscalia de Valparaiso
             'id_escalafon' => 1,
             'flag_lider' => false,
+            'password' => bcrypt('1234'),
+            'id_rol' => 0,
         ]);
 
         TblPersona::create([
@@ -62,6 +72,8 @@ class TblPersonaSeeder extends Seeder
             'cod_fiscalia' => 507, // Fiscalia de Villa Alemana
             'id_escalafon' => 1,
             'flag_lider' => false,
+            'password' => bcrypt('1234'),
+            'id_rol' => 0,
         ]);
 
         TblPersona::create([
@@ -71,6 +83,8 @@ class TblPersonaSeeder extends Seeder
             'cod_fiscalia' => 503, // Fiscalia de San Antonio
             'id_escalafon' => 1,
             'flag_lider' => false,
+            'password' => bcrypt('1234'),
+            'id_rol' => 0,
         ]);
 
         // Crear usando Factory con fiscalías reales

@@ -11,15 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        
+
 
          Schema::create('tbl_tipo_trabajo', function (Blueprint $table) {
             $table->id();
             $table->string('gls_tipo_trabajo');
+            $table->boolean('flag_activo')->default(true)->comment('Indica si el tipo de trabajo está activo en el sistema');
             $table->timestamps();
         });
 
-        
+
     }
 
     /**
@@ -27,8 +28,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        
+
         Schema::dropIfExists('tbl_tipo_trabajo');
-        
+
     }
 };

@@ -47,7 +47,7 @@ class TblFeriadoResource extends Resource
             '11' => 'Noviembre',
             '12' => 'Diciembre',
         ];
-        
+
         return $form
             ->schema([
                 Forms\Components\Select::make('mes')
@@ -55,19 +55,19 @@ class TblFeriadoResource extends Resource
                     ->options($meses)
                     ->required()
                     ->helperText('Seleccione el mes del feriado'),
-                    
+
                 Forms\Components\Select::make('dia')
                     ->label('Día')
                     ->options($dias)
                     ->required()
                     ->helperText('Seleccione el día del feriado'),
-                    
+
                 Forms\Components\TextInput::make('descripcion')
                     ->label('Descripción')
                     ->required()
                     ->maxLength(255)
                     ->helperText('Descripción del feriado'),
-                    
+
                 Forms\Components\Toggle::make('flag_activo')
                     ->label('Estado Activo')
                     ->default(true)
@@ -83,26 +83,42 @@ class TblFeriadoResource extends Resource
                 Tables\Columns\TextColumn::make('id')
                     ->label('ID')
                     ->sortable(),
-                    
+
                 Tables\Columns\TextColumn::make('fecha')
-                    ->label('Fecha (MM/DD)')
+                    ->label('Fecha')
                     ->formatStateUsing(function ($state) {
                         if (!$state) return '';
+                        $meses = [
+                            '01' => 'Enero',
+                            '02' => 'Febrero',
+                            '03' => 'Marzo',
+                            '04' => 'Abril',
+                            '05' => 'Mayo',
+                            '06' => 'Junio',
+                            '07' => 'Julio',
+                            '08' => 'Agosto',
+                            '09' => 'Septiembre',
+                            '10' => 'Octubre',
+                            '11' => 'Noviembre',
+                            '12' => 'Diciembre',
+                        ];
                         $partes = explode('-', $state);
                         if (count($partes) == 2) {
-                            return $partes[0] . '/' . $partes[1];
+                            $mes = $meses[$partes[0]] ?? $partes[0];
+                            $dia = ltrim($partes[1], '0');
+                            return "$dia de $mes";
                         }
                         return $state;
                     })
                     ->sortable()
                     ->searchable(),
-                    
+
                 Tables\Columns\TextColumn::make('descripcion')
                     ->label('Descripción')
                     ->searchable()
                     ->sortable()
                     ->wrap(),
-                    
+
                 Tables\Columns\IconColumn::make('flag_activo')
                     ->label('Estado')
                     ->boolean()
@@ -129,8 +145,8 @@ class TblFeriadoResource extends Resource
                     })
                     ->requiresConfirmation()
                     ->modalHeading(fn ($record) => $record->flag_activo ? 'Desactivar Feriado' : 'Activar Feriado')
-                    ->modalDescription(fn ($record) => $record->flag_activo 
-                        ? '¿Está seguro de que desea desactivar este feriado?' 
+                    ->modalDescription(fn ($record) => $record->flag_activo
+                        ? '¿Está seguro de que desea desactivar este feriado?'
                         : '¿Está seguro de que desea activar este feriado?'),
             ])
             ->bulkActions([

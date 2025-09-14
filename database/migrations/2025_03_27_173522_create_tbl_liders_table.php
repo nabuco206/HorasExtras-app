@@ -11,17 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        
+
 
         Schema::create('tbl_liders', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->string('username');
+            $table->id();
+            $table->foreignId('persona_id')->nullable()->constrained('tbl_personas');
             $table->bigInteger('cod_fiscalia');
-            $table->char('activo');
+            $table->string('gls_unidad');
+            $table->boolean('flag_activo')->default(true)->comment('Indica si el líder está activo en el sistema');
             $table->timestamps();
         });
 
-        
+
     }
 
     /**

@@ -22,8 +22,10 @@ return new class extends Migration
             $table->date('fecha');
             $table->time('hrs_inicial');
             $table->time('hrs_final');
+                        
             $table->bigInteger('id_estado')->default(0);
-//             $table->foreign('id_estado')->references('id')->on('tbl_estados');
+            $table->foreign('id_estado')->references('id')->on('tbl_estados');
+
             $table->char('tipo_solicitud');
             $table->date('fecha_evento')->nullable();
             $table->time('hrs_inicio')->nullable();

@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('fecha', 5)->unique(); // formato MM-DD
             $table->string('descripcion')->nullable();
+            $table->boolean('flag_activo')->default(true)->comment('Indica si el feriado está activo en el sistema');
             $table->timestamps();
         });
     }

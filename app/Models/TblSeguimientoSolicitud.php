@@ -36,4 +36,9 @@ class TblSeguimientoSolicitud extends Model
     {
         return $this->belongsTo(TblEstado::class);
     }
+    
+    public function estado()
+    {
+        return $this->belongsTo(\App\Models\TblEstado::class, 'id_estado');
+    }
 }

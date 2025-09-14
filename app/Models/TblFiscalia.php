@@ -15,7 +15,11 @@ class TblFiscalia extends Model
      *
      * @var array
      */
+    protected $primaryKey = 'cod_fiscalia';
+    public $incrementing = false;
+    protected $keyType = 'int';
     protected $fillable = [
+        'cod_fiscalia',
         'gls_fiscalia',
     ];
 
@@ -25,11 +29,8 @@ class TblFiscalia extends Model
      * @var array
      */
     protected $casts = [
-        'id' => 'integer',
+        'cod_fiscalia' => 'integer',
     ];
 
-    public function tblPersona(): BelongsTo
-    {
-        return $this->belongsTo(TblPersona::class, 'id', 'cod_fiscalia');
-    }
+    // Si tienes relaciones, ajústalas aquí según corresponda
 }

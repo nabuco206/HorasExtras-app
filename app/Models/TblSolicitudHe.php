@@ -98,4 +98,27 @@ class TblSolicitudHe extends Model
     {
         return $this->attributes['username'] ?? null;
     }
+
+    public function verEstados($idSolicitud): void
+    {
+        $seguimientos = \App\Models\TblSeguimientoSolicitud::where('id_solicitud_he', $idSolicitud)
+            ->with('estado')
+            ->orderBy('created_at')
+            ->get();
+
+        $estados = [];
+
+        foreach ($seguimientos as $seguimiento) {
+            $estados[] = [
+                'id' => $seguimiento->id,
+                'gls_estado' => $seguimiento->id_estado == 0
+                    ? 'Ingresado'
+                    : ($seguimiento->estado->gls_estado ?? 'Desconocido'),
+                'created_at' => $seguimiento->created_at->format('d/m/Y H:i'),
+            ];
+        }
+
+        $this->estadosSolicitud = $estados;
+        $this->modalEstadosVisible = true;
+    }
 }

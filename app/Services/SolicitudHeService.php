@@ -31,15 +31,16 @@ class SolicitudHeService
             $min_reales = $inicio->diffInMinutes($fin);
 
             // 3. DETERMINAR CONTEXTO
-            $esFeriado = TblFeriado::where('fecha', $fecha)->exists();
+            $mesdia = Carbon::parse($fecha)->format('m-d');
+            $esFeriado = TblFeriado::where('fecha', $mesdia)->where('flag_activo', 1)->exists();
             $esFinDeSemana = in_array($inicio->dayOfWeek, [Carbon::SATURDAY, Carbon::SUNDAY]);
 
-            $min_25 = 0;
-            $min_50 = 0;
+            $min_25_tramo = 0;
+            $min_50_tramo = 0;
 
             if ($esFeriado || $esFinDeSemana) {
                 // Todo el tiempo es 50%
-                $min_50 = $min_reales;
+                $min_50_tramo = $min_reales;
             } else {
                 // Día hábil: dividir en tramos
                 $inicio_25 = Carbon::parse("$fecha 18:00");
@@ -50,23 +51,26 @@ class SolicitudHeService
                 $inicio_tramo_25 = $inicio->copy()->max($inicio_25);
                 $fin_tramo_25 = $fin->copy()->min($fin_25);
                 if ($inicio_tramo_25->lessThan($fin_tramo_25)) {
-                    $min_25 = $inicio_tramo_25->diffInMinutes($fin_tramo_25);
+                    $min_25_tramo = $inicio_tramo_25->diffInMinutes($fin_tramo_25);
                 }
 
                 // Tramo 50%: intersección entre [inicio, fin] y [21:00, fin]
                 $inicio_tramo_50 = $inicio->copy()->max($inicio_50);
                 if ($inicio_tramo_50->lessThan($fin)) {
-                    $min_50 = $inicio_tramo_50->diffInMinutes($fin);
+                    $min_50_tramo = $inicio_tramo_50->diffInMinutes($fin);
                 }
             }
 
-            $total_min = $min_reales; // Solo minutos reales, los recargos son informativos
+            // Calcular recargos
+            $recargo_25 = $min_25_tramo * 0.25;
+            $recargo_50 = $min_50_tramo * 0.5;
+            $total_min = $min_reales + $recargo_25 + $recargo_50;
 
             // Logging
             $this->logResultado($fecha, $horaInicio, $horaFin, [
                 'min_reales' => $min_reales,
-                'min_25' => $min_25,
-                'min_50' => $min_50,
+                'min_25' => $recargo_25,
+                'min_50' => $recargo_50,
                 'total_min' => $total_min,
                 'contexto' => [
                     'es_feriado' => $esFeriado,
@@ -76,8 +80,8 @@ class SolicitudHeService
 
             return [
                 'min_reales' => $min_reales,
-                'min_25' => $min_25,
-                'min_50' => $min_50,
+                'min_25' => $recargo_25,
+                'min_50' => $recargo_50,
                 'total_min' => $total_min,
                 'contexto' => [
                     'es_feriado' => $esFeriado,

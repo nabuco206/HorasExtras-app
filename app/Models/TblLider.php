@@ -60,7 +60,7 @@ class TblLider extends Model
      */
     public function fiscalia(): BelongsTo
     {
-        return $this->belongsTo(TblFiscalia::class, 'cod_fiscalia', 'id');
+        return $this->belongsTo(TblFiscalia::class, 'cod_fiscalia', 'cod_fiscalia');
     }
 
     /**

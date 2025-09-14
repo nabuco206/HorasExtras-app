@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 use Illuminate\Support\Facades\DB;
 
-use App\Models\User;
 use App\Models\TblFiscalia;
 use App\Models\TblEscalafon;
 use App\Models\TblPersona;
@@ -32,65 +31,55 @@ class DatabaseSeeder extends Seeder
         TblEscalafon::create([
             'gls_escalafon' => 'TESNICO',
         ]);
-        
+
         $fiscalias = [
-            ['id' => 501, 'gls_fiscalia' => 'Fiscalia de Valparaiso'],
-            ['id' => 502, 'gls_fiscalia' => 'Fiscalia de Viña del Mar'],
-            ['id' => 504, 'gls_fiscalia' => 'Fiscalia de Quilpue'],
-            ['id' => 507, 'gls_fiscalia' => 'Fiscalia de Villa Alemana'],
-            ['id' => 5, 'gls_fiscalia' => 'Fiscalia de Limache'],
-            ['id' => 6, 'gls_fiscalia' => 'Fiscalia de Quillota'],
-            ['id' => 7, 'gls_fiscalia' => 'Fiscalia de La Calera'],
-            ['id' => 503, 'gls_fiscalia' => 'Fiscalia de San Antonio'],
-            ['id' => 515, 'gls_fiscalia' => 'Fiscalia de Casablanca'],
+            ['cod_fiscalia' => 501, 'gls_fiscalia' => 'Fiscalia de Valparaiso'],
+            ['cod_fiscalia' => 502, 'gls_fiscalia' => 'Fiscalia de Viña del Mar'],
+            ['cod_fiscalia' => 504, 'gls_fiscalia' => 'Fiscalia de Quilpue'],
+            ['cod_fiscalia' => 507, 'gls_fiscalia' => 'Fiscalia de Villa Alemana'],
+            ['cod_fiscalia' => 5, 'gls_fiscalia' => 'Fiscalia de Limache'],
+            ['cod_fiscalia' => 6, 'gls_fiscalia' => 'Fiscalia de Quillota'],
+            ['cod_fiscalia' => 7, 'gls_fiscalia' => 'Fiscalia de La Calera'],
+            ['cod_fiscalia' => 503, 'gls_fiscalia' => 'Fiscalia de San Antonio'],
+            ['cod_fiscalia' => 515, 'gls_fiscalia' => 'Fiscalia de Casablanca'],
         ];
-       
+
         DB::table('tbl_fiscalias')->truncate();
         foreach ($fiscalias as $fiscalia) {
             TblFiscalia::create($fiscalia);
         }
 
         TblPersona::truncate();
-        TblPersona::create([
+        $persona1 = TblPersona::create([
             'Nombre' => 'CristianCRM',
             'Apellido' => 'Rojas',
             'UserName' => 'crojasm',
             'cod_fiscalia' => 501,
             'id_escalafon' => 1,
             'flag_lider' => true,
+            'password' => bcrypt('1234'),
+            'id_rol' => 0,
         ]);
 
-        TblPersona::create([
+        $persona2 = TblPersona::create([
             'Nombre' => 'Persona',
             'Apellido' => '01',
             'UserName' => 'persona01',
             'cod_fiscalia' => 501,
             'id_escalafon' => 1,
             'flag_lider' => false,
+            'password' => bcrypt('1234'),
+            'id_rol' => 0,
         ]);
 
-        DB::table('users')->truncate();
-        User::create([
-            'name' => 'crojasm',
-            'email' => 'crojasm@minpublico.cl',
-            'password' => bcrypt('1234'),
-            'persona_id' => 1, 
-            'id_rol' => 0, 
-        ]);
-         User::create([
-            'name' => 'persona01',
-            'email' => 'persona01@minpublico.cl',
-            'password' => bcrypt('1234'),
-            'persona_id' => 2, // Cambiado de 1 a 2
-            'id_rol' => 0, 
-        ]);
-        
+
+
         TblTipoCompensacion::truncate();
         TblTipoCompensacion::create([
             'id' => 0,
             'gls_tipoCompensacion' => 'Compensación en Hrs',
         ]);
-        
+
         TblTipoCompensacion::create([
             'id' => 1,
             'gls_tipoCompensacion' => 'Pago',
@@ -101,7 +90,7 @@ class DatabaseSeeder extends Seeder
             'id' => 0,
             'gls_estado' => 'Ingreso',
         ]);
-        
+
         TblEstado::create([
             'id' => 1,
             'gls_estado' => 'Aprobado',
@@ -111,12 +100,12 @@ class DatabaseSeeder extends Seeder
             'id' => 0,
             'gls_tipo_trabajo' => 'EIVG',
         ]);
-        
+
         TblTipoTrabajo::create([
             'id' => 1,
             'gls_tipo_trabajo' => 'Causas Rezagadas',
         ]);
-         
+
 
 
         $feriados = [
@@ -142,11 +131,11 @@ class DatabaseSeeder extends Seeder
             TblFeriado::create($feriado);
         }
 
-        
+
         // $this->call(TblSolicitudHeSeeder::class);
-        
+
         // Crear personas con flag_lider
         $this->call(TblPersonaSeeder::class);
-        
+
     }
 }

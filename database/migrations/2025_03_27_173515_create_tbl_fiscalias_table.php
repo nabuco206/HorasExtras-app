@@ -11,16 +11,23 @@ return new class extends Migration
      */
     public function up(): void
     {
-        
 
         Schema::create('tbl_fiscalias', function (Blueprint $table) {
-            $table->id()->foreign('tbl_persona.cod_fiscalia');
+            $table->bigInteger('cod_fiscalia')->primary(); // Clave primaria personalizada
             $table->string('gls_fiscalia');
-            $table->bigInteger('cod_fiscalia')->default(0);
             $table->timestamps();
         });
 
-        
+
+
+        // Schema::create('tbl_fiscalias', function (Blueprint $table) {
+        //     $table->id()->foreign('tbl_persona.cod_fiscalia');
+        //     $table->string('gls_fiscalia');
+        //     $table->bigInteger('cod_fiscalia')->default(0);
+        //     $table->timestamps();
+        // });
+
+
     }
 
     /**

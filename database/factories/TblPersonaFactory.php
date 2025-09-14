@@ -23,7 +23,7 @@ class TblPersonaFactory extends Factory
     {
         // Fiscalías válidas disponibles
         $fiscalias = [501, 502, 504, 507, 5, 6, 7, 503, 515];
-        
+
         return [
             'Nombre' => fake()->firstName(),
             'Apellido' => fake()->lastName(),
@@ -31,6 +31,8 @@ class TblPersonaFactory extends Factory
             'cod_fiscalia' => fake()->randomElement($fiscalias),
             'id_escalafon' => 1, // Usamos el escalafón que existe
             'flag_lider' => fake()->boolean(30), // 30% de probabilidad de ser líder
+            'password' => bcrypt('1234'),
+            'id_rol' => 0,
         ];
     }
 

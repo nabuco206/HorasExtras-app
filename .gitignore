@@ -20,3 +20,5 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+/copiar-db.sh
+/CopiarDB.bat
