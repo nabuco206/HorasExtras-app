@@ -11,18 +11,22 @@ return new class extends Migration
      */
     public function up(): void
     {
-        
+
 
         Schema::create('tbl_seguimiento_solicituds', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('id_solicitud_he');
+            $table->unsignedBigInteger('id_solicitud_he');
             $table->string('username');
-            $table->bigInteger('id_estado');
-//             $table->foreign('id_estado')->references('id')->on('tbl_estados');
+            // $table->bigInteger('id_estado');
+            $table->foreignId('id_estado')->nullable()->constrained('tbl_estados');
+            $table->foreign('username')->references('UserName')->on('tbl_personas')->onDelete('cascade');
             $table->timestamps();
+
+
+
         });
 
-        
+
     }
 
     /**

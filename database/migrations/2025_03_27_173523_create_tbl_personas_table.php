@@ -23,8 +23,8 @@ return new class extends Migration
             $table->foreignId('id_escalafon')->nullable()->constrained('tbl_escalafons');
             $table->unsignedBigInteger('id_turno')->default(0)->after('id_escalafon');
             $table->boolean('flag_lider')->default(true)->comment('Indica si la persona es lider en el sistema');
-            $table->boolean('flag_activo')->default(true)->comment('Indica si la persona está activa en el sistema');
-            $table->unsignedBigInteger('id_rol')->default(0);
+            $table->boolean('flag_activo')->default(0)->comment('Indica estado del registro');
+            $table->foreignId('id_rol')->nullable()->constrained('tbl_rol');
             $table->string('password');
             $table->timestamps();
         });
@@ -37,6 +37,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tbl_personas');
+    Schema::disableForeignKeyConstraints();
+    Schema::dropIfExists('tbl_personas');
+    Schema::enableForeignKeyConstraints();
     }
 };

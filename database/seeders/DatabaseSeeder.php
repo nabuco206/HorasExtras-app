@@ -10,6 +10,7 @@ use App\Models\TblFeriado;
 use App\Models\TblTipoCompensacion;
 use App\Models\TblEstado;
 use App\Models\TblTipoTrabajo;
+use App\Models\Tbl;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -28,8 +29,29 @@ class DatabaseSeeder extends Seeder
         //     'id'=>501,
         //     'gls_fiscalia' => 'Fiscalía de Valparaíso',
         // ]);
+
+
+
+            DB::table('tbl_rol')->insert([
+                           ['gls_rol' => 'Usuario']
+                    ]);
+
+            DB::table('tbl_rol')->insert([
+                           ['gls_rol' => 'Lider']
+                    ]);
+
+
+        TblEscalafon::truncate();
+
+
         TblEscalafon::create([
-            'gls_escalafon' => 'TESNICO',
+            'gls_escalafon' => 'TECNICO',
+        ]);
+        TblEscalafon::create([
+            'gls_escalafon' => 'PROFESIONAL',
+        ]);
+        TblEscalafon::create([
+            'gls_escalafon' => 'AUXILIAR',
         ]);
 
         $fiscalias = [
@@ -58,7 +80,7 @@ class DatabaseSeeder extends Seeder
             'id_escalafon' => 1,
             'flag_lider' => true,
             'password' => bcrypt('1234'),
-            'id_rol' => 0,
+            'id_rol' => 1,
         ]);
 
         $persona2 = TblPersona::create([
@@ -69,7 +91,7 @@ class DatabaseSeeder extends Seeder
             'id_escalafon' => 1,
             'flag_lider' => false,
             'password' => bcrypt('1234'),
-            'id_rol' => 0,
+            'id_rol' => 1,
         ]);
 
 

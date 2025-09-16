@@ -1,15 +1,61 @@
 <?php
-
 namespace App\Services;
 
 use App\Models\TblFeriado;
+use App\Models\TblSolicitudHe;
+use App\Models\TblSeguimientoSolicitud;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Exception;
 
 class SolicitudHeService
 {
+     /**
+     * Obtiene solicitudes filtradas por parámetros opcionales.
+     *
+     * @param array $filtros (ej: ['id_estado' => 1, 'cod_fiscalia' => 'X'])
+     * @param int $perPage
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
+    public function getSolicitudesFiltradas(array $filtros = [], int $perPage = 10)
+    {
+        $query = TblSolicitudHe::query();
+        foreach ($filtros as $campo => $valor) {
+            if (!is_null($valor) && $valor !== '') {
+                $query->where($campo, $valor);
+            }
+        }
+        return $query->orderByDesc('created_at')->paginate($perPage);
+    }
+
+    /**
+     * Cambia el estado de una solicitud y registra el cambio en el log.
+     *
+     * @param int $solicitudId
+     * @param int $nuevoEstadoId
+     * @param string|null $comentario
+     * @return bool
+     */
+    public function cambiarEstado(int $solicitudId, int $nuevoEstadoId, ?string $comentario = null): bool
+    {
+        return DB::transaction(function () use ($solicitudId, $nuevoEstadoId, $comentario) {
+            $solicitud = TblSolicitudHe::findOrFail($solicitudId);
+            $solicitud->id_estado = $nuevoEstadoId;
+            $solicitud->save();
+
+            TblSeguimientoSolicitud::create([
+                'id_solicitud_he' => $solicitud->id,
+                'username'        => Auth::user()->username,
+                'id_estado'       => $nuevoEstadoId,
+                'comentario'      => $comentario,
+            ]);
+
+            return true;
+        });
+    }
     /**
      * Calcula el porcentaje de horas extras según reglas:
      * - 25%: de 18:00 a 21:00 (días hábiles)

@@ -46,7 +46,7 @@
         <div class="bg-white dark:bg-gray-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ __('Acciones Rápidas') }}</h3>
             <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <a href="{{ route('solicitud-hes.create') }}" 
+                <a href="{{ route('solicitud-hes.create') }}"
                    class="flex items-center justify-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors">
                     <div class="text-center">
                         <div class="text-blue-600 dark:text-blue-400 mb-2">
@@ -58,7 +58,7 @@
                     </div>
                 </a>
 
-                <a href="{{ route('sistema') }}" 
+                <a
                    class="flex items-center justify-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors">
                     <div class="text-center">
                         <div class="text-green-600 dark:text-green-400 mb-2">
@@ -70,7 +70,7 @@
                     </div>
                 </a>
 
-                <a href="{{ route('settings.profile') }}" 
+                <a href="{{ route('settings.profile') }}"
                    class="flex items-center justify-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors">
                     <div class="text-center">
                         <div class="text-purple-600 dark:text-purple-400 mb-2">

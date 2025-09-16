@@ -11,18 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        
-              
+
+
         Schema::create('tbl_solicitud_hes', function (Blueprint $table) {
             $table->id()->foreign('tbl_seguimiento_solicitud.id_solicitud_he');
             $table->string('username');
-//             // $table->foreign('username')->references('name')->on('users');
-            $table->bigInteger('id_tipo_trabajo');
-//             $table->foreign('id_tipo_trabajo')->references('id')->on('tbl_tipo_trabajo');
+            $table->bigInteger('cod_fiscalia');
+            $table->foreign('cod_fiscalia')->references('cod_fiscalia')->on('tbl_fiscalias');
+            $table->foreignId('id_tipo_trabajo')->nullable()->constrained('tbl_tipo_trabajo');
             $table->date('fecha');
             $table->time('hrs_inicial');
             $table->time('hrs_final');
-                        
+
             $table->bigInteger('id_estado')->default(0);
             $table->foreign('id_estado')->references('id')->on('tbl_estados');
 
@@ -39,7 +39,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        
+
     }
 
     /**

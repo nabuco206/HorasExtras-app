@@ -9,6 +9,10 @@ use Illuminate\Validation\Rule;
 use Livewire\Volt\Component;
 
 new class extends Component {
+    public bool $modalConfirmarCambioEstado = false;
+    public string $accionEstado = '';
+    public $selectedSolicitudes = [];
+    public bool $selectAll = false;
     public string $username = '';
     public int $id_tipo_trabajo = 0;
     public string $fecha = '';
@@ -29,75 +33,69 @@ new class extends Component {
         $this->username = Auth::user()->name;
         $this->tipos_trabajo = TblTipoTrabajo::all();
         $this->estados = TblEstado::all();
-        $this->solicitudes = \App\Models\TblSolicitudHe::orderByDesc('id')->get();
-        $this->propone_pago = false;
+        // Filtrar por cod_fiscalia del usuario y estado (ejemplo: id_estado = 1)
+        $codFiscalia = Auth::user()->cod_fiscalia ?? null;
+        $estadoFiltrado = 0; // Cambia este valor según el estado que quieras filtrar
+        $this->solicitudes = \App\Models\TblSolicitudHe::where('cod_fiscalia', $codFiscalia)
+            ->where('id_estado', $estadoFiltrado)
+            ->orderByDesc('id')
+            ->get();
+    $this->selectedSolicitudes = [];
+    $this->selectAll = false;
     }
+
+    // Abre el modal y setea la acción (aprobar/rechazar)
+    public function abrirModalCambioEstado($accion)
+    {
+        $this->accionEstado = $accion;
+        $this->modalConfirmarCambioEstado = true;
+    }
+
+    // Confirma el cambio de estado y realiza el update y log
+    public function confirmarCambioEstado()
+    {
+        $nuevoEstado = $this->accionEstado === 'aprobar' ? 2 : 3; // 2=aprobado, 3=rechazado
+        if (!empty($this->selectedSolicitudes)) {
+            \App\Models\TblSolicitudHe::whereIn('id', $this->selectedSolicitudes)
+                ->update(['id_estado' => $nuevoEstado]);
+            // Log en tbl_seguimiento
+            foreach ($this->selectedSolicitudes as $idSolicitud) {
+                \App\Models\TblSeguimientoSolicitud::create([
+                    'id_solicitud_he' => $idSolicitud,
+                    'id_estado' => $nuevoEstado,
+                    'created_at' => now(),
+                ]);
+            }
+        }
+        $this->modalConfirmarCambioEstado = false;
+        $this->selectedSolicitudes = [];
+        // Refrescar listado
+        $codFiscalia = Auth::user()->cod_fiscalia ?? null;
+        $estadoFiltrado = 0;
+        $this->solicitudes = \App\Models\TblSolicitudHe::where('cod_fiscalia', $codFiscalia)
+            ->where('id_estado', $estadoFiltrado)
+            ->orderByDesc('id')
+            ->get();
+    }
+
+    public function toggleSelectAll()
+    {
+        if (count($this->selectedSolicitudes) === $this->solicitudes->count()) {
+            $this->selectedSolicitudes = [];
+        } else {
+            $this->selectedSolicitudes = $this->solicitudes->pluck('id')->toArray();
+        }
+    }
+
+    public function updatedSelectedSolicitudes()
+    {
+    $this->selectAll = count($this->selectedSolicitudes) === $this->solicitudes->count();
+    }
+    // $this->propone_pago = false;
 
     /**
      * Update the profile information for the currently authenticated user.
      */
-    public function saveSolicitud(): void
-    {
-        $validated = $this->validate([
-            'id_tipo_trabajo' => ['required', 'integer', 'exists:tbl_tipo_trabajo,id'],
-            'fecha' => ['required', 'date', 'before_or_equal:today'], // No permite fechas futuras
-            'hrs_inicial' => ['required', 'date_format:H:i'],
-            'hrs_final' => ['required', 'date_format:H:i', 'after:hrs_inicial'],
-            'propone_pago' => ['boolean'],
-        ]);
-
-        // Validación adicional: no permitir cruce de medianoche
-        if ($this->hrs_final <= $this->hrs_inicial) {
-            session()->flash('error', 'La hora de salida debe ser mayor que la hora de ingreso y no puede cruzar las 00:00 hrs.');
-            return;
-        }
-
-        $validated['tipo_solicitud'] = 0;
-        $validated['id_tipoCompensacion'] = $this->propone_pago ? 1 : 0;
-        $validated['username'] = Auth::user()->name; // Asegurar que el username esté presente
-
-        // Aplicar el cálculo automático de porcentajes usando SolicitudHeService
-        try {
-            $solicitudHeService = app(\App\Services\SolicitudHeService::class);
-            $resultado = $solicitudHeService->calculaPorcentaje(
-                $this->fecha,
-                $this->hrs_inicial,
-                $this->hrs_final
-            );
-
-            // Agregar los campos calculados
-            $validated['fecha_evento'] = $this->fecha;
-            $validated['hrs_inicio'] = $this->hrs_inicial;
-            $validated['hrs_fin'] = $this->hrs_final;
-            $validated['min_reales'] = $resultado['min_reales'];
-            $validated['min_25'] = $resultado['min_25'];
-            $validated['min_50'] = $resultado['min_50'];
-            $validated['total_min'] = $resultado['total_min'];
-
-        } catch (\Exception $e) {
-            // Si hay error en el cálculo, usar valores por defecto
-            $validated['fecha_evento'] = $this->fecha;
-            $validated['hrs_inicio'] = $this->hrs_inicial;
-            $validated['hrs_fin'] = $this->hrs_final;
-            $validated['min_reales'] = 0;
-            $validated['min_25'] = 0;
-            $validated['min_50'] = 0;
-            $validated['total_min'] = 0;
-        }
-
-        $nuevaSolicitud = \App\Models\TblSolicitudHe::create($validated);
-
-        // Registrar seguimiento usando el logger
-        \App\Services\SeguimientoSolicitudLogger::log(
-            $nuevaSolicitud->id,
-            $this->username,
-            $nuevaSolicitud->id_estado ?? 0 // Usa el estado de la solicitud o 1 por defecto
-        );
-
-        $this->solicitudes = \App\Models\TblSolicitudHe::orderByDesc('id')->get();
-
-        $this->dispatch('profile-updated', name: $this->username);
-    }
 
     public function verEstados($idSolicitud): void
     {
@@ -131,32 +129,6 @@ new class extends Component {
 
     <x-sistema.layout :heading="__('Ingreso Hora Extra')">
         <!-- Formulario -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6 mb-8 max-w-6xl">
-            <form wire:submit="saveSolicitud" class="w-full space-y-6" enctype="multipart/form-data">
-                    <flux:input wire:model="username" type="hidden" required readonly />
-                    <div class="flex gap-4 items-end">
-                        <flux:select wire:model="id_tipo_trabajo" :label="__('Tipo de Trabajo')" class="flex-1 max-w-md" required>
-                            <option value="">Seleccioneeeee...</option>
-                            @foreach($tipos_trabajo as $tipo)
-                                <option value="{{ $tipo->id }}">{{ $tipo->gls_tipo_trabajo }}</option>
-                            @endforeach
-                        </flux:select>
-                        <flux:input wire:model="fecha" :label="__('Fecha')" type="date" class="flex-1" required />
-                        <flux:input wire:model="hrs_inicial" :label="__('Hora Ingreso')" type="time" class="flex-1" required />
-                        <flux:input wire:model="hrs_final" :label="__('Hora Salida')" type="time" class="flex-1" required />
-                        <div class="flex items-end">
-                            <flux:checkbox wire:model="propone_pago" :label="__('Propone Pago')" />
-                        </div>
-                    </div>
-
-                    <div class="flex items-center justify-center gap-4">
-                        <flux:button variant="primary" type="submit" class="px-8">{{ __('Ingresar') }}</flux:button>
-                        <x-action-message class="me-3" on="profile-updated">
-                            {{ __('Guardado !!!.') }}
-                        </x-action-message>
-                    </div>
-                </form>
-            </div>
 
             <div class="bg-white dark:bg-gray-800 rounded-xl border border-neutral-200 dark:border-neutral-700 w-full">
                 <div class="p-6 border-b border-neutral-200 dark:border-neutral-700">
@@ -164,30 +136,50 @@ new class extends Component {
                 </div>
 
                 <div class="p-6">
+                    <div class="mb-2 flex gap-2">
+                        <button class="px-3 py-1 bg-green-600 text-white rounded" wire:click="abrirModalCambioEstado('aprobar')">
+                            Aprobar seleccionados
+                        </button>
+                        <button class="px-3 py-1 bg-red-600 text-white rounded" wire:click="abrirModalCambioEstado('rechazar')">
+                            Rechazar seleccionados
+                        </button>
+                    </div>
                     <div class="w-full overflow-x-auto">
-                        <table class="w-full text-xs text-left rtl:text-right text-gray-500 dark:text-gray-400 min-w-max">
-                            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600">
-    <tr>
-        <th class="px-2 py-2 text-center whitespace-nowrap"></th> <!-- Solo la lupa -->
-        <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">#</th>
-        <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Tipo Trabajo</th>
-        <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Fecha</th>
-        <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Hora Inicial</th>
-        <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Hora Final</th>
-        <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Estado</th>
-        <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Tipo Solicitud</th>
-        <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Hora Inicio</th>
-        <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Hora Fin</th>
-        <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Compensación</th>
-        <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Min. Reales</th>
-        <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Min. 25%</th>
-        <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Min. 50%</th>
-        <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Total Min.</th>
-    </tr>
-</thead>
+<table class="w-full text-xs text-left rtl:text-right text-gray-500 dark:text-gray-400 min-w-max">
+    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600">
+        <tr>
+            <th class="px-2 py-2 text-center whitespace-nowrap">
+                <input type="checkbox"
+                    :checked="$selectAll"
+                    wire:click="toggleSelectAll"
+                    title="Seleccionar todos"
+                    class="form-checkbox h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring focus:ring-blue-200 focus:ring-opacity-50 align-middle"
+                />
+            </th>
+            <th class="px-2 py-2 text-center whitespace-nowrap"></th> <!-- Solo la lupa -->
+            <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">#</th>
+            <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Tipo Trabajo</th>
+            <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Fecha</th>
+            <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Hora Inicial</th>
+            <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Hora Final</th>
+            <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Estado</th>
+            <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Tipo Solicitud</th>
+            <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Hora Inicio</th>
+            <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Hora Fin</th>
+            <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Compensación</th>
+            <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Min. Reales</th>
+            <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Min. 25%</th>
+            <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Min. 50%</th>
+            <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Total Min.</th>
+        </tr>
+    </thead>
 <tbody class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
     @forelse ($solicitudes as $solicitud)
         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+            <td class="px-2 py-2 text-center">
+                <input type="checkbox" wire:model="selectedSolicitudes" value="{{ $solicitud->id }}"
+                    class="form-checkbox h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring focus:ring-blue-200 focus:ring-opacity-50 align-middle" />
+            </td>
             <td class="px-2 py-2 text-center">
                 <button wire:click="verEstados({{ $solicitud->id }})" type="button" title="Ver estados">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-600 hover:text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -290,3 +282,18 @@ new class extends Component {
     @endif
 
 </section>
+
+    <!-- Modal de confirmación de cambio de estado -->
+    @if($modalConfirmarCambioEstado)
+        <div class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-40">
+            <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+                <h2 class="text-lg font-semibold mb-4">
+                    ¿Está seguro que va a {{ $accionEstado === 'aprobar' ? 'Aprobar' : 'Rechazar' }} las solicitudes seleccionadas?
+                </h2>
+                <div class="flex justify-end gap-2 mt-4">
+                    <button class="px-4 py-2 bg-gray-300 rounded" wire:click="$set('modalConfirmarCambioEstado', false)">Cancelar</button>
+                    <button class="px-4 py-2 bg-blue-600 text-white rounded" wire:click="confirmarCambioEstado">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    @endif

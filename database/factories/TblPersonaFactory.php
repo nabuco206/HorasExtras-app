@@ -32,7 +32,7 @@ class TblPersonaFactory extends Factory
             'id_escalafon' => 1, // Usamos el escalafón que existe
             'flag_lider' => fake()->boolean(30), // 30% de probabilidad de ser líder
             'password' => bcrypt('1234'),
-            'id_rol' => 0,
+            'id_rol' => 1,
         ];
     }
 

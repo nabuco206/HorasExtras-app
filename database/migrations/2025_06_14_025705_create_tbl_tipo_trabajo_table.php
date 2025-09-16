@@ -29,7 +29,10 @@ return new class extends Migration
     public function down(): void
     {
 
+         Schema::disableForeignKeyConstraints();
+        Schema::dropIfExists('tbl_solicitud_hes'); // o cualquier tabla que tenga FK a tbl_tipo_trabajo
         Schema::dropIfExists('tbl_tipo_trabajo');
+        Schema::enableForeignKeyConstraints();
 
     }
 };

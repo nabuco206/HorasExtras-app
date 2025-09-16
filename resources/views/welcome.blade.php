@@ -26,7 +26,7 @@
                         >
                             Dashboard
                         </a>
-                        <a href="{{ route('sistema') }}" class="text-sm text-blue-700 underline ml-4">Menú Principal</a>
+                        <a  class="text-sm text-blue-700 underline ml-4">Menú Principal</a>
                     @else
                         <a
                             href="{{ route('login') }}"
@@ -76,15 +76,15 @@
                             </span>
                             <span>Gestiona tu tiempo para compensar.</span>
                         </li>
-                        
+
                     </ul>
-                    
+
                 </div>
                 <div class="bg-[#fff2f2] dark:bg-[#1D0002] relative lg:-ml-px -mb-px lg:mb-0 rounded-t-lg lg:rounded-t-none lg:rounded-r-lg aspect-[335/376] lg:aspect-auto w-full lg:w-[438px] shrink-0 overflow-hidden flex items-center justify-center">
                     {{-- Laravel HE --}}
-                   
+
                     <img src="{{ asset('images/logoHE.png') }}" alt="Logo HE" class="w-48 h-48 md:w-65 md:h-65">
-               
+
 
                     <div class="absolute inset-0 rounded-t-lg lg:rounded-t-none lg:rounded-r-lg shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d]"></div>
                 </div>
@@ -95,7 +95,7 @@
             <div class="hidden fixed top-0 right-0 px-6 py-4 sm:block">
                 @auth
                     <a href="{{ route('dashboard') }}" class="text-sm text-gray-700 underline">Dashboard</a>
-                    <a href="{{ route('sistema') }}" class="text-sm text-blue-700 underline ml-4">Menú Principal</a>
+                    <a  class="text-sm text-blue-700 underline ml-4">Menú Principal</a>
                 @else
                     <a href="{{ route('login') }}" class="text-sm text-gray-700 underline">Log in</a>
                     @if (Route::has('register'))

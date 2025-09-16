@@ -28,7 +28,7 @@ class TblPersonaSeeder extends Seeder
             'id_escalafon' => 1,
             'flag_lider' => true,
             'password' => bcrypt('1234'),
-            'id_rol' => 0,
+            'id_rol' => 1,
         ]);
 
         TblPersona::create([
@@ -39,7 +39,7 @@ class TblPersonaSeeder extends Seeder
             'id_escalafon' => 1,
             'flag_lider' => true,
             'password' => bcrypt('1234'),
-            'id_rol' => 0,
+            'id_rol' => 1,
         ]);
 
         TblPersona::create([
@@ -50,7 +50,7 @@ class TblPersonaSeeder extends Seeder
             'id_escalafon' => 1,
             'flag_lider' => true,
             'password' => bcrypt('1234'),
-            'id_rol' => 0,
+            'id_rol' => 1,
         ]);
 
         // Crear algunas personas regulares
@@ -62,7 +62,7 @@ class TblPersonaSeeder extends Seeder
             'id_escalafon' => 1,
             'flag_lider' => false,
             'password' => bcrypt('1234'),
-            'id_rol' => 0,
+            'id_rol' => 1,
         ]);
 
         TblPersona::create([
@@ -73,7 +73,7 @@ class TblPersonaSeeder extends Seeder
             'id_escalafon' => 1,
             'flag_lider' => false,
             'password' => bcrypt('1234'),
-            'id_rol' => 0,
+            'id_rol' => 1,
         ]);
 
         TblPersona::create([
@@ -84,7 +84,7 @@ class TblPersonaSeeder extends Seeder
             'id_escalafon' => 1,
             'flag_lider' => false,
             'password' => bcrypt('1234'),
-            'id_rol' => 0,
+            'id_rol' => 1,
         ]);
 
         // Crear usando Factory con fiscalías reales

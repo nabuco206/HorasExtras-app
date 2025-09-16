@@ -1,4 +1,6 @@
 @php
+    $user = auth()->user();
+    // echo $user->cod_fiscalia;
     $groups = [
         'Platform' => [
             [
@@ -13,7 +15,7 @@
                 'url' => Route::has('sistema.ingreso-he') ? route('sistema.ingreso-he') : '#',
                 'current' => Route::has('sistema.ingreso-he') && request()->routeIs('sistema.ingreso-he')
             ],
-           
+
         ],
         'Administración UDP' => [
             [
@@ -23,9 +25,19 @@
                 'current' => false,
                 'target' => '_blank'
             ],
-           
+
         ]
     ];
+    if ($user->id_rol = 1) {
+        $groups['Aproba'] = [
+            [
+                'name' => 'Pendientes de Aprobación',
+                'icon' => 'shield-check',
+                'url' => Route::has('sistema.flujo-aprob') ? route('sistema.flujo-aprob') : '#',
+                'current' => Route::has('sistema.flujo-aprob') && request()->routeIs('sistema.flujo-aprob')
+            ],
+        ];
+    }
 @endphp
 
 <!DOCTYPE html>
@@ -47,11 +59,11 @@
                         @foreach ($links as $link)
                             @if(isset($link['submenu']))
                                 <flux:dropdown position="right" class="w-full" :close-on-click="false">
-                                    <flux:navlist.item 
+                                    <flux:navlist.item
                                         :active="collect($link['submenu'])->contains(fn($sub) => $sub['current'])"
                                         as="button"
                                         class="w-full hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
-                                        icon="{{ $link['icon'] }}" 
+                                        icon="{{ $link['icon'] }}"
                                         >
                                         <div class="flex justify-between items-center w-full">
                                             <span>{{ $link['name'] }}</span>
@@ -63,12 +75,12 @@
                                             </div>
                                         </div>
                                     </flux:navlist.item>
-                                    
+
                                     <flux:menu slot="dropdown" class="ml-2 w-48 border-l-2 border-zinc-200 dark:border-zinc-700">
                                         @foreach($link['submenu'] as $subitem)
                                             @if(isset($subitem['target']) && $subitem['target'] === '_blank')
-                                                <flux:menu.item 
-                                                    :href="$subitem['url']" 
+                                                <flux:menu.item
+                                                    :href="$subitem['url']"
                                                     :active="$subitem['current']"
                                                     target="_blank"
                                                     class="pl-4 hover:bg-zinc-100 dark:hover:bg-zinc-700"
@@ -76,8 +88,8 @@
                                                     {{ $subitem['name'] }}
                                                 </flux:menu.item>
                                             @else
-                                                <flux:menu.item 
-                                                    :href="$subitem['url']" 
+                                                <flux:menu.item
+                                                    :href="$subitem['url']"
                                                     :active="$subitem['current']"
                                                     wire:navigate
                                                     class="pl-4 hover:bg-zinc-100 dark:hover:bg-zinc-700"
@@ -91,9 +103,9 @@
                             @else
                                 @if(!empty($link['iconTrailing']))
                                     @if(isset($link['target']) && $link['target'] === '_blank')
-                                        <flux:navlist.item 
-                                            :href="$link['url']" 
-                                            :current="$link['current']" 
+                                        <flux:navlist.item
+                                            :href="$link['url']"
+                                            :current="$link['current']"
                                             target="_blank"
                                         >
                                             <div class="flex justify-between items-center w-full">
@@ -102,9 +114,9 @@
                                             </div>
                                         </flux:navlist.item>
                                     @else
-                                        <flux:navlist.item 
-                                            :href="$link['url']" 
-                                            :current="$link['current']" 
+                                        <flux:navlist.item
+                                            :href="$link['url']"
+                                            :current="$link['current']"
                                             wire:navigate
                                         >
                                             <div class="flex justify-between items-center w-full">
@@ -115,19 +127,19 @@
                                     @endif
                                 @else
                                     @if(isset($link['target']) && $link['target'] === '_blank')
-                                        <flux:navlist.item 
-                                            :icon="$link['icon']" 
-                                            :href="$link['url']" 
-                                            :current="$link['current']" 
+                                        <flux:navlist.item
+                                            :icon="$link['icon']"
+                                            :href="$link['url']"
+                                            :current="$link['current']"
                                             target="_blank"
                                         >
                                             {{ $link['name'] }}
                                         </flux:navlist.item>
                                     @else
-                                        <flux:navlist.item 
-                                            :icon="$link['icon']" 
-                                            :href="$link['url']" 
-                                            :current="$link['current']" 
+                                        <flux:navlist.item
+                                            :icon="$link['icon']"
+                                            :href="$link['url']"
+                                            :current="$link['current']"
                                             wire:navigate
                                         >
                                             {{ $link['name'] }}
