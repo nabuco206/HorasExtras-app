@@ -15,7 +15,12 @@
                 'url' => Route::has('sistema.ingreso-he') ? route('sistema.ingreso-he') : '#',
                 'current' => Route::has('sistema.ingreso-he') && request()->routeIs('sistema.ingreso-he')
             ],
-
+            [
+                'name' => 'Nombre del Componente',
+                'icon' => 'cube-transparent',
+                'url' => url('demo.ciclo-aprobacion'),
+                'current' => request()->is('ciclo-aprobacion')
+            ],
         ],
         'Administración UDP' => [
             [

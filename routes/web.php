@@ -20,7 +20,15 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('settings/password', 'settings.password')->name('settings.password');
     Volt::route('settings/appearance', 'settings.appearance')->name('settings.appearance');
     Volt::route('sistema/ingreso-he', 'sistema.ingreso-he')->name('sistema.ingreso-he');
-    Volt::route('sistema/CicloAprobacion', 'sistema.ciclo-aprobacion')->name('sistema.flujo-aprob');
+    // Cambiado a Livewire tradicional:
+    // Route::get('sistema/ciclo-aprobacion', \App\Http\Livewire\Sistema\CicloAprobacion::class)
+    //     ->name('sistema.flujo-aprob');
+
+    Route::view('demo-ciclo-aprobacion', 'demo-ciclo-aprobacion')->name('demo.ciclo-aprobacion');
+
+    Route::get('/ciclo-aprobacion', function () {
+        return view('livewire.sistema.ciclo-aprobacion');
+    })->name('ciclo-aprobacion');
     // Volt::route('sistema/solicitud', 'sistema.ingreso-hesolicitud_create')->name('sistema.solicitud_create');
 });
 

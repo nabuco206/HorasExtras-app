@@ -56,6 +56,30 @@ class SolicitudHeService
             return true;
         });
     }
+
+    // La función verEstados no debe estar aquí. Solo debe estar obtenerEstados, que retorna el array de estados.
+    public function obtenerEstados($idSolicitud)
+    {
+        $seguimientos = \App\Models\TblSeguimientoSolicitud::where('id_solicitud_he', $idSolicitud)
+            ->with('estado')
+            ->orderBy('created_at')
+            ->get();
+
+        $estados = [];
+
+        foreach ($seguimientos as $seguimiento) {
+            $estados[] = [
+                'idSolicitud' => $idSolicitud,
+                'id' => $seguimiento->id,
+                'gls_estado' => $seguimiento->estado->gls_estado ,
+                'created_at' => $seguimiento->created_at->format('d/m/Y H:i'),
+            ];
+        }
+
+        return $estados;
+    }
+
+
     /**
      * Calcula el porcentaje de horas extras según reglas:
      * - 25%: de 18:00 a 21:00 (días hábiles)

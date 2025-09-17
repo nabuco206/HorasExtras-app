@@ -23,7 +23,8 @@ class TblSolicitudHeFactory extends Factory
     {
         return [
             'username' => fake()->userName(),
-            'tipo_trabajo' => fake()->numberBetween(-100000, 100000),
+            'cod_fiscalia' => fake()->numberBetween(1, 10),
+            'id_tipo_trabajo' => fake()->numberBetween(1, 5),
             'fecha' => fake()->date(),
             'hrs_inicial' => fake()->time(),
             'hrs_final' => fake()->time(),
@@ -32,10 +33,10 @@ class TblSolicitudHeFactory extends Factory
             'fecha_evento' => fake()->date(),
             'hrs_inicio' => fake()->time(),
             'hrs_fin' => fake()->time(),
-            'id_tipoCompensacion' => fake()->numberBetween(-100000, 100000),
-            'min_25' => fake()->numberBetween(-100000, 100000),
-            'min_50' => fake()->numberBetween(-100000, 100000),
-            'total_min' => fake()->numberBetween(-100000, 100000),
+            'id_tipoCompensacion' => fake()->numberBetween(1, 5),
+            'min_25' => fake()->numberBetween(0, 1000),
+            'min_50' => fake()->numberBetween(0, 1000),
+            'total_min' => fake()->numberBetween(0, 1000),
         ];
     }
 }
