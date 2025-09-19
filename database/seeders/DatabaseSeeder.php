@@ -55,6 +55,10 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $fiscalias = [
+            ['cod_fiscalia' => 01, 'gls_fiscalia' => 'UGI - FR'],
+            ['cod_fiscalia' => 02, 'gls_fiscalia' => 'UDP - FR'],
+            ['cod_fiscalia' => 03, 'gls_fiscalia' => 'UAF - FR'],
+            ['cod_fiscalia' => 04, 'gls_fiscalia' => 'URAVYT - FR'],
             ['cod_fiscalia' => 501, 'gls_fiscalia' => 'Fiscalia de Valparaiso'],
             ['cod_fiscalia' => 502, 'gls_fiscalia' => 'Fiscalia de Viña del Mar'],
             ['cod_fiscalia' => 504, 'gls_fiscalia' => 'Fiscalia de Quilpue'],
@@ -116,6 +120,18 @@ class DatabaseSeeder extends Seeder
         TblEstado::create([
             'id' => 1,
             'gls_estado' => 'Aprobado',
+        ]);
+        TblEstado::create([
+            'id' => 2,
+            'gls_estado' => 'Cerrado',
+        ]);
+        TblEstado::create([
+            'id' => 3,
+            'gls_estado' => 'Rechazado',
+        ]);
+        TblEstado::create([
+            'id' => 4,
+            'gls_estado' => 'Boton Apr',
         ]);
         TblTipoTrabajo::truncate();
         TblTipoTrabajo::create([

@@ -1,0 +1,59 @@
+<?php
+
+namespace App\Http\Livewire\Sistema;
+
+use Livewire\Component;
+use App\Services\SolicitudHeService;
+use App\Models\TblTipoTrabajo;
+use App\Models\TblEstado;
+use Illuminate\Support\Facades\Auth;
+
+class CicloAprobacion extends Component
+{
+    public $tipos_trabajo = [];
+    public $estados = [];
+    public $solicitudes = [];
+    public $seleccionados = [];
+    // public $modalEstadosVisible = false;
+    // public $estadosSolicitud = [];
+
+    // public function mount()
+    // {
+    //     $this->tipos_trabajo = TblTipoTrabajo::all();
+    //     $this->estados = TblEstado::all();
+    //     $this->solicitudes = \App\Models\TblSolicitudHe::orderByDesc('id')->get();
+    // }
+
+    public function aprobarSeleccionados()
+    {
+         \Log::info('Entró a aprobarSeleccionados'); // Esto aparecerá en storage/logs/laravel.log
+
+        // O puedes usar un mensaje flash para mostrarlo en la vista:
+        session()->flash('mensaje', '¡Método aprobarSeleccionados ejecutado!');
+
+        app(SolicitudHeService::class)
+            ->cambiarEstadoMultiple($this->seleccionados, 2, 'Aprobado masivamente');
+        $this->reset('seleccionados');
+        $this->mount(); // Recarga los datos
+    }
+
+    public function rechazarSeleccionados()
+    {
+        app(SolicitudHeService::class)
+            ->cambiarEstadoMultiple($this->seleccionados, 3, 'Rechazado masivamente');
+        $this->reset('seleccionados');
+        $this->mount();
+    }
+
+    public function verEstados($idSolicitud)
+    {
+        $service = app(SolicitudHeService::class);
+        $this->estadosSolicitud = $service->obtenerEstados($idSolicitud);
+        $this->modalEstadosVisible = true;
+    }
+
+    public function render()
+    {
+        return view('livewire.sistema.ciclo-aprobacion');
+    }
+}

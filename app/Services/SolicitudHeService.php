@@ -57,6 +57,36 @@ class SolicitudHeService
         });
     }
 
+    /**
+     * Cambia el estado de varias solicitudes y registra el seguimiento.
+     *
+     * @param array $idsSolicitudes
+     * @param int $nuevoEstadoId
+     * @param string|null $comentario
+     * @return void
+     */
+    public function cambiarEstadoMultiple(array $idsSolicitudes, int $nuevoEstadoId, ?string $comentario = null): void
+    {
+        \Log::info('Entró a cambiarEstadoMultiple SolicitudHeService ');
+        DB::transaction(function () use ($idsSolicitudes, $nuevoEstadoId, $comentario) {
+           \Log::info('Entró a cambiarEstadoMultiple SolicitudHeService 2');
+           \Log::info($idsSolicitudes);
+            // 1. Update masivo de estado
+            TblSolicitudHe::whereIn('id', $idsSolicitudes)
+                ->update(['id_estado' => $nuevoEstadoId]);
+
+            // 2. Insertar seguimiento para cada solicitud
+            foreach ($idsSolicitudes as $id) {
+                TblSeguimientoSolicitud::create([
+                    'id_solicitud_he' => $id,
+                    'username'        => Auth::user()->username,
+                    'id_estado'       => $nuevoEstadoId,
+                    // 'comentario'      => $comentario,
+                ]);
+            }
+        });
+    }
+
     // La función verEstados no debe estar aquí. Solo debe estar obtenerEstados, que retorna el array de estados.
     public function obtenerEstados($idSolicitud)
     {

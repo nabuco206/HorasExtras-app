@@ -15,12 +15,12 @@
                 'url' => Route::has('sistema.ingreso-he') ? route('sistema.ingreso-he') : '#',
                 'current' => Route::has('sistema.ingreso-he') && request()->routeIs('sistema.ingreso-he')
             ],
-            [
-                'name' => 'Nombre del Componente',
-                'icon' => 'cube-transparent',
-                'url' => url('demo.ciclo-aprobacion'),
-                'current' => request()->is('ciclo-aprobacion')
-            ],
+        [
+            'name' => 'Demo Ciclo Aprobación',
+            'icon' => 'cube-transparent',
+            'url' => route('demo.ciclo-aprobacion'), // si tienes una ruta, o usa url('/demo-ciclo-aprobacion')
+            'current' => request()->is('demo-ciclo-aprobacion')
+        ]
         ],
         'Administración UDP' => [
             [
@@ -36,10 +36,10 @@
     if ($user->id_rol = 1) {
         $groups['Aproba'] = [
             [
-                'name' => 'Pendientes de Aprobación',
+                'name' => 'Pendientes de Aprobaciónnnn',
                 'icon' => 'shield-check',
-                'url' => Route::has('sistema.flujo-aprob') ? route('sistema.flujo-aprob') : '#',
-                'current' => Route::has('sistema.flujo-aprob') && request()->routeIs('sistema.flujo-aprob')
+                'url' => Route::has('sistema.ciclo-aprobacion') ? route('sistema.ciclo-aprobacion') : '#',
+                'current' => Route::has('sistema.ciclo-aprobacion') && request()->routeIs('sistema.ciclo-aprobacion')
             ],
         ];
     }

@@ -16,6 +16,11 @@ Al clonar :
     npm run build 
     php artisan serve
 
+php artisan make:livewire DemoCicloAprobacion
+ COMPONENT CREATED  🤙
+
+CLASS: app/Livewire/DemoCicloAprobacion.php
+VIEW:  resources/views/livewire/demo-ciclo-aprobacion.blade.php
 
 
     🔁 Ahora puedes descargar los últimos cambios desde GitHub con:
