@@ -31,6 +31,6 @@ class TblTipoCompensacion extends Model
 
     public function tblSolicitudHe(): BelongsTo
     {
-        return $this->belongsTo(TblSolicitudHe::class, 'id', 'id_tipoCompensacion');
+        return $this->belongsTo(TblSolicitudHe::class, 'id', 'id_tipo_compensacion');
     }
 }

@@ -21,7 +21,8 @@ return new class extends Migration
             $table->bigInteger('cod_fiscalia')->nullable();
             $table->foreign('cod_fiscalia')->references('cod_fiscalia')->on('tbl_fiscalias');
             $table->foreignId('id_escalafon')->nullable()->constrained('tbl_escalafons');
-            $table->unsignedBigInteger('id_turno')->default(0)->after('id_escalafon');
+            $table->foreignId('id_turno')->nullable()->constrained('tbl_turnos');
+            // $table->foreignId('id_turno')->default(0)->after('id_escalafon');
             $table->boolean('flag_lider')->default(true)->comment('Indica si la persona es lider en el sistema');
             $table->boolean('flag_activo')->default(0)->comment('Indica estado del registro');
             $table->foreignId('id_rol')->nullable()->constrained('tbl_rol');

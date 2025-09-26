@@ -133,7 +133,7 @@ class DatabaseSeeder extends Seeder
             'id' => 4,
             'gls_estado' => 'Boton Apr',
         ]);
-        TblTipoTrabajo::truncate();
+        // TblTipoTrabajo::truncate();
         TblTipoTrabajo::create([
             'id' => 0,
             'gls_tipo_trabajo' => 'EIVG',

@@ -20,8 +20,14 @@
             'icon' => 'cube-transparent',
             'url' => route('demo.ciclo-aprobacion'), // si tienes una ruta, o usa url('/demo-ciclo-aprobacion')
             'current' => request()->is('demo-ciclo-aprobacion')
-        ]
         ],
+         [
+            'name' => 'Solicitud Compensación',
+            'icon' => 'cube-transparent',
+            'url' => route('sistema.ingreso-compensacion'),
+            'current' => request()->is('sistema/ingreso-compensacion')
+        ]
+                ],
         'Administración UDP' => [
             [
                 'name' => 'Panel de Admin',

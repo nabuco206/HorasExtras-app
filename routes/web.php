@@ -22,10 +22,15 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('sistema/ingreso-he', 'sistema.ingreso-he')->name('sistema.ingreso-he');
 
     Volt::route('sistema/ciclo-aprobacion', 'sistema.ciclo-aprobacion')->name('sistema.ciclo-aprobacion');
+    
 
     Route::get('/demo-ciclo-aprobacion', \App\Livewire\DemoCicloAprobacion::class)
     ->middleware(['auth'])
     ->name('demo.ciclo-aprobacion');
+
+    Route::get('sistema/ingreso-compensacion', \App\Livewire\Sistema\IngresoCompensacion::class)
+    ->middleware(['auth'])
+    ->name('sistema.ingreso-compensacion');
 });
 
 

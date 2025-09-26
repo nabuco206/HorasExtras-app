@@ -21,7 +21,10 @@ class DemoCicloAprobacion extends Component
     {
         $this->tipos_trabajo = TblTipoTrabajo::all();
         $this->estados = TblEstado::all();
-        $this->solicitudes = \App\Models\TblSolicitudHe::orderByDesc('id')->get();
+        $codFiscalia = auth()->user()->cod_fiscalia;
+        $this->solicitudes = \App\Models\TblSolicitudHe::where('cod_fiscalia', $codFiscalia)
+                ->orderByDesc('id')
+                ->get();
        
     }
 

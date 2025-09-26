@@ -31,10 +31,7 @@ class TblSolicitudHe extends Model
         'hrs_final',
         'id_estado',
         'tipo_solicitud',
-        'fecha_evento',
-        'hrs_inicio',
-        'hrs_fin',
-        'id_tipoCompensacion',
+        'id_tipo_compensacion',
         'min_reales',
         'min_25',
         'min_50',
@@ -52,7 +49,7 @@ class TblSolicitudHe extends Model
         'fecha' => 'date',
         'id_estado' => 'integer',
         'fecha_evento' => 'date',
-        'id_tipoCompensacion' => 'integer',
+        'id_tipo_compensacion' => 'integer',
         'min_reales' => 'integer',
         'min_25' => 'integer',
         'min_50' => 'integer',
@@ -81,7 +78,7 @@ class TblSolicitudHe extends Model
 
     public function tipoCompensacion(): BelongsTo
     {
-        return $this->belongsTo(TblTipoCompensacion::class, 'id_tipoCompensacion');
+        return $this->belongsTo(TblTipo_Compensacion::class, 'id_tipo_compensacion');
     }
 
     /**

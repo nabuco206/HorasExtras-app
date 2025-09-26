@@ -1,5 +1,5 @@
 
-<div class="p-6" x-data="{
+<div class="w-full" x-data="{
         seleccionados: @entangle('seleccionados'),
         selectAll: false,
         toggleAll() {
@@ -12,7 +12,7 @@
     }">
     <div class="bg-white dark:bg-gray-800 rounded-xl border border-neutral-200 dark:border-neutral-700 w-full">
         <div class="p-6 border-b border-neutral-200 dark:border-neutral-700">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Solicitudes Ingresadas</h3>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Solicitudes Ingresadas DEMO</h3>
         </div>
         @if (session()->has('mensaje'))
             <div class="bg-green-100 text-green-800 px-4 py-2 rounded mb-2">
@@ -22,7 +22,7 @@
         <div class="p-6">
             <div class="mb-4 flex gap-2">
                 <button wire:click="aprobarSeleccionados" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded shadow">
-                    Apruebo
+                    Apruebo-Demo
                 </button>
                 <button wire:click="rechazarSeleccionados" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded shadow">
                     Rechazo
@@ -50,8 +50,6 @@
                         <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Hora Final</th>
                         <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Estado</th>
                         <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Tipo Solicitud</th>
-                        <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Hora Inicio</th>
-                        <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Hora Fin</th>
                         <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Compensación</th>
                         <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Min. Reales</th>
                         <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Min. 25%</th>
@@ -120,17 +118,15 @@
                                 <td class="px-2 py-2 text-center whitespace-nowrap">
                                     <span class="max-w-24 block truncate" title="{{ $solicitud->tipo_solicitud ?? '-' }}">{{ $solicitud->tipo_solicitud ?? '-' }}</span>
                                 </td>
-                                <td class="px-2 py-2 text-center whitespace-nowrap">{{ $solicitud->hrs_inicio ?? '-' }}</td>
-                                <td class="px-2 py-2 text-center whitespace-nowrap">{{ $solicitud->hrs_fin ?? '-' }}</td>
                                 <td class="px-2 py-2 text-center whitespace-nowrap">
-                                    @if($solicitud->id_tipoCompensacion == 1)
+                                    @if($solicitud->id_tipo_compensacion == 1)
                                         <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
                                             <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                                 <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"/>
                                             </svg>
                                             Dinero
                                         </span>
-                                    @elseif($solicitud->id_tipoCompensacion == 2)
+                                    @elseif($solicitud->id_tipo_compensacion == 0)
                                         <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
                                             <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
