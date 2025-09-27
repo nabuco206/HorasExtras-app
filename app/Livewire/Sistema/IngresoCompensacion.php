@@ -13,11 +13,14 @@ class IngresoCompensacion extends Component
     public $hrs_inicial;
     public $hrs_final;
     public $total_min;
+    public $solicitudes = [];
+    public $mensaje = null;
 
     public function mount()
     {
         $this->username = auth()->user()->name;
         $this->cod_fiscalia = auth()->user()->cod_fiscalia;
+        $this->solicitudes = \App\Models\TblSolicitudCompensa::orderByDesc('id')->get();
     }
 
     public function save()
@@ -28,8 +31,11 @@ class IngresoCompensacion extends Component
             'fecha' => 'required|date',
             'hrs_inicial' => 'required',
             'hrs_final' => 'required',
-            'total_min' => 'nullable|integer',
         ]);
+
+        $inicio = \Carbon\Carbon::createFromFormat('H:i', $this->hrs_inicial);
+        $fin = \Carbon\Carbon::createFromFormat('H:i', $this->hrs_final);
+        $this->total_min = $inicio->diffInMinutes($fin);
 
         TblSolicitudCompensa::create([
             'username' => $this->username,
@@ -42,6 +48,7 @@ class IngresoCompensacion extends Component
 
         session()->flash('mensaje', 'Solicitud ingresada correctamente');
         $this->reset(['fecha', 'hrs_inicial', 'hrs_final', 'total_min']);
+        $this->solicitudes = TblSolicitudCompensa::orderByDesc('id')->get();
     }
 
     public function render()
