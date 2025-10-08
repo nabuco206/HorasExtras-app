@@ -22,12 +22,12 @@ class TblPersonaFactory extends Factory
     public function definition(): array
     {
         // Fiscalías válidas disponibles
-        $fiscalias = [501, 502, 504, 507, 5, 6, 7, 503, 515];
+        $fiscalias = [501, 502, 504, 507, 503, 515];
 
         return [
-            'Nombre' => fake()->firstName(),
-            'Apellido' => fake()->lastName(),
-            'UserName' => fake()->unique()->userName(),
+            'nombre' => fake()->firstName(),
+            'apellido' => fake()->lastName(),
+            'username' => fake()->unique()->userName(),
             'cod_fiscalia' => fake()->randomElement($fiscalias),
             'id_escalafon' => 1, // Usamos el escalafón que existe
             'flag_lider' => fake()->boolean(30), // 30% de probabilidad de ser líder

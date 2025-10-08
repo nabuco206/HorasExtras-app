@@ -18,8 +18,6 @@ return new class extends Migration
             $table->string('username');
             $table->bigInteger('cod_fiscalia');
             $table->foreign('cod_fiscalia')->references('cod_fiscalia')->on('tbl_fiscalias');
-            // $table->foreignId('id_tipo_trabajo')->nullable()->constrained('tbl_tipo_trabajo');
-            // $table->foreignId('tipo_trabajo_id')->nullable()->constrained('tipo_trabajos');
             $table->bigInteger('id_tipo_trabajo');
             $table->foreign('id_tipo_trabajo')->references('id')->on('tbl_tipo_trabajo')->onDelete('cascade');
             $table->date('fecha');
@@ -28,11 +26,7 @@ return new class extends Migration
 
             $table->bigInteger('id_estado')->default(0);
             $table->foreign('id_estado')->references('id')->on('tbl_estados');
-
-            $table->char('tipo_solicitud');
             $table->bigInteger('id_tipo_compensacion');
-            $table->foreign('id_tipo_compensacion')->references('id')->on('tbl_tipo_compensacions')->onDelete('cascade');
-//             $table->foreign('id_tipoCompensacion')->references('id')->on('tbl_tipo_compensacions');
             $table->bigInteger('min_reales')->nullable();
             $table->bigInteger('min_25')->nullable();
             $table->bigInteger('min_50')->nullable();

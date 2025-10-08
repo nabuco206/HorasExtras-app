@@ -11,15 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        
-
-        Schema::create('tbl_tipo_compensacions', function (Blueprint $table) {
+        Schema::create('tbl_tipo_compensaciones', function (Blueprint $table) {
             $table->id();
-            $table->string('gls_tipoCompensacion', 255);
+            $table->string('gls_tipo_compensacion');
             $table->timestamps();
         });
-
-        
     }
 
     /**
@@ -27,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tbl_tipo_compensacions');
+        Schema::dropIfExists('tbl_tipo_compensaciones');
     }
 };

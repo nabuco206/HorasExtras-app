@@ -44,7 +44,7 @@
                     :target="($profileItem?->shouldOpenUrlInNewTab() ?? false) ? '_blank' : null"
                     tag="a"
                 >
-                    {{ $profileItem?->getLabel() ?? ($profilePage ? $profilePage::getLabel() : null) ?? filament()->getUserName($user) }}
+                    {{ $profileItem?->getLabel() ?? ($profilePage ? $profilePage::getLabel() : null) ?? filament()->getusername($user) }}
                 </x-filament::dropdown.list.item>
             </x-filament::dropdown.list>
         @else
@@ -52,7 +52,7 @@
                 :color="$profileItem?->getColor()"
                 :icon="$profileItem?->getIcon() ?? \Filament\Support\Facades\FilamentIcon::resolve('panels::user-menu.profile-item') ?? 'heroicon-m-user-circle'"
             >
-                {{ $profileItem?->getLabel() ?? filament()->getUserName($user) }}
+                {{ $profileItem?->getLabel() ?? filament()->getusername($user) }}
             </x-filament::dropdown.header>
         @endif
 

@@ -11,9 +11,9 @@ class TblPersona extends Authenticatable
     protected $table = 'tbl_personas';
 
     protected $fillable = [
-        'Nombre',
-        'Apellido',
-        'UserName',
+        'nombre',
+        'apellido',
+        'username',
         'cod_fiscalia',
         'id_escalafon',
         'flag_lider',
@@ -37,25 +37,25 @@ class TblPersona extends Authenticatable
 
     /**
      * Accesor para el atributo "name" requerido por Filament.
-     * Siempre retorna el UserName o un string fijo si está vacío.
+     * Siempre retorna el username o un string fijo si está vacío.
      */
     public function getNameAttribute(): string
     {
-        // Puedes cambiar 'Usuario Filament' por $this->UserName si prefieres mostrar el username real
-        return $this->UserName ?? 'Usuario Filament';
+        // Ahora usa username en minúsculas
+        return $this->username ?? 'Usuario Filament';
     }
 
     /**
-     * Forzar el identificador de autenticación a UserName para Filament y Laravel
+     * Forzar el identificador de autenticación a username para Filament y Laravel
      */
     public function getAuthIdentifierName()
     {
-        return 'UserName';
+        return 'username';
     }
 
     public function tblSolicitudHe(): BelongsTo
     {
-        return $this->belongsTo(TblSolicitudHe::class, 'UserName', 'username');
+        return $this->belongsTo(TblSolicitudHe::class, 'username', 'username');
     }
 
     public function fiscalia()
@@ -90,30 +90,30 @@ class TblPersona extends Authenticatable
 
     public function initials(): string
     {
-        $nombreCompleto = $this->Nombre . ' ' . $this->Apellido;
+        $nombreCompleto = $this->nombre . ' ' . $this->apellido;
         return collect(explode(' ', $nombreCompleto))
             ->map(fn ($parte) => mb_substr($parte, 0, 1))
             ->implode('');
     }
 
     // Métodos requeridos para Filament y autenticación
-    public function getUserNameAttribute(): string
+    public function getUsernameAttribute(): string
     {
         // Siempre retorna string no vacío, nunca null
-        $username = (string) ($this->attributes['UserName'] ?? '');
+        $username = (string) ($this->attributes['username'] ?? '');
         return $username !== '' ? $username : 'SinNombre';
     }
 
     public function getUserName(): string
     {
         // Log para depuración
-        $username = $this->UserName ?? 'null';
-        \Log::info('[Filament][getUserName] Instancia: ' . get_class($this) . ' | UserName: ' . $username);
+        $username = $this->username ?? 'null';
+        \Log::info('[Filament][getUserName] Instancia: ' . get_class($this) . ' | username: ' . $username);
         return $username ?: 'SinNombre';
     }
 
     public function username(): string
     {
-        return $this->UserName;
+        return $this->username;
     }
 }

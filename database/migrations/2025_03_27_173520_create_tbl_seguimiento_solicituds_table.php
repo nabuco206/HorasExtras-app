@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('username');
             // $table->bigInteger('id_estado');
             $table->foreignId('id_estado')->nullable()->constrained('tbl_estados');
-            $table->foreign('username')->references('UserName')->on('tbl_personas')->onDelete('cascade');
+            $table->foreign('username')->references('username')->on('tbl_personas')->onDelete('cascade');
             $table->timestamps();
 
 

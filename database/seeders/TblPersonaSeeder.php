@@ -23,7 +23,7 @@ class TblPersonaSeeder extends Seeder
         TblPersona::create([
             'Nombre' => 'María',
             'Apellido' => 'González',
-            'UserName' => 'maria.gonzalez',
+            'username' => 'maria.gonzalez',
             'cod_fiscalia' => 501, // Fiscalia de Valparaiso
             'id_escalafon' => 1,
             'flag_lider' => true,
@@ -34,7 +34,7 @@ class TblPersonaSeeder extends Seeder
         TblPersona::create([
             'Nombre' => 'Carlos',
             'Apellido' => 'Rodríguez',
-            'UserName' => 'carlos.rodriguez',
+            'username' => 'carlos.rodriguez',
             'cod_fiscalia' => 502, // Fiscalia de Viña del Mar
             'id_escalafon' => 1,
             'flag_lider' => true,
@@ -45,7 +45,7 @@ class TblPersonaSeeder extends Seeder
         TblPersona::create([
             'Nombre' => 'Andrea',
             'Apellido' => 'Silva',
-            'UserName' => 'andrea.silva',
+            'username' => 'andrea.silva',
             'cod_fiscalia' => 504, // Fiscalia de Quilpue
             'id_escalafon' => 1,
             'flag_lider' => true,
@@ -57,7 +57,7 @@ class TblPersonaSeeder extends Seeder
         TblPersona::create([
             'Nombre' => 'Ana',
             'Apellido' => 'López',
-            'UserName' => 'ana.lopez',
+            'username' => 'ana.lopez',
             'cod_fiscalia' => 501, // Fiscalia de Valparaiso
             'id_escalafon' => 1,
             'flag_lider' => false,
@@ -68,7 +68,7 @@ class TblPersonaSeeder extends Seeder
         TblPersona::create([
             'Nombre' => 'Luis',
             'Apellido' => 'Martínez',
-            'UserName' => 'luis.martinez',
+            'username' => 'luis.martinez',
             'cod_fiscalia' => 507, // Fiscalia de Villa Alemana
             'id_escalafon' => 1,
             'flag_lider' => false,
@@ -79,7 +79,7 @@ class TblPersonaSeeder extends Seeder
         TblPersona::create([
             'Nombre' => 'Carmen',
             'Apellido' => 'Morales',
-            'UserName' => 'carmen.morales',
+            'username' => 'carmen.morales',
             'cod_fiscalia' => 503, // Fiscalia de San Antonio
             'id_escalafon' => 1,
             'flag_lider' => false,

@@ -62,6 +62,6 @@ class User extends Authenticatable
 
     public function persona()
     {
-        return $this->hasOne(\App\Models\TblPersona::class, 'Username', 'name');
+        return $this->hasOne(\App\Models\TblPersona::class, 'username', 'name');
     }
 }

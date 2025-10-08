@@ -62,7 +62,6 @@ new class extends Component {
             return;
         }
 
-    $validated['tipo_solicitud'] = 0;
     $validated['id_tipo_compensacion'] = $this->propone_pago ? 1 : 0;
     $validated['username'] = Auth::user()->name; // Asegurar que el username esté presente
     $validated['cod_fiscalia'] = Auth::user()->cod_fiscalia; // Agregar cod_fiscalia del usuario autenticado
@@ -166,8 +165,8 @@ new class extends Component {
                                     <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Hora Inicial</th>
                                     <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Hora Final</th>
                                     <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Estado</th>
-                                    <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Tipo Solicitud</th>
-                                    <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Compensación</th>
+
+
                                     <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Min. Reales</th>
                                     <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Min. 25%</th>
                                     <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Min. 50%</th>
@@ -221,9 +220,6 @@ new class extends Component {
                                                 @else
                                                     <span>{{ $solicitud->id_estado ?? '-' }}</span>
                                                 @endif
-                                            </td>
-                                            <td class="px-2 py-2 text-center whitespace-nowrap">
-                                                <span class="max-w-24 block truncate" title="{{ $solicitud->tipo_solicitud ?? '-' }}">{{ $solicitud->tipo_solicitud ?? '-' }}</span>
                                             </td>
                                             <td class="px-2 py-2 text-center whitespace-nowrap">
                                                 @if($solicitud->id_tipo_compensacion == 1)

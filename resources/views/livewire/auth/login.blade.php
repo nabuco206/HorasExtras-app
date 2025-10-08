@@ -13,7 +13,7 @@ use Livewire\Volt\Component;
 
 new #[Layout('components.layouts.auth')] class extends Component {
     #[Validate('required|string')]
-    public string $UserName = '';
+    public string $username = '';
 
     #[Validate('required|string')]
     public string $password = '';
@@ -29,11 +29,11 @@ new #[Layout('components.layouts.auth')] class extends Component {
 
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt(['UserName' => $this->UserName, 'password' => $this->password], $this->remember)) {
+        if (! Auth::attempt(['username' => $this->username, 'password' => $this->password], $this->remember)) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'UserName' => __('auth.failed'),
+                'username' => __('auth.failed'),
             ]);
         }
 
@@ -69,7 +69,7 @@ new #[Layout('components.layouts.auth')] class extends Component {
      */
     protected function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->UserName).'|'.request()->ip());
+        return Str::transliterate(Str::lower($this->username).'|'.request()->ip());
     }
 }; ?>
 
@@ -82,7 +82,7 @@ new #[Layout('components.layouts.auth')] class extends Component {
     <form wire:submit="login" class="flex flex-col gap-6">
         <!-- Email Address -->
         <flux:input
-            wire:model="UserName"
+            wire:model="username"
             :label="__('Nombre de usuario')"
             type="text"
             required

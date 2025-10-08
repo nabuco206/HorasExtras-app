@@ -6,7 +6,7 @@
     @if($user)
         <div style="color:red; margin-bottom: 1em;">
             Usuario autenticado: {{ get_class($user) }}<br>
-            UserName: {{ $user->UserName ?? 'null' }}
+            UserName: {{ $user->username ?? 'null' }}
         </div>
     @endif
     @if (filament()->hasRegistration())

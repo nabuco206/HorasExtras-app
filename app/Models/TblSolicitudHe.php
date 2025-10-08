@@ -30,7 +30,6 @@ class TblSolicitudHe extends Model
         'hrs_inicial',
         'hrs_final',
         'id_estado',
-        'tipo_solicitud',
         'id_tipo_compensacion',
         'min_reales',
         'min_25',

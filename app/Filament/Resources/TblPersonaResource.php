@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\Select;
 use Filament\Tables\Columns\TextColumn;
+use Illuminate\Validation\Rules;
 
 class TblPersonaResource extends Resource
 {
@@ -42,22 +43,24 @@ class TblPersonaResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('Nombre')
+                Forms\Components\TextInput::make('nombre')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\TextInput::make('Apellido')
+                Forms\Components\TextInput::make('apellido')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\TextInput::make('UserName')
+                Forms\Components\TextInput::make('username')
                     ->required()
-                    ->maxLength(255),
+                    ->maxLength(255)
+                    ->unique(TblPersona::class, 'username', ignoreRecord: true)
+                    ->helperText('El nombre de usuario debe ser único en el sistema'),
                 Select::make('cod_fiscalia')
                     ->label('Fiscalía')
                     ->options(
                         TblFiscalia::query()
                             ->whereNotNull('gls_fiscalia')
                             ->where('gls_fiscalia', '!=', '')
-                            ->pluck('gls_fiscalia', 'id')
+                            ->pluck('gls_fiscalia', 'cod_fiscalia')
                             ->toArray()
                     )
                     ->searchable()
@@ -88,13 +91,13 @@ class TblPersonaResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('Nombre')
+                TextColumn::make('nombre')
                     ->sortable()
                     ->searchable(),
-                TextColumn::make('Apellido')
+                TextColumn::make('apellido')
                     ->sortable()
                     ->searchable(),
-                TextColumn::make('UserName')
+                TextColumn::make('username')
                     ->sortable()
                     ->searchable(),
                 TextColumn::make('fiscalia.gls_fiscalia')
@@ -119,6 +122,19 @@ class TblPersonaResource extends Resource
                     ->falseIcon('heroicon-o-x-circle')
                     ->trueColor('success')
                     ->falseColor('danger'),
+                TextColumn::make('id_rol')
+                    ->label('Rol')
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        '1' => 'Usuario',
+                        '2' => 'Líder',
+                        default => 'Sin rol',
+                    })
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        '1' => 'primary',
+                        '2' => 'warning',
+                        default => 'gray',
+                    }),
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('flag_lider')
@@ -143,8 +159,8 @@ class TblPersonaResource extends Resource
                     })
                     ->requiresConfirmation()
                     ->modalHeading(fn ($record) => $record->flag_activo ? 'Desactivar Persona' : 'Activar Persona')
-                    ->modalDescription(fn ($record) => $record->flag_activo 
-                        ? '¿Está seguro de que desea desactivar esta persona?' 
+                    ->modalDescription(fn ($record) => $record->flag_activo
+                        ? '¿Está seguro de que desea desactivar esta persona?'
                         : '¿Está seguro de que desea activar esta persona?'),
             ])
             ->bulkActions([

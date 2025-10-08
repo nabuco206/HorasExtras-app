@@ -11,16 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-
-
-        Schema::create('tbl_estados', function (Blueprint $table) {
+        Schema::create('tbl_tipo_estados', function (Blueprint $table) {
             $table->id();
-            $table->string('gls_estado');
-            $table->foreignId('id_tipo_estado')->nullable()->constrained('tbl_tipo_estados');
+            $table->string('gls_tipo_estado');
             $table->timestamps();
         });
-
-
     }
 
     /**
@@ -28,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tbl_estados');
+        Schema::dropIfExists('tbl_tipo_estados');
     }
 };

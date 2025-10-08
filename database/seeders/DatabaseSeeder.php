@@ -10,7 +10,7 @@ use App\Models\TblFeriado;
 use App\Models\TblTipoCompensacion;
 use App\Models\TblEstado;
 use App\Models\TblTipoTrabajo;
-use App\Models\Tbl;
+use App\Models\TblTipoEstado;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -21,16 +21,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Comentado para PostgreSQL
-        // DB::statement('PRAGMA foreign_keys = OFF;');
-
-        // User::factory(10)->create();
-        // TblFiscalia::factory(10)->create([
-        //     'id'=>501,
-        //     'gls_fiscalia' => 'Fiscalía de Valparaíso',
-        // ]);
-
-
 
             DB::table('tbl_rol')->insert([
                            ['gls_rol' => 'Usuario']
@@ -42,8 +32,6 @@ class DatabaseSeeder extends Seeder
 
 
         TblEscalafon::truncate();
-
-
         TblEscalafon::create([
             'gls_escalafon' => 'TECNICO',
         ]);
@@ -52,6 +40,9 @@ class DatabaseSeeder extends Seeder
         ]);
         TblEscalafon::create([
             'gls_escalafon' => 'AUXILIAR',
+        ]);
+         TblEscalafon::create([
+            'gls_escalafon' => 'ADMINISTRATIVO',
         ]);
 
         $fiscalias = [
@@ -63,9 +54,9 @@ class DatabaseSeeder extends Seeder
             ['cod_fiscalia' => 502, 'gls_fiscalia' => 'Fiscalia de Viña del Mar'],
             ['cod_fiscalia' => 504, 'gls_fiscalia' => 'Fiscalia de Quilpue'],
             ['cod_fiscalia' => 507, 'gls_fiscalia' => 'Fiscalia de Villa Alemana'],
-            ['cod_fiscalia' => 5, 'gls_fiscalia' => 'Fiscalia de Limache'],
-            ['cod_fiscalia' => 6, 'gls_fiscalia' => 'Fiscalia de Quillota'],
-            ['cod_fiscalia' => 7, 'gls_fiscalia' => 'Fiscalia de La Calera'],
+            ['cod_fiscalia' => 511, 'gls_fiscalia' => 'Fiscalia de Limache'],
+            ['cod_fiscalia' => 508, 'gls_fiscalia' => 'Fiscalia de Quillota'],
+            ['cod_fiscalia' => 509, 'gls_fiscalia' => 'Fiscalia de La Calera'],
             ['cod_fiscalia' => 503, 'gls_fiscalia' => 'Fiscalia de San Antonio'],
             ['cod_fiscalia' => 515, 'gls_fiscalia' => 'Fiscalia de Casablanca'],
         ];
@@ -77,9 +68,9 @@ class DatabaseSeeder extends Seeder
 
         TblPersona::truncate();
         $persona1 = TblPersona::create([
-            'Nombre' => 'CristianCRM',
-            'Apellido' => 'Rojas',
-            'UserName' => 'crojasm',
+            'nombre' => 'CristianCRM',
+            'apellido' => 'Rojas',
+            'username' => 'crojasm',
             'cod_fiscalia' => 501,
             'id_escalafon' => 1,
             'flag_lider' => true,
@@ -88,9 +79,9 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $persona2 = TblPersona::create([
-            'Nombre' => 'Persona',
-            'Apellido' => '01',
-            'UserName' => 'persona01',
+            'nombre' => 'Persona',
+            'apellido' => '01',
+            'username' => 'persona01',
             'cod_fiscalia' => 501,
             'id_escalafon' => 1,
             'flag_lider' => false,
@@ -99,16 +90,29 @@ class DatabaseSeeder extends Seeder
         ]);
 
 
+        TblTipoEstado::truncate();
+        TblTipoEstado::create([
+            'id' => 0,
+            'gls_tipo_estado' => 'Flujo HE',
+        ]);
+        TblTipoEstado::create([
+            'id' => 1,
+            'gls_tipo_estado' => 'Flujo Compensacion',
+        ]);
+        TblTipoEstado::create([
+            'id' => 2,
+            'gls_tipo_estado' => 'Bolson',
+        ]);
+
 
         TblTipoCompensacion::truncate();
         TblTipoCompensacion::create([
             'id' => 0,
-            'gls_tipoCompensacion' => 'Compensación en Hrs',
+            'gls_tipo_compensacion' => 'Compensación en Hrs',
         ]);
-
         TblTipoCompensacion::create([
             'id' => 1,
-            'gls_tipoCompensacion' => 'Pago',
+            'gls_tipo_compensacion' => 'Pago',
         ]);
 
         TblEstado::truncate();

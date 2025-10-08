@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class TblTipoCompensacion extends Model
 {
     use HasFactory;
+    protected $table = 'tbl_tipo_compensaciones';
 
     /**
      * The attributes that are mass assignable.
@@ -16,7 +17,7 @@ class TblTipoCompensacion extends Model
      * @var array
      */
     protected $fillable = [
-        'gls_tipoCompensacion',
+        'gls_tipo_compensacion',
     ];
 
     /**
@@ -26,7 +27,7 @@ class TblTipoCompensacion extends Model
      */
     protected $casts = [
         'id' => 'integer',
-        'gls_tipoCompensacion' => 'string',
+        'gls_tipo_compensacion' => 'string',
     ];
 
     public function tblSolicitudHe(): BelongsTo

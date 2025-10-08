@@ -11,22 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-
-
-        Schema::create('tbl_bolson_tiempos', function (Blueprint $table) {
+        Schema::create('tbl_bolson_hists', function (Blueprint $table) {
             $table->id();
+            $table->bigInteger('id_bolson');
             $table->string('username');
-            $table->bigInteger('id_solicitud');
-            $table->bigInteger('minutos_agregados');
-            $table->bigInteger('saldo_minutos');
-            $table->date('fec_creacion');
-            $table->date('fec_vence');
-            $table->bigInteger('origen');
-            $table->bigInteger('id_estado');
+            $table->string('accion');
+            $table->bigInteger('minutos_afectados');
             $table->timestamps();
         });
-
-
     }
 
     /**
@@ -34,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tbl_bolson_tiempos');
+        Schema::dropIfExists('tbl_bolson_hists');
     }
 };
