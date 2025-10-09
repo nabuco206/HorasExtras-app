@@ -10,15 +10,22 @@ class TblBolsonTiempo extends Model
 {
     use HasFactory;
 
+    protected $table = 'tbl_bolson_tiempos';
+
     /**
      * The attributes that are mass assignable.
      *
      * @var array
      */
     protected $fillable = [
+        'username',
         'id_solicitud',
-        'tiempo',
-        'estado',
+        'minutos_agregados',
+        'saldo_minutos',
+        'fec_creacion',
+        'fec_vence',
+        'origen',
+        'id_estado',
     ];
 
     /**
@@ -29,8 +36,11 @@ class TblBolsonTiempo extends Model
     protected $casts = [
         'id' => 'integer',
         'id_solicitud' => 'integer',
-        'tiempo' => 'integer',
+        'minutos_agregados' => 'integer',
+        'saldo_minutos' => 'integer',
     ];
+
+    public $timestamps = true;
 
     public function idSolicitud(): BelongsTo
     {

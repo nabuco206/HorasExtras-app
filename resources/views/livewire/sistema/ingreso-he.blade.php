@@ -50,23 +50,21 @@ new class extends Component {
     {
         $validated = $this->validate([
             'id_tipo_trabajo' => ['required', 'integer', 'exists:tbl_tipo_trabajo,id'],
-            'fecha' => ['required', 'date', 'before_or_equal:today'], // No permite fechas futuras
+            'fecha' => ['required', 'date', 'before_or_equal:today'],
             'hrs_inicial' => ['required', 'date_format:H:i'],
             'hrs_final' => ['required', 'date_format:H:i', 'after:hrs_inicial'],
             'propone_pago' => ['boolean'],
         ]);
 
-        // Validación adicional: no permitir cruce de medianoche
         if ($this->hrs_final <= $this->hrs_inicial) {
             session()->flash('error', 'La hora de salida debe ser mayor que la hora de ingreso y no puede cruzar las 00:00 hrs.');
             return;
         }
 
-    $validated['id_tipo_compensacion'] = $this->propone_pago ? 1 : 0;
-    $validated['username'] = Auth::user()->name; // Asegurar que el username esté presente
-    $validated['cod_fiscalia'] = Auth::user()->cod_fiscalia; // Agregar cod_fiscalia del usuario autenticado
+        $validated['id_tipo_compensacion'] = $this->propone_pago ? 1 : 0;
+        $validated['username'] = Auth::user()->name;
+        $validated['cod_fiscalia'] = Auth::user()->cod_fiscalia;
 
-        // Aplicar el cálculo automático de porcentajes usando SolicitudHeService
         try {
             $solicitudHeService = app(\App\Services\SolicitudHeService::class);
             $resultado = $solicitudHeService->calculaPorcentaje(
@@ -75,7 +73,6 @@ new class extends Component {
                 $this->hrs_final
             );
 
-            // Agregar los campos calculados
             $validated['fecha_evento'] = $this->fecha;
             $validated['hrs_inicio'] = $this->hrs_inicial;
             $validated['hrs_fin'] = $this->hrs_final;
@@ -85,7 +82,6 @@ new class extends Component {
             $validated['total_min'] = $resultado['total_min'];
 
         } catch (\Exception $e) {
-            // Si hay error en el cálculo, usar valores por defecto
             $validated['fecha_evento'] = $this->fecha;
             $validated['hrs_inicio'] = $this->hrs_inicial;
             $validated['hrs_fin'] = $this->hrs_final;
@@ -101,8 +97,39 @@ new class extends Component {
         \App\Services\SeguimientoSolicitudLogger::log(
             $nuevaSolicitud->id,
             $this->username,
-            $nuevaSolicitud->id_estado ?? 0 // Usa el estado de la solicitud o 1 por defecto
+            $nuevaSolicitud->id_estado ?? 0
         );
+
+        // === AGREGAR MINUTOS AL BOLSON Y REGISTRAR EN HISTORIAL ===
+        if ($nuevaSolicitud->id_tipo_compensacion == 0 && $nuevaSolicitud->total_min > 0) {
+            // Obtener saldo anterior
+            $ultimoBolson = \App\Models\TblBolsonTiempo::where('username', $this->username)
+                ->orderByDesc('id')
+                ->first();
+            $saldoAnterior = $ultimoBolson ? $ultimoBolson->saldo_minutos : 0;
+            $minutosAgregar = intval($nuevaSolicitud->total_min);
+            $nuevoSaldo = $saldoAnterior + $minutosAgregar;
+
+            // Crear registro en tbl_bolson_tiempos
+            $nuevoBolson = \App\Models\TblBolsonTiempo::create([
+                'username'          => $this->username,
+                'id_solicitud'      => $nuevaSolicitud->id,
+                'minutos_agregados' => $minutosAgregar,
+                'saldo_minutos'     => $nuevoSaldo,
+                'fec_creacion'      => now()->toDateString(),
+                'fec_vence'         => now()->addYear()->toDateString(), // Ajusta si tu lógica es distinta
+                'origen'            => 1, // Cambia si tienes otro origen
+                'id_estado'         => 1, // Cambia si tienes otro estado inicial
+            ]);
+
+            // Crear registro en tbl_bolson_hists
+            \App\Models\TblBolsonHist::create([
+                'id_bolson'         => $nuevoBolson->id,
+                'username'          => $this->username,
+                'accion'            => 'INGRESO',
+                'minutos_afectados' => $minutosAgregar,
+            ]);
+        }
 
         $this->solicitudes = \App\Models\TblSolicitudHe::orderByDesc('id')->get();
 
