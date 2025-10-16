@@ -11,20 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-
-
-        Schema::create('tbl_estados', function (Blueprint $table) {
+        Schema::create('tbl_flujos', function (Blueprint $table) {
             $table->id();
-            $table->string('codigo', 50)->unique(); // Código lógico: APROBADO_JEFE, RECHAZADO_JEFE, etc.
+            $table->string('codigo', 50)->unique(); // 'FLUJO_TIEMPO', 'FLUJO_DINERO', etc.
             $table->string('descripcion', 150);
-            $table->string('tipo_accion', 50)->nullable(); // 'SUMA', 'RESTA', 'NINGUNA'
-            $table->string('flujo', 50)->nullable(); // 'TIEMPO', 'DINERO', 'AMBOS'
-            $table->boolean('es_final')->default(false);
             $table->boolean('activo')->default(true);
             $table->timestamps();
         });
-
-
     }
 
     /**
@@ -32,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tbl_estados');
+        Schema::dropIfExists('tbl_flujos');
     }
 };

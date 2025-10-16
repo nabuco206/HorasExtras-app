@@ -115,28 +115,28 @@ class DatabaseSeeder extends Seeder
             'gls_tipo_compensacion' => 'Pago',
         ]);
 
-        TblEstado::truncate();
-        TblEstado::create([
-            'id' => 0,
-            'gls_estado' => 'Ingreso',
-        ]);
+        // TblEstado::truncate();
+        // TblEstado::create([
+        //     'id' => 0,
+        //     'gls_estado' => 'Ingreso',
+        // ]);
 
-        TblEstado::create([
-            'id' => 1,
-            'gls_estado' => 'Aprobado',
-        ]);
-        TblEstado::create([
-            'id' => 2,
-            'gls_estado' => 'Cerrado',
-        ]);
-        TblEstado::create([
-            'id' => 3,
-            'gls_estado' => 'Rechazado',
-        ]);
-        TblEstado::create([
-            'id' => 4,
-            'gls_estado' => 'Boton Apr',
-        ]);
+        // TblEstado::create([
+        //     'id' => 1,
+        //     'gls_estado' => 'Aprobado',
+        // ]);
+        // TblEstado::create([
+        //     'id' => 2,
+        //     'gls_estado' => 'Cerrado',
+        // ]);
+        // TblEstado::create([
+        //     'id' => 3,
+        //     'gls_estado' => 'Rechazado',
+        // ]);
+        // TblEstado::create([
+        //     'id' => 4,
+        //     'gls_estado' => 'Boton Apr',
+        // ]);
         // TblTipoTrabajo::truncate();
         TblTipoTrabajo::create([
             'id' => 0,
@@ -178,6 +178,9 @@ class DatabaseSeeder extends Seeder
 
         // Crear personas con flag_lider
         $this->call(TblPersonaSeeder::class);
+
+        $this->call(TblEstadoSeeder::class);
+
 
     }
 }

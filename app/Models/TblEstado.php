@@ -5,25 +5,20 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+// app/Models/TblEstado.php
 class TblEstado extends Model
 {
-    use HasFactory;
+    protected $table = 'tbl_estados';
+    protected $fillable = ['codigo', 'descripcion', 'tipo_accion', 'flujo', 'es_final', 'activo'];
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
-    protected $fillable = [
-        'gls_estado',
-    ];
+    public function transicionesOrigen()
+    {
+        return $this->hasMany(TblFlujoEstado::class, 'estado_origen_id');
+    }
 
-    /**
-     * The attributes that should be cast to native types.
-     *
-     * @var array
-     */
-    protected $casts = [
-        'id' => 'integer',
-    ];
+    public function transicionesDestino()
+    {
+        return $this->hasMany(TblFlujoEstado::class, 'estado_destino_id');
+    }
 }
+

@@ -108,6 +108,9 @@ new class extends Component {
             $validated['min_50'] = $resultado['min_50'];
             $validated['total_min'] = $resultado['total_min'];
 
+            $estadoPendiente = \App\Models\TblEstado::where('codigo', 'INGRESADO')->first();
+            $validated['id_estado'] = $estadoPendiente ? $estadoPendiente->id : 1;
+
         } catch (\Exception $e) {
             $validated['fecha_evento'] = $this->fecha;
             $validated['hrs_inicio'] = $this->hrs_inicial;
@@ -117,6 +120,7 @@ new class extends Component {
             $validated['min_50'] = 0;
             $validated['total_min'] = 0;
         }
+      
 
         $nuevaSolicitud = \App\Models\TblSolicitudHe::create($validated);
 
@@ -124,7 +128,7 @@ new class extends Component {
         \App\Services\SeguimientoSolicitudLogger::log(
             $nuevaSolicitud->id,
             $this->username,
-            $nuevaSolicitud->id_estado ?? 0
+            $nuevaSolicitud->id_estado ?: $estadoPendiente->id
         );
 
         // === AGREGAR MINUTOS AL BOLSON Y REGISTRAR EN HISTORIAL ===
@@ -145,7 +149,7 @@ new class extends Component {
                 'minutos'           => $minutosAgregar,
                 'fecha_vence'       => now()->addYear()->toDateString(),
                 'saldo_min'         => $minutosAgregar,
-                'origen'            => 'HE_APROBADA',
+                'origen'            => 'HE_ING_USU',
                 'activo'            => true,
             ]);
 
@@ -153,11 +157,11 @@ new class extends Component {
             \App\Models\TblBolsonHist::create([
                 'id_bolson_tiempo'  => $nuevoBolson->id,
                 'username'          => $this->username,
-                'accion'            => 'credito',
+                'accion'            => 'SUMA',
                 'minutos_afectados' => $minutosAgregar,
                 'saldo_anterior'    => $saldoAnterior,
                 'saldo_nuevo'       => $minutosAgregar,
-                'observaciones'     => "Crédito por ingreso de HE #{$nuevaSolicitud->id}",
+                'observaciones'     => "Suma por ingreso de HE #{$nuevaSolicitud->id}",
             ]);
         }
 
@@ -173,6 +177,7 @@ new class extends Component {
 }; ?>
 
 <section class="w-full">
+   
     <!-- <div class="relative mb-6 w-full">
         <flux:heading size="xl" level="1">{{ __('Ingreso Hora Extra') }}</flux:heading>
         <flux:subheading size="lg" class="mb-6">{{ __('Manage your profile and account settings') }}</flux:subheading>
@@ -186,7 +191,7 @@ new class extends Component {
                     <flux:input wire:model="username" type="hidden" required readonly />
                     <div class="flex gap-4 items-end">
                         <flux:select wire:model="id_tipo_trabajo" :label="__('Tipo de Trabajo')" class="flex-1 max-w-md" required>
-                            <option value="">Seleccioneeeee...</option>
+                            <option value="">Seleccione...</option>
                             @foreach($tipos_trabajo as $tipo)
                                 <option value="{{ $tipo->id }}">{{ $tipo->gls_tipo_trabajo }}</option>
                             @endforeach
@@ -198,7 +203,11 @@ new class extends Component {
                             <flux:checkbox wire:model="propone_pago" :label="__('Propone Pago')" />
                         </div>
                     </div>
-
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-200 mb-1">Adjuntar imagen</label>
+                        <input type="file" class="w-full text-xs border rounded-md">
+                        <span class="text-xs text-gray-400">* Adjuntar imagen del control horario</span>
+                    </div>
                     <div class="flex items-center justify-center gap-4">
                         <flux:button variant="primary" type="submit" class="px-8">{{ __('Ingresar') }}</flux:button>
                         <x-action-message class="me-3" on="profile-updated">
@@ -207,7 +216,6 @@ new class extends Component {
                     </div>
                 </form>
             </div>
-
             <!-- Cuadro Flotante del Bolsón de Tiempo -->
             <div class="fixed top-4 right-4 z-40 w-80" x-data="{ expanded: false }">
                 <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/90 dark:to-emerald-800/90 backdrop-blur-sm rounded-xl border border-emerald-200 dark:border-emerald-700 shadow-lg">
@@ -222,7 +230,7 @@ new class extends Component {
                                 </div>
                                 <div>
                                     <h4 class="font-semibold text-emerald-900 dark:text-emerald-100 text-sm">Bolsón de Tiempo</h4>
-                                                                        <p class="text-xs text-emerald-700 dark:text-emerald-300">{{ $saldoDisponible }} min disponibles</p>
+                                    <p class="text-xs text-emerald-700 dark:text-emerald-300">{{ $saldoDisponible }} min disponibles</p>
                                 </div>
                             </div>
                             <div class="flex items-center space-x-2">
@@ -308,7 +316,10 @@ new class extends Component {
                     </div>
                 </div>
             </div>
+            <!-- FIN Cuadro Flotante del Bolsón de Tiempo -->
 
+
+            
             <div class="bg-white dark:bg-gray-800 rounded-xl border border-neutral-200 dark:border-neutral-700 w-full">
                 <div class="p-6 border-b border-neutral-200 dark:border-neutral-700">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Solicitudes Ingresadas</h3>
@@ -360,27 +371,7 @@ new class extends Component {
                                                 @php
                                                     $estado = $estados->firstWhere('id', $solicitud->id_estado);
                                                 @endphp
-                                                @if($estado)
-                                                    @if($estado->id == 1)
-                                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
-                                                            {{ $estado->gls_estado }}
-                                                        </span>
-                                                    @elseif($estado->id == 2)
-                                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-                                                            {{ $estado->gls_estado }}
-                                                        </span>
-                                                    @elseif($estado->id == 3)
-                                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
-                                                            {{ $estado->gls_estado }}
-                                                        </span>
-                                                    @else
-                                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300">
-                                                            {{ $estado->gls_estado }}
-                                                        </span>
-                                                    @endif
-                                                @else
-                                                    <span>{{ $solicitud->id_estado ?? '-' }}</span>
-                                                @endif
+                                                {{ $estado ? $estado->descripcion : '-' }}
                                             </td>
                                             <td class="px-2 py-2 text-center whitespace-nowrap">
                                                 @if($solicitud->id_tipo_compensacion == 1)
