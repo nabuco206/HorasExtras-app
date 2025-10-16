@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\TblSolicitudHe;
-use Faker\Factory as Faker;
+use Carbon\Carbon;
 
 class TblSolicitudHeSeeder extends Seeder
 {
@@ -14,27 +14,38 @@ class TblSolicitudHeSeeder extends Seeder
      */
     public function run(): void
     {
-        $faker = Faker::create();
+        // Crear las dos solicitudes específicas según los datos proporcionados
 
-        for ($i = 0; $i < 50; $i++) {
-            TblSolicitudHe::create([
-                'username' => $faker->userName,
-                'cod_fiscalia' => $faker->numberBetween(1, 10),
-                'id_tipo_trabajo' => $faker->numberBetween(1, 5),
-                'fecha' => $faker->date(),
-                'hrs_inicial' => $faker->time('H:i'),
-                'hrs_final' => $faker->time('H:i'),
-                'id_estado' => 1,
-                'tipo_solicitud' => $faker->randomLetter(),
-                'fecha_evento' => $faker->date(),
-                'hrs_inicio' => $faker->time('H:i'),
-                'hrs_fin' => $faker->time('H:i'),
-                'id_tipoCompensacion' => $faker->numberBetween(1, 5),
-                'min_reales' => $faker->numberBetween(0, 1000),
-                'min_25' => $faker->numberBetween(0, 1000),
-                'min_50' => $faker->numberBetween(0, 1000),
-                'total_min' => $faker->numberBetween(0, 1000),
-            ]);
-        }
+        // Solicitud #1: EIVG del 07/10/2025, 18:00-19:00, 75 minutos totales
+        // TblSolicitudHe::create([
+        //     'username' => 'persona01',
+        //     'cod_fiscalia' => 501, // Fiscalia de Valparaiso
+        //     'id_tipo_trabajo' => 0, // EIVG
+        //     'fecha' => '2025-10-07',
+        //     'hrs_inicial' => '18:00',
+        //     'hrs_final' => '19:00',
+        //     'id_estado' => 0, // Ingreso
+        //     'id_tipo_compensacion' => 0, // Tiempo (Compensación en Hrs)
+        //     'min_reales' => 60,
+        //     'min_25' => 15,
+        //     'min_50' => 0,
+        //     'total_min' => 75,
+        // ]);
+
+        // // Solicitud #2: Idéntica a la anterior (según la tabla proporcionada)
+        // TblSolicitudHe::create([
+        //     'username' => 'persona01',
+        //     'cod_fiscalia' => 501, // Fiscalia de Valparaiso
+        //     'id_tipo_trabajo' => 0, // EIVG
+        //     'fecha' => '2025-10-07',
+        //     'hrs_inicial' => '18:00',
+        //     'hrs_final' => '19:00',
+        //     'id_estado' => 0, // Ingreso
+        //     'id_tipo_compensacion' => 0, // Tiempo (Compensación en Hrs)
+        //     'min_reales' => 60,
+        //     'min_25' => 15,
+        //     'min_50' => 0,
+        //     'total_min' => 75,
+        // ]);
     }
 }

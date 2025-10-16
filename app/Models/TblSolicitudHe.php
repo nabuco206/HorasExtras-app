@@ -80,6 +80,11 @@ class TblSolicitudHe extends Model
         return $this->belongsTo(TblTipo_Compensacion::class, 'id_tipo_compensacion');
     }
 
+    public function bolsonTiempo(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(TblBolsonTiempo::class, 'id_solicitud_he');
+    }
+
     /**
      * Debug method to check if username is accessible
      */

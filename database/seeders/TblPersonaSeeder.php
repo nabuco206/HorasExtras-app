@@ -86,9 +86,5 @@ class TblPersonaSeeder extends Seeder
             'password' => bcrypt('1234'),
             'id_rol' => 1,
         ]);
-
-        // Crear usando Factory con fiscalías reales
-        TblPersona::factory()->puedeSerLider()->count(3)->create();
-        TblPersona::factory()->noPuedeSerLider()->count(5)->create();
     }
 }

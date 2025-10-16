@@ -2,14 +2,22 @@
 
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
-use App\Http\Controllers\SolicitudHeController;
+// use App\Http\Controllers\SolicitudHeController;
 use App\Http\Controllers\SistemaController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Auth\AuthController;
 
 Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
-Route::view('dashboard', 'dashboard')
+Route::post('/authenticate', [AuthController::class, 'authenticate'])->name('authenticate');
+
+Route::get('/test-login', function () {
+    return view('test-login');
+})->name('test-login');
+
+Route::get('dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
@@ -22,7 +30,7 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('sistema/ingreso-he', 'sistema.ingreso-he')->name('sistema.ingreso-he');
 
     Volt::route('sistema/ciclo-aprobacion', 'sistema.ciclo-aprobacion')->name('sistema.ciclo-aprobacion');
-    
+
 
     Route::get('/demo-ciclo-aprobacion', \App\Livewire\DemoCicloAprobacion::class)
     ->middleware(['auth'])
@@ -51,8 +59,8 @@ Route::view('sistema/profile', 'sistema.profile')
 
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('solicitud-hes/create', [SolicitudHeController::class, 'create'])->name('solicitud-hes.create');
-    Route::post('solicitud-hes', [SolicitudHeController::class, 'store'])->name('solicitud-hes.store');
+    // Route::get('solicitud-hes/create', [SolicitudHeController::class, 'create'])->name('solicitud-hes.create');
+    // Route::post('solicitud-hes', [SolicitudHeController::class, 'store'])->name('solicitud-hes.store');
 });
 
 require __DIR__.'/auth.php';

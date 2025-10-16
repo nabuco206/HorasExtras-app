@@ -173,8 +173,8 @@ class DatabaseSeeder extends Seeder
             TblFeriado::create($feriado);
         }
 
-
-        // $this->call(TblSolicitudHeSeeder::class);
+        // Crear las solicitudes de prueba específicas
+        $this->call(TblSolicitudHeSeeder::class);
 
         // Crear personas con flag_lider
         $this->call(TblPersonaSeeder::class);

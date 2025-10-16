@@ -1,0 +1,126 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\TblBolsonTiempo;
+use App\Models\TblBolsonHist;
+use Illuminate\Support\Facades\Log;
+
+class BolsonService
+{
+    public function expirarBolsonesVencidos()
+    {
+        $vencidos = TblBolsonTiempo::where('activo', true)
+            ->where('saldo_min', '>', 0)
+            ->where('fecha_vence', '<=', now())
+            ->get();
+
+        $expirados = [];
+
+        foreach ($vencidos as $bolson) {
+            $saldoAnterior = $bolson->saldo_min;
+            
+            $bolson->update([
+                'activo' => false,
+                'saldo_min' => 0
+            ]);
+
+            $expirados[] = [
+                'bolson_id' => $bolson->id,
+                'username' => $bolson->username,
+                'minutos_perdidos' => $saldoAnterior,
+                'fecha_vence' => $bolson->fecha_vence->toDateString()
+            ];
+        }
+
+        if (!empty($expirados)) {
+            Log::info("Bolsones expirados", ['count' => count($expirados), 'detalles' => $expirados]);
+        }
+
+        return $expirados;
+    }
+
+    public function obtenerSaldoDisponible(string $username): int
+    {
+        return TblBolsonTiempo::vigentes()
+            ->where('username', $username)
+            ->sum('saldo_min');
+    }
+
+    public function obtenerDetalleSaldo(string $username): array
+    {
+        $bolsones = TblBolsonTiempo::vigentes()
+            ->where('username', $username)
+            ->orderBy('fecha_creacion', 'asc')
+            ->get();
+
+        return $bolsones->map(function ($bolson) {
+            return [
+                'id' => $bolson->id,
+                'saldo_min' => $bolson->saldo_min,
+                'fecha_vence' => $bolson->fecha_vence->toDateString(),
+                'descripcion' => $bolson->descripcion
+            ];
+        })->toArray();
+    }
+
+    public function obtenerResumenDetallado(string $username): array
+    {
+        $bolsones = TblBolsonTiempo::vigentes()
+            ->where('username', $username)
+            ->orderBy('fecha_creacion', 'asc')
+            ->get();
+
+        $totalMinutos = $bolsones->sum('saldo_min');
+        
+        return [
+            'total_minutos' => $totalMinutos,
+            'total_horas' => floor($totalMinutos / 60),
+            'minutos_restantes' => $totalMinutos % 60,
+            'total_bolsones' => $bolsones->count(),
+        ];
+    }
+
+    public function simularDescuento(string $username, int $minutosADescontar): array
+    {
+        $bolsonesVigentes = TblBolsonTiempo::vigentes()
+            ->where('username', $username)
+            ->where('saldo_min', '>', 0)
+            ->orderBy('fecha_creacion', 'asc')
+            ->get();
+
+        $simulacion = [
+            'factible' => false,
+            'total_disponible' => $bolsonesVigentes->sum('saldo_min'),
+            'minutos_solicitados' => $minutosADescontar,
+            'distribucion' => []
+        ];
+
+        if ($simulacion['total_disponible'] < $minutosADescontar) {
+            $simulacion['mensaje'] = 'Saldo insuficiente';
+            return $simulacion;
+        }
+
+        $minutosRestantes = $minutosADescontar;
+        foreach ($bolsonesVigentes as $bolson) {
+            if ($minutosRestantes <= 0) break;
+
+            $descontarDeBolson = min($minutosRestantes, $bolson->saldo_min);
+            
+            $simulacion['distribucion'][] = [
+                'bolson_id' => $bolson->id,
+                'fecha_creacion' => $bolson->fecha_creacion->toDateString(),
+                'saldo_actual' => $bolson->saldo_min,
+                'minutos_a_descontar' => $descontarDeBolson,
+                'saldo_resultante' => $bolson->saldo_min - $descontarDeBolson
+            ];
+
+            $minutosRestantes -= $descontarDeBolson;
+        }
+
+        $simulacion['factible'] = $minutosRestantes <= 0;
+        $simulacion['mensaje'] = $simulacion['factible'] ? 'Simulación exitosa' : 'Saldo insuficiente';
+
+        return $simulacion;
+    }
+}

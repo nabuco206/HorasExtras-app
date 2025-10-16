@@ -1,5 +1,5 @@
 <x-layouts.app :title="__('Dashboard')">
-    <div x-data="{ 
+    <div x-data="{
         notifications: [
             { id: 1, show: true, color: 'green', icon: 'check', message: 'Alerta al Dashboard CRM!', detail: 'A new software version is available for download.' },
             { id: 2, show: true, color: 'blue', icon: 'info', message: 'Recordatorio', detail: 'No olvides revisar tus solicitudes pendientes.' }
@@ -8,9 +8,9 @@
     }">
         <!-- Notificaciones -->
         <template x-for="(n, i) in notifications" :key="n.id">
-            <div 
-                x-show="n.show" 
-                x-init="setTimeout(() => n.show = false, 10000)" 
+            <div
+                x-show="n.show"
+                x-init="setTimeout(() => n.show = false, 10000)"
                 x-transition:enter="transition ease-out duration-300"
                 x-transition:enter-start="opacity-0 translate-y-2"
                 x-transition:enter-end="opacity-100 translate-y-0"
@@ -49,8 +49,8 @@
                 </h1>
                 <div class="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
                     <!-- Campana de notificaciones antes de Bienvenido -->
-                    <button 
-                        @click="showAll()" 
+                    <button
+                        @click="showAll()"
                         class="focus:outline-none"
                         title="Mostrar notificaciones"
                     >
@@ -62,13 +62,32 @@
                 </div>
             </div>
 
-            <div class="grid auto-rows-min gap-6 md:grid-cols-3">
+            <div class="grid auto-rows-min gap-6 md:grid-cols-4">
+                <!-- Saldo Bolsón de Tiempo -->
+                <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 rounded-xl border border-emerald-200 dark:border-emerald-700 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-emerald-900 dark:text-emerald-100">{{ __('Bolsón de Tiempo') }}</h3>
+                        <div class="bg-emerald-200 dark:bg-emerald-800 text-emerald-800 dark:text-emerald-200 px-2 py-1 rounded-full text-sm font-medium">
+                            {{ $minutosDisponibles }} min
+                        </div>
+                    </div>
+                    <p class="text-emerald-700 dark:text-emerald-300 text-sm">{{ __('Tiempo disponible para compensación') }}</p>
+                    @if($bolsonesProximosVencer > 0)
+                        <div class="mt-3 flex items-center text-amber-600 dark:text-amber-400">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-9 1.938A9.953 9.953 0 013 12c0-5.523 4.477-10 10-10s10 4.477 10 10a9.953 9.953 0 01-2.938 7.062M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span class="text-xs">{{ $bolsonesProximosVencer }} próximo(s) a vencer</span>
+                        </div>
+                    @endif
+                </div>
+
                 <!-- Solicitudes Pendientes -->
                 <div class="bg-white dark:bg-gray-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('Solicitudes Pendientes') }}</h3>
                         <div class="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-2 py-1 rounded-full text-sm font-medium">
-                            0
+                            {{ $solicitudesPendientes }}
                         </div>
                     </div>
                     <p class="text-gray-600 dark:text-gray-400 text-sm">{{ __('Solicitudes de horas extras pendientes de aprobación') }}</p>
@@ -79,7 +98,7 @@
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('Solicitudes Aprobadas') }}</h3>
                         <div class="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded-full text-sm font-medium">
-                            0
+                            {{ $solicitudesAprobadas }}
                         </div>
                     </div>
                     <p class="text-gray-600 dark:text-gray-400 text-sm">{{ __('Solicitudes de horas extras aprobadas este mes') }}</p>
@@ -88,20 +107,73 @@
                 <!-- Total Horas Extras -->
                 <div class="bg-white dark:bg-gray-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('Total Horas Extras') }}</h3>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('Total Minutos Extras') }}</h3>
                         <div class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full text-sm font-medium">
-                            0h
+                            {{ $totalMinutosMes }} min
                         </div>
                     </div>
-                    <p class="text-gray-600 dark:text-gray-400 text-sm">{{ __('Total de horas extras acumuladas este mes') }}</p>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">{{ __('Total de minutos extras acumulados este mes') }}</p>
                 </div>
             </div>
+
+            <!-- Detalle del Bolsón de Tiempo -->
+            @if(count($detalleBolson) > 0)
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ __('Detalle del Bolsón de Tiempo') }}</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-200 dark:border-gray-700">
+                                <th class="text-left py-2 text-gray-600 dark:text-gray-400 font-medium">{{ __('Solicitud HE') }}</th>
+                                <th class="text-left py-2 text-gray-600 dark:text-gray-400 font-medium">{{ __('Minutos Iniciales') }}</th>
+                                <th class="text-left py-2 text-gray-600 dark:text-gray-400 font-medium">{{ __('Disponible') }}</th>
+                                <th class="text-left py-2 text-gray-600 dark:text-gray-400 font-medium">{{ __('Vencimiento') }}</th>
+                                <th class="text-left py-2 text-gray-600 dark:text-gray-400 font-medium">{{ __('Estado') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($detalleBolson as $bolson)
+                            <tr class="border-b border-gray-100 dark:border-gray-800">
+                                <td class="py-3 text-gray-900 dark:text-gray-100">
+                                    #{{ $bolson['solicitud_he_id'] }}
+                                </td>
+                                <td class="py-3 text-gray-700 dark:text-gray-300">
+                                    {{ $bolson['minutos_iniciales'] }} min
+                                </td>
+                                <td class="py-3 text-gray-700 dark:text-gray-300">
+                                    {{ $bolson['minutos_disponibles'] }} min
+                                </td>
+                                <td class="py-3 text-gray-700 dark:text-gray-300">
+                                    {{ \Carbon\Carbon::parse($bolson['fecha_vencimiento'])->format('d/m/Y') }}
+                                </td>
+                                <td class="py-3">
+                                    @if($bolson['dias_restantes'] < 0)
+                                        <span class="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 px-2 py-1 rounded-full text-xs font-medium">
+                                            Vencido
+                                        </span>
+                                    @elseif($bolson['dias_restantes'] <= 30)
+                                        <span class="bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200 px-2 py-1 rounded-full text-xs font-medium">
+                                            {{ $bolson['dias_restantes'] }} días
+                                        </span>
+                                    @else
+                                        <span class="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded-full text-xs font-medium">
+                                            Vigente
+                                        </span>
+                                    @endif
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @endif
 
             <!-- Acciones Rápidas -->
             <div class="bg-white dark:bg-gray-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ __('Acciones Rápidas') }}</h3>
-                <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <a href="{{ route('solicitud-hes.create') }}"
+                <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+                    <a href="{{ route('sistema.ingreso-he') }}"
                        class="flex items-center justify-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors">
                         <div class="text-center">
                             <div class="text-blue-600 dark:text-blue-400 mb-2">
@@ -109,11 +181,23 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                                 </svg>
                             </div>
-                            <span class="text-sm font-medium text-blue-600 dark:text-blue-400">{{ __('Nueva Solicitud') }}</span>
+                            <span class="text-sm font-medium text-blue-600 dark:text-blue-400">{{ __('Nueva HE') }}</span>
                         </div>
                     </a>
 
-                    <a
+                    <a href="{{ route('sistema.ingreso-compensacion') }}"
+                       class="flex items-center justify-center p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors">
+                        <div class="text-center">
+                            <div class="text-emerald-600 dark:text-emerald-400 mb-2">
+                                <svg class="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3a4 4 0 118 0v4m-4 12v-6m0 0H8m4 0h4m-4 0v6M3 21h18M3 10h18"></path>
+                                </svg>
+                            </div>
+                            <span class="text-sm font-medium text-emerald-600 dark:text-emerald-400">{{ __('Compensación') }}</span>
+                        </div>
+                    </a>
+
+                    <a href="{{ route('sistema.ciclo-aprobacion') }}"
                        class="flex items-center justify-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors">
                         <div class="text-center">
                             <div class="text-green-600 dark:text-green-400 mb-2">
@@ -121,7 +205,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
                                 </svg>
                             </div>
-                            <span class="text-sm font-medium text-green-600 dark:text-green-400">{{ __('Ver Sistema') }}</span>
+                            <span class="text-sm font-medium text-green-600 dark:text-green-400">{{ __('Ciclo Aprobación') }}</span>
                         </div>
                     </a>
 
