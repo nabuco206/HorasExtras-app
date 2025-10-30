@@ -149,6 +149,13 @@
                                 </label>
                             </div>
 
+                            <!-- Session Status -->
+                            @if (session('status'))
+                                <div class="mt-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-sm text-sm text-center">
+                                    {{ session('status') }}
+                                </div>
+                            @endif
+
                             <!-- Submit Button -->
                             <button
                                 type="submit"
@@ -157,13 +164,6 @@
                             >
                                 Ingresar
                             </button>
-
-                            <!-- Session Status -->
-                            @if (session('status'))
-                                <div class="mt-4 text-center text-sm text-green-600 dark:text-green-400">
-                                    {{ session('status') }}
-                                </div>
-                            @endif
 
                             <!-- Error Messages -->
                             @if ($errors->any())

@@ -27,12 +27,14 @@ return new class extends Migration
             // $table->bigInteger('id_estado')->default(0);
             // $table->foreign('id_estado')->references('id')->on('tbl_estados');
             $table->foreignId('id_estado')->nullable()->constrained('tbl_estados');
-            
+
             $table->bigInteger('id_tipo_compensacion');
             $table->bigInteger('min_reales')->nullable();
             $table->bigInteger('min_25')->nullable();
             $table->bigInteger('min_50')->nullable();
             $table->bigInteger('total_min')->nullable();
+            $table->string('archivo_adjunto')->nullable();
+            $table->string('nombre_archivo_original')->nullable();
             $table->timestamps();
         });
 

@@ -25,6 +25,7 @@ class TblBolsonTiempo extends Model
         'fecha_vence',
         'saldo_min',
         'origen',
+        'estado',
         'activo',
     ];
 
@@ -67,16 +68,62 @@ class TblBolsonTiempo extends Model
     {
         return $query->where('fecha_vence', '>=', now()->toDateString())
                     ->where('activo', true)
+                    ->where('estado', 'DISPONIBLE')
                     ->where('saldo_min', '>', 0);
     }
 
     /**
-     * Verificar si el bolsón está vigente
+     * Scope para obtener bolsones pendientes de aprobación
+     */
+    public function scopePendientes($query)
+    {
+        return $query->where('estado', 'PENDIENTE')
+                    ->where('activo', true);
+    }
+
+    /**
+     * Verificar si el bolsón está vigente para uso
      */
     public function estaVigente(): bool
     {
         return $this->fecha_vence >= now()->toDateString()
                && $this->activo
+               && $this->estado === 'DISPONIBLE'
                && $this->saldo_min > 0;
+    }
+
+    /**
+     * Verificar si el bolsón está pendiente de aprobación
+     */
+    public function estaPendiente(): bool
+    {
+        return $this->estado === 'PENDIENTE' && $this->activo;
+    }
+
+    /**
+     * Marcar como disponible (aprobado)
+     */
+    public function marcarComoDisponible(): bool
+    {
+        if ($this->estado === 'PENDIENTE') {
+            $this->estado = 'DISPONIBLE';
+            return $this->save();
+        }
+        return false;
+    }
+
+    /**
+     * Marcar como utilizado
+     */
+    public function marcarComoUtilizado($minutosUtilizados = null): bool
+    {
+        if ($this->estado === 'DISPONIBLE') {
+            $this->estado = 'UTILIZADO';
+            if ($minutosUtilizados !== null) {
+                $this->saldo_min = max(0, $this->saldo_min - $minutosUtilizados);
+            }
+            return $this->save();
+        }
+        return false;
     }
 }

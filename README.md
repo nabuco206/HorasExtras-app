@@ -4,6 +4,14 @@ CLONAR
 git clone <url-del-repositorio>
 cd <nombre-del-proyecto>
 
+bajar cambios de un repositorio remoto
+git pull
+
+# 1. Hacer cambios en tu código
+git add .                    # Agregar archivos al staging
+git commit -m "Mensaje"      # Crear commit local
+git push origin main         # Enviar al repositorio remoto
+
 Al clonar :
     composer install
     npm install
@@ -19,8 +27,7 @@ Al clonar :
 php artisan make:livewire DemoCicloAprobacion
  COMPONENT CREATED  🤙
 
-CLASS: app/Livewire/DemoCicloAprobacion.php
-VIEW:  resources/views/livewire/demo-ciclo-aprobacion.blade.php
+
 
 
     🔁 Ahora puedes descargar los últimos cambios desde GitHub con:
@@ -54,6 +61,16 @@ http://127.0.0.1:8000/admin/login
 php artisan serve --host=[IP] --port=[port]
 
 php artisan migrate:fresh --seed
+
+# Verificar enlace simbólico
+ls -la public/storage
+
+# Recrear si es necesario
+rm public/storage
+php artisan storage:link
+
+# Verificar permisos
+chmod -R 755 storage/app/public/
 
 
 php artisan route:list

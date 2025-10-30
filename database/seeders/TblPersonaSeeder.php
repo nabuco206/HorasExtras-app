@@ -18,8 +18,20 @@ class TblPersonaSeeder extends Seeder
         // $fiscalias = TblFiscalia::pluck('id')->toArray();
         $fiscalias = TblFiscalia::pluck('cod_fiscalia')->toArray();
 
-        // Crear algunos líderes
+        // Crear usuario del sistema
+        TblPersona::create([
+            'Nombre' => 'Sistema',
+            'Apellido' => 'Automatico',
+            'username' => 'SISTEMA',
+            'cod_fiscalia' => 501, // Fiscalia de Valparaiso
+            'id_escalafon' => 1,
+            'flag_lider' => true,
+            'flag_activo' => true,
+            'password' => bcrypt('sistema123'),
+            'id_rol' => 1,
+        ]);
 
+        // Crear algunos líderes
         TblPersona::create([
             'Nombre' => 'María',
             'Apellido' => 'González',
@@ -27,6 +39,7 @@ class TblPersonaSeeder extends Seeder
             'cod_fiscalia' => 501, // Fiscalia de Valparaiso
             'id_escalafon' => 1,
             'flag_lider' => true,
+            'flag_activo' => true,
             'password' => bcrypt('1234'),
             'id_rol' => 1,
         ]);
@@ -38,6 +51,7 @@ class TblPersonaSeeder extends Seeder
             'cod_fiscalia' => 502, // Fiscalia de Viña del Mar
             'id_escalafon' => 1,
             'flag_lider' => true,
+            'flag_activo' => true,
             'password' => bcrypt('1234'),
             'id_rol' => 1,
         ]);
@@ -49,6 +63,7 @@ class TblPersonaSeeder extends Seeder
             'cod_fiscalia' => 504, // Fiscalia de Quilpue
             'id_escalafon' => 1,
             'flag_lider' => true,
+            'flag_activo' => true,
             'password' => bcrypt('1234'),
             'id_rol' => 1,
         ]);
@@ -61,6 +76,7 @@ class TblPersonaSeeder extends Seeder
             'cod_fiscalia' => 501, // Fiscalia de Valparaiso
             'id_escalafon' => 1,
             'flag_lider' => false,
+            'flag_activo' => true,
             'password' => bcrypt('1234'),
             'id_rol' => 1,
         ]);
@@ -72,6 +88,7 @@ class TblPersonaSeeder extends Seeder
             'cod_fiscalia' => 507, // Fiscalia de Villa Alemana
             'id_escalafon' => 1,
             'flag_lider' => false,
+            'flag_activo' => true,
             'password' => bcrypt('1234'),
             'id_rol' => 1,
         ]);
@@ -83,8 +100,37 @@ class TblPersonaSeeder extends Seeder
             'cod_fiscalia' => 503, // Fiscalia de San Antonio
             'id_escalafon' => 1,
             'flag_lider' => false,
+            'flag_activo' => true,
             'password' => bcrypt('1234'),
             'id_rol' => 1,
         ]);
+
+        // Crear usuarios de prueba para desarrollo
+        TblPersona::create([
+            'Nombre' => 'Persona',
+            'Apellido' => '01',
+            'username' => 'persona01',
+            'cod_fiscalia' => 501,
+            'id_escalafon' => 1,
+            'flag_lider' => false,
+            'flag_activo' => true,
+            'password' => bcrypt('1234'),
+            'id_rol' => 1,
+        ]);
+
+        // Crear algunos usuarios adicionales para pruebas masivas
+        for ($i = 1; $i <= 5; $i++) {
+            TblPersona::create([
+                'Nombre' => "Usuario Test {$i}",
+                'Apellido' => "Apellido {$i}",
+                'username' => "usertest{$i}",
+                'cod_fiscalia' => 501,
+                'id_escalafon' => 1,
+                'flag_lider' => false,
+                'flag_activo' => true,
+                'password' => bcrypt('1234'),
+                'id_rol' => 1,
+            ]);
+        }
     }
 }

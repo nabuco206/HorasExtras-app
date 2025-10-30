@@ -10,7 +10,7 @@ use App\Models\TblFeriado;
 use App\Models\TblTipoCompensacion;
 use App\Models\TblEstado;
 use App\Models\TblTipoTrabajo;
-use App\Models\TblTipoEstado;
+// use App\Models\TblTipoEstado;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -67,6 +67,8 @@ class DatabaseSeeder extends Seeder
         }
 
         TblPersona::truncate();
+        // Las personas se crean en TblPersonaSeeder para mejor organización
+        // Crear solo el usuario principal aquí
         $persona1 = TblPersona::create([
             'nombre' => 'CristianCRM',
             'apellido' => 'Rojas',
@@ -74,35 +76,24 @@ class DatabaseSeeder extends Seeder
             'cod_fiscalia' => 501,
             'id_escalafon' => 1,
             'flag_lider' => true,
+            'flag_activo' => true,
             'password' => bcrypt('1234'),
             'id_rol' => 1,
         ]);
 
-        $persona2 = TblPersona::create([
-            'nombre' => 'Persona',
-            'apellido' => '01',
-            'username' => 'persona01',
-            'cod_fiscalia' => 501,
-            'id_escalafon' => 1,
-            'flag_lider' => false,
-            'password' => bcrypt('1234'),
-            'id_rol' => 1,
-        ]);
-
-
-        TblTipoEstado::truncate();
-        TblTipoEstado::create([
-            'id' => 0,
-            'gls_tipo_estado' => 'Flujo HE',
-        ]);
-        TblTipoEstado::create([
-            'id' => 1,
-            'gls_tipo_estado' => 'Flujo Compensacion',
-        ]);
-        TblTipoEstado::create([
-            'id' => 2,
-            'gls_tipo_estado' => 'Bolson',
-        ]);
+        // TblTipoEstado::truncate();
+        // TblTipoEstado::create([
+        //     'id' => 0,
+        //     'gls_tipo_estado' => 'Flujo HE',
+        // ]);
+        // TblTipoEstado::create([
+        //     'id' => 1,
+        //     'gls_tipo_estado' => 'Flujo Compensacion',
+        // ]);
+        // TblTipoEstado::create([
+        //     'id' => 2,
+        //     'gls_tipo_estado' => 'Bolson',
+        // ]);
 
 
         TblTipoCompensacion::truncate();
@@ -173,13 +164,25 @@ class DatabaseSeeder extends Seeder
             TblFeriado::create($feriado);
         }
 
-        // Crear las solicitudes de prueba específicas
-        $this->call(TblSolicitudHeSeeder::class);
+        // Llamar a seeders específicos de flujos de trabajo
+        $this->call(TblEstadoSeeder::class);
+        $this->call(TblFlujoSeeder::class);
+        $this->call(TblFlujoEstadoSeeder::class);
 
-        // Crear personas con flag_lider
+        // $this->call(TblConfigHorasExtrasSeeder::class);
+        // $this->call(TblTurnoSeeder::class);
+
+        // Crear personas ANTES que las solicitudes
         $this->call(TblPersonaSeeder::class);
 
-        $this->call(TblEstadoSeeder::class);
+        // Crear las solicitudes de prueba específicas
+        // $this->call(TblSolicitudHeSeeder::class);
+
+        // Crear algunos bolsones de tiempo de ejemplo
+        // $this->call(TblBolsonTiempoSeeder::class);
+
+        // Crear solicitudes de compensación de prueba
+        // $this->call(TblSolicitudCompensaSeeder::class);
 
 
     }

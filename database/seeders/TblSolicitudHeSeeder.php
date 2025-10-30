@@ -16,36 +16,81 @@ class TblSolicitudHeSeeder extends Seeder
     {
         // Crear las dos solicitudes específicas según los datos proporcionados
 
-        // Solicitud #1: EIVG del 07/10/2025, 18:00-19:00, 75 minutos totales
-        // TblSolicitudHe::create([
-        //     'username' => 'persona01',
-        //     'cod_fiscalia' => 501, // Fiscalia de Valparaiso
-        //     'id_tipo_trabajo' => 0, // EIVG
-        //     'fecha' => '2025-10-07',
-        //     'hrs_inicial' => '18:00',
-        //     'hrs_final' => '19:00',
-        //     'id_estado' => 0, // Ingreso
-        //     'id_tipo_compensacion' => 0, // Tiempo (Compensación en Hrs)
-        //     'min_reales' => 60,
-        //     'min_25' => 15,
-        //     'min_50' => 0,
-        //     'total_min' => 75,
-        // ]);
+        // Solicitud especial para devoluciones de compensaciones rechazadas
+        TblSolicitudHe::create([
+            'id' => 999,
+            'username' => 'SISTEMA',
+            'cod_fiscalia' => 1,
+            'id_tipo_trabajo' => 1,
+            'fecha' => '2025-01-01',
+            'hrs_inicial' => '00:00:00',
+            'hrs_final' => '00:00:00',
+            'id_estado' => 1, // INGRESADO
+            'id_tipo_compensacion' => 1,
+            'min_reales' => 0,
+            'min_25' => 0,
+            'min_50' => 0,
+            'total_min' => 0,
+        ]);
 
-        // // Solicitud #2: Idéntica a la anterior (según la tabla proporcionada)
-        // TblSolicitudHe::create([
-        //     'username' => 'persona01',
-        //     'cod_fiscalia' => 501, // Fiscalia de Valparaiso
-        //     'id_tipo_trabajo' => 0, // EIVG
-        //     'fecha' => '2025-10-07',
-        //     'hrs_inicial' => '18:00',
-        //     'hrs_final' => '19:00',
-        //     'id_estado' => 0, // Ingreso
-        //     'id_tipo_compensacion' => 0, // Tiempo (Compensación en Hrs)
-        //     'min_reales' => 60,
-        //     'min_25' => 15,
-        //     'min_50' => 0,
-        //     'total_min' => 75,
-        // ]);
+        // Crear algunas solicitudes de prueba para demostrar el sistema
+        $usuarios = ['maria.gonzalez', 'carlos.rodriguez', 'ana.lopez', 'luis.martinez', 'carmen.morales'];
+        $fechas = [
+            now()->subDays(5)->format('Y-m-d'),
+            now()->subDays(3)->format('Y-m-d'),
+            now()->subDays(1)->format('Y-m-d'),
+            now()->format('Y-m-d'),
+        ];
+
+        $contador = 1;
+        foreach ($usuarios as $username) {
+            foreach ($fechas as $key => $fecha) {
+                if ($contador > 10) break; // Limitar a 10 solicitudes
+
+                $horasExtras = [
+                    ['08:00:00', '10:00:00', 120], // 2 horas
+                    ['18:00:00', '20:30:00', 150], // 2.5 horas
+                    ['14:00:00', '16:00:00', 120], // 2 horas
+                    ['09:00:00', '12:00:00', 180], // 3 horas
+                ];
+
+                $he = $horasExtras[$key % count($horasExtras)];
+
+                TblSolicitudHe::create([
+                    'username' => $username,
+                    'cod_fiscalia' => 501,
+                    'id_tipo_trabajo' => 1, // Asumiendo que existe
+                    'fecha' => $fecha,
+                    'hrs_inicial' => $he[0],
+                    'hrs_final' => $he[1],
+                    'id_estado' => $contador <= 6 ? 1 : ($contador <= 8 ? 3 : 4), // Variado: pendientes, aprobadas, rechazadas
+                    'id_tipo_compensacion' => 1, // HE_COMPENSACION
+                    'min_reales' => $he[2],
+                    'min_25' => intval($he[2] * 0.25),
+                    'min_50' => 0,
+                    'total_min' => $he[2] + intval($he[2] * 0.25),
+                ]);
+
+                $contador++;
+            }
+        }
+
+        // Crear algunas solicitudes adicionales para usuarios de prueba
+        for ($i = 1; $i <= 5; $i++) {
+            TblSolicitudHe::create([
+                'username' => "user_test_{$i}",
+                'cod_fiscalia' => 501,
+                'id_tipo_trabajo' => 1,
+                'fecha' => now()->subDays(rand(1, 10))->format('Y-m-d'),
+                'hrs_inicial' => '08:00:00',
+                'hrs_final' => '10:00:00',
+                'id_estado' => 1, // INGRESADO - listas para aprobar
+                'id_tipo_compensacion' => 1,
+                'min_reales' => 120,
+                'min_25' => 30,
+                'min_50' => 0,
+                'total_min' => 150,
+            ]);
+        }
     }
 }

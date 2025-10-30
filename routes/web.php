@@ -31,6 +31,10 @@ Route::middleware(['auth'])->group(function () {
 
     Volt::route('sistema/ciclo-aprobacion', 'sistema.ciclo-aprobacion')->name('sistema.ciclo-aprobacion');
 
+    // Nueva ruta para aprobaciones masivas mejoradas
+    Route::get('sistema/aprobaciones-masivas', \App\Livewire\Sistema\AprobacionesMasivas::class)
+        ->middleware(['auth'])
+        ->name('sistema.aprobaciones-masivas');
 
     Route::get('/demo-ciclo-aprobacion', \App\Livewire\DemoCicloAprobacion::class)
     ->middleware(['auth'])
@@ -39,6 +43,22 @@ Route::middleware(['auth'])->group(function () {
     Route::get('sistema/ingreso-compensacion', \App\Livewire\Sistema\IngresoCompensacion::class)
     ->middleware(['auth'])
     ->name('sistema.ingreso-compensacion');
+
+    // Nueva ruta para aprobaciones de compensación
+    Route::get('sistema/aprobaciones-compensacion', \App\Livewire\Sistema\AprobacionesCompensacion::class)
+        ->middleware(['auth'])
+        ->name('sistema.aprobaciones-compensacion');
+
+    // Rutas del sistema de workflow
+    Route::prefix('workflow')->name('workflow.')->group(function () {
+        Route::get('/demo', [App\Http\Controllers\WorkflowController::class, 'demo'])->name('demo');
+        Route::get('/flujos', [App\Http\Controllers\WorkflowController::class, 'obtenerFlujos'])->name('flujos');
+        Route::get('/flujo/{flujoId}', [App\Http\Controllers\WorkflowController::class, 'obtenerFlujo'])->name('flujo');
+        Route::get('/solicitud/{solicitudId}/transiciones', [App\Http\Controllers\WorkflowController::class, 'obtenerTransicionesDisponibles'])->name('transiciones');
+        Route::post('/solicitud/{solicitudId}/transicion', [App\Http\Controllers\WorkflowController::class, 'ejecutarTransicion'])->name('ejecutar-transicion');
+        Route::get('/solicitud/{solicitudId}/historial', [App\Http\Controllers\WorkflowController::class, 'obtenerHistorial'])->name('historial');
+        Route::post('/crear-solicitud-prueba', [App\Http\Controllers\WorkflowController::class, 'crearSolicitudPrueba'])->name('crear-solicitud-prueba');
+    });
 });
 
 

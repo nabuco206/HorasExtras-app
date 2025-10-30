@@ -13,22 +13,123 @@ use Illuminate\Support\Facades\Log;
 class BolsonService
 {
     /**
-     * Procesar solicitud de HE aprobada y crear entrada en bolsón
+     * Crear bolsón pendiente cuando se ingresa una solicitud HE
+     */
+    public function crearBolsonPendiente(TblSolicitudHe $solicitud): ?TblBolsonTiempo
+    {
+        try {
+            DB::beginTransaction();
+
+            // Calcular minutos de la solicitud
+            $minutosCalculados = $this->calcularMinutosSolicitud($solicitud);
+
+            if ($minutosCalculados <= 0) {
+                // Si no se pueden calcular por horas, usar total_min de la solicitud
+                $minutosCalculados = $solicitud->total_min ?? 0;
+            }
+
+            if ($minutosCalculados <= 0) {
+                DB::rollBack();
+                Log::warning("No se pudieron determinar minutos para bolsón pendiente", [
+                    'solicitud_id' => $solicitud->id
+                ]);
+                return null;
+            }
+
+            // Crear entrada en el bolsón con estado PENDIENTE
+            $bolson = TblBolsonTiempo::create([
+                'username' => $solicitud->username,
+                'id_solicitud_he' => $solicitud->id,
+                'minutos' => $minutosCalculados,
+                'saldo_min' => $minutosCalculados,
+                'fecha_crea' => now()->toDateString(),
+                'fecha_vence' => now()->addYear()->toDateString(),
+                'origen' => 'HE_PENDIENTE',
+                'estado' => 'PENDIENTE',
+                'activo' => true
+            ]);
+
+            // Registrar en historial
+            $this->registrarHistorial(
+                $bolson,
+                'CREACION_PENDIENTE',
+                $minutosCalculados,
+                0,
+                $minutosCalculados,
+                "Bolsón pendiente creado por solicitud HE #{$solicitud->id} - En espera de aprobación"
+            );
+
+            DB::commit();
+            Log::info("Bolsón pendiente creado exitosamente", [
+                'bolson_id' => $bolson->id,
+                'solicitud_id' => $solicitud->id,
+                'minutos' => $minutosCalculados,
+                'estado' => 'PENDIENTE'
+            ]);
+
+            return $bolson;
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Error al crear bolsón pendiente", [
+                'solicitud_id' => $solicitud->id,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Procesar solicitud de HE aprobada y activar bolsón
      */
     public function procesarSolicitudHeAprobada(TblSolicitudHe $solicitud): ?TblBolsonTiempo
     {
         try {
             DB::beginTransaction();
 
-            // Calcular minutos de la solicitud aprobada
+            // Buscar si ya existe un bolsón pendiente para esta solicitud
+            $bolsonExistente = TblBolsonTiempo::where('id_solicitud_he', $solicitud->id)
+                ->where('estado', 'PENDIENTE')
+                ->first();
+
+            if ($bolsonExistente) {
+                // Activar el bolsón existente
+                $bolsonExistente->update([
+                    'estado' => 'DISPONIBLE',
+                    'origen' => 'HE_APROBADA'
+                ]);
+
+                // Registrar en historial
+                $this->registrarHistorial(
+                    $bolsonExistente,
+                    'APROBACION',
+                    0,
+                    $bolsonExistente->saldo_min,
+                    $bolsonExistente->saldo_min,
+                    "Bolsón aprobado - Tiempo disponible para compensación"
+                );
+
+                DB::commit();
+                Log::info("Bolsón activado por aprobación", [
+                    'bolson_id' => $bolsonExistente->id,
+                    'solicitud_id' => $solicitud->id,
+                    'minutos' => $bolsonExistente->minutos
+                ]);
+
+                return $bolsonExistente;
+            }
+
+            // Si no existe bolsón pendiente, crear uno nuevo directamente disponible
             $minutosAprobados = $this->calcularMinutosSolicitud($solicitud);
+            if ($minutosAprobados <= 0) {
+                $minutosAprobados = $solicitud->total_min ?? 0;
+            }
 
             if ($minutosAprobados <= 0) {
                 DB::rollBack();
                 return null;
             }
 
-            // Crear entrada en el bolsón
             $bolson = TblBolsonTiempo::create([
                 'username' => $solicitud->username,
                 'id_solicitud_he' => $solicitud->id,
@@ -37,6 +138,7 @@ class BolsonService
                 'fecha_crea' => now()->toDateString(),
                 'fecha_vence' => now()->addYear()->toDateString(),
                 'origen' => 'HE_APROBADA',
+                'estado' => 'DISPONIBLE',
                 'activo' => true
             ]);
 
@@ -47,11 +149,14 @@ class BolsonService
                 $minutosAprobados,
                 0,
                 $minutosAprobados,
-                "Bolsón creado por solicitud HE #{$solicitud->id}"
+                "Bolsón creado y aprobado por solicitud HE #{$solicitud->id}"
             );
 
             DB::commit();
-            Log::info("Bolsón creado exitosamente", ['bolson_id' => $bolson->id, 'minutos' => $minutosAprobados]);
+            Log::info("Bolsón creado directamente como disponible", [
+                'bolson_id' => $bolson->id,
+                'minutos' => $minutosAprobados
+            ]);
 
             return $bolson;
 
@@ -284,9 +389,16 @@ class BolsonService
 
     /**
      * Calcular minutos de una solicitud HE
+     * Usa el total_min que ya incluye los cálculos de porcentajes (25% y 50%)
      */
     private function calcularMinutosSolicitud(TblSolicitudHe $solicitud): int
     {
+        // Primero intentar usar el total_min que ya está calculado con porcentajes
+        if ($solicitud->total_min && $solicitud->total_min > 0) {
+            return $solicitud->total_min;
+        }
+
+        // Fallback: calcular minutos reales si no hay total_min
         if (!$solicitud->fecha || !$solicitud->hrs_inicial || !$solicitud->hrs_final) {
             return 0;
         }
@@ -440,6 +552,75 @@ class BolsonService
     }
 
     /**
+     * Obtener bolsones pendientes de un usuario
+     */
+    public function obtenerBolsonesPendientes(string $username): array
+    {
+        $bolsones = TblBolsonTiempo::pendientes()
+            ->where('username', $username)
+            ->with('solicitudHe.estado')
+            ->orderBy('fecha_crea', 'desc')
+            ->get();
+
+        return $bolsones->map(function ($bolson) {
+            return [
+                'id' => $bolson->id,
+                'solicitud_he_id' => $bolson->id_solicitud_he,
+                'minutos' => $bolson->minutos,
+                'fecha_crea' => $bolson->fecha_crea,
+                'estado' => $bolson->estado,
+                'solicitud_estado' => $bolson->solicitudHe?->estado?->gls_estado ?? 'Sin estado',
+                'observaciones' => "Pendiente de aprobación - Solicitud HE #{$bolson->id_solicitud_he}"
+            ];
+        })->toArray();
+    }
+
+    /**
+     * Obtener resumen completo incluyendo pendientes y disponibles
+     */
+    public function obtenerResumenCompleto(string $username): array
+    {
+        $disponibles = TblBolsonTiempo::vigentes()
+            ->where('username', $username)
+            ->orderBy('fecha_crea', 'asc')
+            ->get();
+
+        $pendientes = TblBolsonTiempo::pendientes()
+            ->where('username', $username)
+            ->orderBy('fecha_crea', 'desc')
+            ->get();
+
+        $totalDisponible = $disponibles->sum('saldo_min');
+        $totalPendiente = $pendientes->sum('saldo_min');
+
+        return [
+            'total_disponible' => $totalDisponible,
+            'total_pendiente' => $totalPendiente,
+            'total_general' => $totalDisponible + $totalPendiente,
+            'bolsones_disponibles' => $disponibles->count(),
+            'bolsones_pendientes' => $pendientes->count(),
+            'detalle_disponibles' => $disponibles->map(function ($bolson) {
+                return [
+                    'id' => $bolson->id,
+                    'minutos_disponibles' => $bolson->saldo_min,
+                    'fecha_vence' => $bolson->fecha_vence->toDateString(),
+                    'estado' => $bolson->estado,
+                    'origen' => $bolson->origen
+                ];
+            })->toArray(),
+            'detalle_pendientes' => $pendientes->map(function ($bolson) {
+                return [
+                    'id' => $bolson->id,
+                    'minutos_pendientes' => $bolson->saldo_min,
+                    'fecha_crea' => $bolson->fecha_crea,
+                    'estado' => $bolson->estado,
+                    'solicitud_he_id' => $bolson->id_solicitud_he
+                ];
+            })->toArray()
+        ];
+    }
+
+    /**
      * Obtener estadísticas generales del sistema de bolsones
      */
     public function obtenerEstadisticasGenerales(): array
@@ -447,12 +628,77 @@ class BolsonService
         return [
             'total_bolsones_activos' => TblBolsonTiempo::where('activo', true)->count(),
             'total_minutos_disponibles' => TblBolsonTiempo::vigentes()->sum('saldo_min'),
+            'total_minutos_pendientes' => TblBolsonTiempo::pendientes()->sum('saldo_min'),
             'usuarios_con_bolsones' => TblBolsonTiempo::vigentes()
+                ->distinct('username')
+                ->count('username'),
+            'usuarios_con_pendientes' => TblBolsonTiempo::pendientes()
                 ->distinct('username')
                 ->count('username'),
             'bolsones_por_vencer_7_dias' => TblBolsonTiempo::vigentes()
                 ->where('fecha_vence', '<=', now()->addWeek())
                 ->count(),
         ];
+    }
+
+    /**
+     * Crear bolsón de devolución cuando se rechaza una compensación
+     */
+    public function crearBolsonDevolución($username, $minutos, $concepto = 'Devolución por compensación rechazada'): array
+    {
+        try {
+            DB::beginTransaction();
+
+            // Crear nuevo bolsón con los minutos devueltos usando campos correctos
+            $bolsonDevolucion = new TblBolsonTiempo();
+            $bolsonDevolucion->username = $username;
+            $bolsonDevolucion->id_solicitud_he = 999; // ID especial para devoluciones (debe existir en tbl_solicitud_hes)
+            $bolsonDevolucion->fecha_crea = now()->format('Y-m-d');
+            $bolsonDevolucion->fecha_vence = now()->addYear()->format('Y-m-d'); // 1 año de vigencia
+            $bolsonDevolucion->minutos = $minutos;
+            $bolsonDevolucion->saldo_min = $minutos;
+            $bolsonDevolucion->origen = 'DEVOLUCION_COMPENSACION';
+            $bolsonDevolucion->estado = 'DISPONIBLE';
+            $bolsonDevolucion->activo = true;
+            $bolsonDevolucion->save();
+
+            // Registrar en el historial
+            $this->registrarHistorial(
+                $bolsonDevolucion,
+                'CREACION',
+                $minutos,
+                0,
+                $minutos,
+                $concepto . ' - Bolsón ID: ' . $bolsonDevolucion->id
+            );
+
+            DB::commit();
+
+            Log::info("Bolsón de devolución creado exitosamente", [
+                'bolson_id' => $bolsonDevolucion->id,
+                'username' => $username,
+                'minutos_devueltos' => $minutos,
+                'concepto' => $concepto
+            ]);
+
+            return [
+                'success' => true,
+                'bolson' => $bolsonDevolucion,
+                'mensaje' => "Bolsón de devolución creado: {$minutos} min disponibles"
+            ];
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Error al crear bolsón de devolución", [
+                'username' => $username,
+                'minutos' => $minutos,
+                'error' => $e->getMessage()
+            ]);
+
+            return [
+                'success' => false,
+                'mensaje' => 'Error al crear bolsón de devolución: ' . $e->getMessage()
+            ];
+        }
     }
 }

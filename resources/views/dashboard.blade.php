@@ -62,7 +62,7 @@
                 </div>
             </div>
 
-            <div class="grid auto-rows-min gap-6 md:grid-cols-4">
+            <div class="grid auto-rows-min gap-6 md:grid-cols-5">
                 <!-- Saldo Bolsón de Tiempo -->
                 <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 rounded-xl border border-emerald-200 dark:border-emerald-700 p-6">
                     <div class="flex items-center justify-between mb-4">
@@ -71,13 +71,48 @@
                             {{ $minutosDisponibles }} min
                         </div>
                     </div>
-                    <p class="text-emerald-700 dark:text-emerald-300 text-sm">{{ __('Tiempo disponible para compensación') }}</p>
+                    <p class="text-emerald-700 dark:text-emerald-300 text-sm mb-3">{{ __('Tiempo disponible para compensación') }}</p>
+
+                    <!-- Mostrar minutos pendientes si existen -->
+                    @if($minutosPendientes > 0)
+                        <div class="mb-3 flex items-center justify-between bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-3 border border-yellow-200 dark:border-yellow-800">
+                            <div class="flex items-center">
+                                <svg class="w-4 h-4 mr-2 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span class="text-sm text-yellow-800 dark:text-yellow-200 font-medium">{{ __('Por aprobar') }}</span>
+                            </div>
+                            <span class="bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 px-2 py-1 rounded-full text-xs font-medium">
+                                {{ $minutosPendientes }} min
+                            </span>
+                        </div>
+                    @endif
+
                     @if($bolsonesProximosVencer > 0)
                         <div class="mt-3 flex items-center text-amber-600 dark:text-amber-400">
                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-9 1.938A9.953 9.953 0 013 12c0-5.523 4.477-10 10-10s10 4.477 10 10a9.953 9.953 0 01-2.938 7.062M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
                             <span class="text-xs">{{ $bolsonesProximosVencer }} próximo(s) a vencer</span>
+                        </div>
+                    @endif
+                </div>
+
+                <!-- Minutos por Aprobar -->
+                <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 rounded-xl border border-yellow-200 dark:border-yellow-700 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-yellow-900 dark:text-yellow-100">{{ __('Por Aprobar') }}</h3>
+                        <div class="bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 px-2 py-1 rounded-full text-sm font-medium">
+                            {{ $minutosPendientes }} min
+                        </div>
+                    </div>
+                    <p class="text-yellow-700 dark:text-yellow-300 text-sm">{{ __('Tiempo pendiente de aprobación') }}</p>
+                    @if($minutosPendientes > 0)
+                        <div class="mt-3 flex items-center text-yellow-600 dark:text-yellow-400">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span class="text-xs">En espera de aprobación del jefe</span>
                         </div>
                     @endif
                 </div>
@@ -117,7 +152,7 @@
             </div>
 
             <!-- Detalle del Bolsón de Tiempo -->
-            @if(count($detalleBolson) > 0)
+            @if(count($detalleBolson) > 0 || count($resumenCompleto['detalle_pendientes']) > 0)
             <div class="bg-white dark:bg-gray-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ __('Detalle del Bolsón de Tiempo') }}</h3>
                 <div class="overflow-x-auto">
@@ -132,6 +167,30 @@
                             </tr>
                         </thead>
                         <tbody>
+                            <!-- Bolsones Pendientes -->
+                            @foreach($resumenCompleto['detalle_pendientes'] as $bolson)
+                            <tr class="border-b border-gray-100 dark:border-gray-800 bg-yellow-50 dark:bg-yellow-900/10">
+                                <td class="py-3 text-gray-900 dark:text-gray-100">
+                                    #{{ $bolson['solicitud_he_id'] }}
+                                </td>
+                                <td class="py-3 text-gray-700 dark:text-gray-300">
+                                    {{ $bolson['minutos_pendientes'] }} min
+                                </td>
+                                <td class="py-3 text-gray-500 dark:text-gray-400 italic">
+                                    Pendiente
+                                </td>
+                                <td class="py-3 text-gray-700 dark:text-gray-300">
+                                    {{ \Carbon\Carbon::parse($bolson['fecha_crea'])->format('d/m/Y') }}
+                                </td>
+                                <td class="py-3">
+                                    <span class="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-2 py-1 rounded-full text-xs font-medium">
+                                        En Espera
+                                    </span>
+                                </td>
+                            </tr>
+                            @endforeach
+
+                            <!-- Bolsones Disponibles -->
                             @foreach($detalleBolson as $bolson)
                             <tr class="border-b border-gray-100 dark:border-gray-800">
                                 <td class="py-3 text-gray-900 dark:text-gray-100">
@@ -157,7 +216,7 @@
                                         </span>
                                     @else
                                         <span class="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded-full text-xs font-medium">
-                                            Vigente
+                                            Disponible
                                         </span>
                                     @endif
                                 </td>
@@ -209,7 +268,20 @@
                         </div>
                     </a>
 
-                    <a href="{{ route('settings.profile') }}"
+                    <a href="{{ route('sistema.aprobaciones-masivas') }}"
+                       class="flex items-center justify-center p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors">
+                        <div class="text-center">
+                            <div class="text-indigo-600 dark:text-indigo-400 mb-2">
+                                <svg class="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <span class="text-sm font-medium text-indigo-600 dark:text-indigo-400">{{ __('Aprobaciones Masivas') }}</span>
+                        </div>
+                    </a>
+
+                    {{-- Mi Perfil (Settings) temporalmente comentado --}}
+                    {{-- <a href="{{ route('settings.profile') }}"
                        class="flex items-center justify-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors">
                         <div class="text-center">
                             <div class="text-purple-600 dark:text-purple-400 mb-2">
@@ -219,7 +291,7 @@
                             </div>
                             <span class="text-sm font-medium text-purple-600 dark:text-purple-400">{{ __('Mi Perfil') }}</span>
                         </div>
-                    </a>
+                    </a> --}}
 
                     <div class="flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900/20 rounded-lg border border-gray-200 dark:border-gray-800">
                         <div class="text-center">

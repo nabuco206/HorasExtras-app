@@ -15,12 +15,12 @@
                 'url' => Route::has('sistema.ingreso-he') ? route('sistema.ingreso-he') : '#',
                 'current' => Route::has('sistema.ingreso-he') && request()->routeIs('sistema.ingreso-he')
             ],
-        [
-            'name' => 'Demo Ciclo Aprobación',
-            'icon' => 'cube-transparent',
-            'url' => route('demo.ciclo-aprobacion'), // si tienes una ruta, o usa url('/demo-ciclo-aprobacion')
-            'current' => request()->is('demo-ciclo-aprobacion')
-        ],
+        // [
+        //     'name' => 'Demo Ciclo Aprobación',
+        //     'icon' => 'cube-transparent',
+        //     'url' => route('demo.ciclo-aprobacion'), // si tienes una ruta, o usa url('/demo-ciclo-aprobacion')
+        //     'current' => request()->is('demo-ciclo-aprobacion')
+        // ],
          [
             'name' => 'Solicitud Compensación',
             'icon' => 'cube-transparent',
@@ -40,12 +40,24 @@
         ]
     ];
     if ($user->id_rol = 1) {
-        $groups['Aproba'] = [
+        $groups['Aprobaciones'] = [
+            // [
+            //     'name' => 'Pendientes de Aprobación',
+            //     'icon' => 'shield-check',
+            //     'url' => Route::has('sistema.ciclo-aprobacion') ? route('sistema.ciclo-aprobacion') : '#',
+            //     'current' => Route::has('sistema.ciclo-aprobacion') && request()->routeIs('sistema.ciclo-aprobacion')
+            // ],
             [
-                'name' => 'Pendientes de Aprobaciónnnn',
-                'icon' => 'shield-check',
-                'url' => Route::has('sistema.ciclo-aprobacion') ? route('sistema.ciclo-aprobacion') : '#',
-                'current' => Route::has('sistema.ciclo-aprobacion') && request()->routeIs('sistema.ciclo-aprobacion')
+                'name' => 'Aprobaciones Compensaciones',
+                'icon' => 'clipboard-document-check',
+                'url' => Route::has('sistema.aprobaciones-compensacion') ? route('sistema.aprobaciones-compensacion') : '#',
+                'current' => Route::has('sistema.aprobaciones-compensacion') && request()->routeIs('sistema.aprobaciones-compensacion')
+            ],
+            [
+                'name' => 'Aprobaciones Masivas',
+                'icon' => 'check-circle',
+                'url' => Route::has('sistema.aprobaciones-masivas') ? route('sistema.aprobaciones-masivas') : '#',
+                'current' => Route::has('sistema.aprobaciones-masivas') && request()->routeIs('sistema.aprobaciones-masivas')
             ],
         ];
     }
@@ -206,9 +218,10 @@
 
                     <flux:menu.separator />
 
-                    <flux:menu.radio.group>
+                    {{-- Settings temporalmente comentado (sidebar principal) --}}
+                    {{-- <flux:menu.radio.group>
                         <flux:menu.item :href="route('settings.profile')" icon="cog" wire:navigate>{{ __('Settings') }}</flux:menu.item>
-                    </flux:menu.radio.group>
+                    </flux:menu.radio.group> --}}
 
                     <flux:menu.separator />
 
@@ -256,9 +269,10 @@
 
                     <flux:menu.separator />
 
-                    <flux:menu.radio.group>
+                    {{-- Settings temporalmente comentado (header móvil) --}}
+                    {{-- <flux:menu.radio.group>
                         <flux:menu.item :href="route('settings.profile')" icon="cog" wire:navigate>{{ __('Settings') }}</flux:menu.item>
-                    </flux:menu.radio.group>
+                    </flux:menu.radio.group> --}}
 
                     <flux:menu.separator />
 

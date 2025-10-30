@@ -35,6 +35,8 @@ class TblSolicitudHe extends Model
         'min_25',
         'min_50',
         'total_min',
+        'archivo_adjunto',
+        'nombre_archivo_original',
     ];
 
     /**
@@ -54,6 +56,38 @@ class TblSolicitudHe extends Model
         'min_50' => 'integer',
         'total_min' => 'integer',
     ];
+
+    /**
+     * Obtener la URL del archivo adjunto
+     */
+    public function getArchivoUrlAttribute(): ?string
+    {
+        if (!$this->archivo_adjunto) {
+            return null;
+        }
+
+        return asset('storage/solicitudes-he/' . $this->archivo_adjunto);
+    }
+
+    /**
+     * Verificar si tiene archivo adjunto
+     */
+    public function tieneArchivo(): bool
+    {
+        return !empty($this->archivo_adjunto) && \Storage::disk('public')->exists('solicitudes-he/' . $this->archivo_adjunto);
+    }
+
+    /**
+     * Obtener la URL del nombre del archivo original
+     */
+    public function getNombreArchivoOriginalUrlAttribute(): ?string
+    {
+        if (!$this->nombre_archivo_original) {
+            return null;
+        }
+
+        return asset('storage/solicitudes-he/' . $this->nombre_archivo_original);
+    }
 
     public function tblSeguimientoSolicitud(): BelongsTo
     {
@@ -85,6 +119,21 @@ class TblSolicitudHe extends Model
         return $this->hasOne(TblBolsonTiempo::class, 'id_solicitud_he');
     }
 
+    public function estado(): BelongsTo
+    {
+        return $this->belongsTo(TblEstado::class, 'id_estado');
+    }
+
+    public function seguimientos(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(TblSeguimientoSolicitud::class, 'id_solicitud_he', 'id');
+    }
+
+    public function fiscalia(): BelongsTo
+    {
+        return $this->belongsTo(TblFiscalia::class, 'cod_fiscalia', 'cod_fiscalia');
+    }
+
     /**
      * Debug method to check if username is accessible
      */
@@ -99,6 +148,112 @@ class TblSolicitudHe extends Model
     public function getUsername(): ?string
     {
         return $this->attributes['username'] ?? null;
+    }
+
+    /**
+     * Obtener el flujo asociado a este tipo de solicitud
+     */
+    public function obtenerFlujo(): ?TblFlujo
+    {
+        // Determinar el tipo de flujo basado en el tipo de compensación
+        $tipoFlujo = match($this->id_tipo_compensacion) {
+            1 => 'HE_COMPENSACION',
+            2 => 'HE_DINERO',
+            default => 'HE_COMPENSACION'
+        };
+
+        return TblFlujo::where('nombre', $tipoFlujo)->first();
+    }
+
+    /**
+     * Obtener las transiciones disponibles para el estado actual
+     */
+    public function transicionesDisponibles($rol = null): \Illuminate\Support\Collection
+    {
+        $flujo = $this->obtenerFlujo();
+
+        if (!$flujo) {
+            return collect();
+        }
+
+        $flujoService = app(\App\Services\FlujoEstadoService::class);
+        return $flujoService->obtenerTransicionesDisponibles($flujo->id, $this->id_estado, $rol);
+    }
+
+    /**
+     * Verificar si se puede transicionar a un estado específico
+     */
+    public function puedeTransicionarA($estadoDestinoId, $rol = null): array
+    {
+        $flujo = $this->obtenerFlujo();
+
+        if (!$flujo) {
+            return [
+                'valida' => false,
+                'mensaje' => 'No se encontró flujo para esta solicitud'
+            ];
+        }
+
+        $flujoService = app(\App\Services\FlujoEstadoService::class);
+        return $flujoService->validarTransicion($flujo->id, $this->id_estado, $estadoDestinoId, $rol, $this);
+    }
+
+    /**
+     * Ejecutar transición a un nuevo estado
+     */
+    public function transicionarA($estadoDestinoId, $usuarioId, $observaciones = null): array
+    {
+        $flujoService = app(\App\Services\FlujoEstadoService::class);
+        return $flujoService->ejecutarTransicion($this, $estadoDestinoId, $usuarioId, $observaciones);
+    }
+
+    /**
+     * Verificar si la solicitud está en un estado final
+     */
+    public function estaEnEstadoFinal(): bool
+    {
+        $flujo = $this->obtenerFlujo();
+
+        if (!$flujo) {
+            return false;
+        }
+
+        $estadosFinales = $flujo->estadosFinales();
+        return $estadosFinales->contains('id', $this->id_estado);
+    }
+
+    /**
+     * Verificar si la solicitud está en un estado inicial
+     */
+    public function estaEnEstadoInicial(): bool
+    {
+        $flujo = $this->obtenerFlujo();
+
+        if (!$flujo) {
+            return false;
+        }
+
+        $estadosIniciales = $flujo->estadosIniciales();
+        return $estadosIniciales->contains('id', $this->id_estado);
+    }
+
+    /**
+     * Obtener el historial de transiciones de esta solicitud
+     */
+    public function historialTransiciones(): \Illuminate\Support\Collection
+    {
+        return $this->seguimientos()
+            ->with(['estadoAnterior', 'estadoNuevo', 'usuario'])
+            ->orderBy('fecha_cambio')
+            ->get();
+    }
+
+    /**
+     * Alias para compatibilidad con código existente
+     */
+    public function getTotalMinutosAttribute()
+    {
+        return $this->total_min;
     }
 
     public function verEstados($idSolicitud): void

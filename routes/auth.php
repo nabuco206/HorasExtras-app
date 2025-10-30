@@ -5,8 +5,10 @@ use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
 Route::middleware('guest')->group(function () {
-    Volt::route('login', 'auth.login')
-        ->name('login');
+    // Redirigir login a la página principal donde está el formulario
+    Route::get('login', function () {
+        return redirect()->route('home');
+    })->name('login');
 
     Volt::route('register', 'auth.register')
         ->name('register');

@@ -21,12 +21,15 @@ class DashboardController extends Controller
         $user = Auth::user();
         $username = $user->username ?? $user->name;
 
-        // Datos del bolsón de tiempo
-        $saldoDisponible = $this->bolsonService->obtenerSaldoDisponible($username);
+        // Datos del bolsón de tiempo (disponibles y pendientes)
+        $resumenCompleto = $this->bolsonService->obtenerResumenCompleto($username);
+        $saldoDisponible = $resumenCompleto['total_disponible'];
+        $saldoPendiente = $resumenCompleto['total_pendiente'];
         $detalleBolson = $this->bolsonService->obtenerDetalleSaldo($username);
 
         // Solo trabajar con minutos
         $minutosDisponibles = $saldoDisponible;
+        $minutosPendientes = $saldoPendiente;
 
         // Estadísticas de solicitudes HE del mes actual
         $inicioMes = Carbon::now()->startOfMonth();
@@ -63,6 +66,8 @@ class DashboardController extends Controller
         return view('dashboard', compact(
             'saldoDisponible',
             'minutosDisponibles',
+            'minutosPendientes',
+            'saldoPendiente',
             'detalleBolson',
             'solicitudesPendientes',
             'solicitudesAprobadas',
@@ -70,7 +75,8 @@ class DashboardController extends Controller
             'bolsonesProximosVencer',
             'detallesBolsonesProximos',
             'compensacionesMes',
-            'resumenBolson'
+            'resumenBolson',
+            'resumenCompleto'
         ));
     }
 }

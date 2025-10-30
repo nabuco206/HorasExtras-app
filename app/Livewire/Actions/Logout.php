@@ -17,6 +17,6 @@ class Logout
         Session::invalidate();
         Session::regenerateToken();
 
-        return redirect('/');
+        return redirect()->route('home')->with('status', '¡Sesión cerrada exitosamente!');
     }
 }

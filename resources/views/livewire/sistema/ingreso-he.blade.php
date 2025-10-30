@@ -3,12 +3,16 @@
 use App\Models\User;
 use App\Models\TblTipoTrabajo;
 use App\Models\TblEstado;
+use App\Models\TblSolicitudHe;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\Rule;
 use Livewire\Volt\Component;
+use Livewire\WithFileUploads;
 
 new class extends Component {
+    use WithFileUploads;
+
     public string $username = '';
     public int $id_tipo_trabajo = 0;
     public string $fecha = '';
@@ -20,11 +24,21 @@ new class extends Component {
     public $solicitudes = [];
     public $modalEstadosVisible = false;
     public $estadosSolicitud = [];
+    public $archivo_adjunto;
+
+    // Nuevas propiedades para el modal de documentos
+    public $modalDocumentoVisible = false;
+    public $documentoActual = null;
+    public $tipoDocumento = null;
+    public $nombreDocumento = null;
 
     // Propiedades del bolsón
     public int $saldoDisponible = 0;
+    public int $saldoPendiente = 0;
     public array $detalleBolson = [];
+    public array $resumenCompleto = [];
     public int $bolsonesProximosVencer = 0;
+
 
     /**
      * Mount the component.
@@ -48,12 +62,16 @@ new class extends Component {
     {
         $bolsonService = app(\App\Services\BolsonService::class);
 
-        $this->saldoDisponible = $bolsonService->obtenerSaldoDisponible($this->username);
+        // Obtener resumen completo (disponibles y pendientes)
+        $this->resumenCompleto = $bolsonService->obtenerResumenCompleto($this->username);
+        $this->saldoDisponible = $this->resumenCompleto['total_disponible'];
+        $this->saldoPendiente = $this->resumenCompleto['total_pendiente'];
         $this->detalleBolson = $bolsonService->obtenerDetalleSaldo($this->username);
 
         // Contar bolsones próximos a vencer (30 días)
         $this->bolsonesProximosVencer = \App\Models\TblBolsonTiempo::where('username', $this->username)
             ->where('activo', true)
+            ->where('estado', 'DISPONIBLE')
             ->where('saldo_min', '>', 0)
             ->where('fecha_vence', '<=', \Carbon\Carbon::now()->addDays(30))
             ->where('fecha_vence', '>=', \Carbon\Carbon::now())
@@ -81,6 +99,7 @@ new class extends Component {
             'hrs_inicial' => ['required', 'date_format:H:i'],
             'hrs_final' => ['required', 'date_format:H:i', 'after:hrs_inicial'],
             'propone_pago' => ['boolean'],
+            'archivo_adjunto' => ['nullable', 'file', 'mimes:jpeg,jpg,png,pdf,doc,docx', 'max:5120'], // 5MB máximo
         ]);
 
         if ($this->hrs_final <= $this->hrs_inicial) {
@@ -111,6 +130,19 @@ new class extends Component {
             $estadoPendiente = \App\Models\TblEstado::where('codigo', 'INGRESADO')->first();
             $validated['id_estado'] = $estadoPendiente ? $estadoPendiente->id : 1;
 
+            // Procesar archivo adjunto
+            if ($this->archivo_adjunto) {
+                $extension = $this->archivo_adjunto->getClientOriginalExtension();
+                $fechaCompleta = date('Y-m-d');
+                $nombreArchivo = $fechaCompleta . '_' . time() . '_' . $this->username . '.' . $extension;
+
+                // Guardar el archivo
+                $rutaArchivo = $this->archivo_adjunto->storeAs('solicitudes-he', $nombreArchivo, 'public');
+
+                $validated['archivo_adjunto'] = $nombreArchivo;
+                $validated['nombre_archivo_original'] = $this->archivo_adjunto->getClientOriginalName();
+            }
+
         } catch (\Exception $e) {
             $validated['fecha_evento'] = $this->fecha;
             $validated['hrs_inicio'] = $this->hrs_inicial;
@@ -120,7 +152,7 @@ new class extends Component {
             $validated['min_50'] = 0;
             $validated['total_min'] = 0;
         }
-      
+
 
         $nuevaSolicitud = \App\Models\TblSolicitudHe::create($validated);
 
@@ -131,38 +163,10 @@ new class extends Component {
             $nuevaSolicitud->id_estado ?: $estadoPendiente->id
         );
 
-        // === AGREGAR MINUTOS AL BOLSON Y REGISTRAR EN HISTORIAL ===
+        // === CREAR BOLSON PENDIENTE PARA HE DE COMPENSACION ===
         if ($nuevaSolicitud->id_tipo_compensacion == 0 && $nuevaSolicitud->total_min > 0) {
-            // Obtener saldo anterior
-            $ultimoBolson = \App\Models\TblBolsonTiempo::where('username', $this->username)
-                ->orderByDesc('id')
-                ->first();
-            $saldoAnterior = $ultimoBolson ? $ultimoBolson->saldo_min : 0;
-            $minutosAgregar = intval($nuevaSolicitud->total_min);
-            // $nuevoSaldo = $saldoAnterior + $minutosAgregar;
-
-            // Crear registro en tbl_bolson_tiempos
-            $nuevoBolson = \App\Models\TblBolsonTiempo::create([
-                'username'          => $this->username,
-                'id_solicitud_he'   => $nuevaSolicitud->id,
-                'fecha_crea'        => now()->toDateString(),
-                'minutos'           => $minutosAgregar,
-                'fecha_vence'       => now()->addYear()->toDateString(),
-                'saldo_min'         => $minutosAgregar,
-                'origen'            => 'HE_ING_USU',
-                'activo'            => true,
-            ]);
-
-            // Crear registro en tbl_bolson_hists
-            \App\Models\TblBolsonHist::create([
-                'id_bolson_tiempo'  => $nuevoBolson->id,
-                'username'          => $this->username,
-                'accion'            => 'SUMA',
-                'minutos_afectados' => $minutosAgregar,
-                'saldo_anterior'    => $saldoAnterior,
-                'saldo_nuevo'       => $minutosAgregar,
-                'observaciones'     => "Suma por ingreso de HE #{$nuevaSolicitud->id}",
-            ]);
+            $flujoService = app(\App\Services\FlujoEstadoService::class);
+            $flujoService->crearBolsonPendienteParaSolicitud($nuevaSolicitud);
         }
 
         $this->solicitudes = \App\Models\TblSolicitudHe::orderByDesc('id')->get();
@@ -173,11 +177,46 @@ new class extends Component {
         $this->dispatch('profile-updated', name: $this->username);
     }
 
+    public function verDocumento($solicitudId)
+    {
+        $solicitud = TblSolicitudHe::find($solicitudId);
+
+        if (!$solicitud || !$solicitud->tieneArchivo()) {
+            $this->dispatch('error', message: 'Documento no encontrado');
+            return;
+        }
+
+        $this->documentoActual = asset('storage/solicitudes-he/' . $solicitud->archivo_adjunto);
+        $this->nombreDocumento = $solicitud->nombre_archivo_original;
+
+        // Determinar tipo de documento
+        $extension = pathinfo($solicitud->archivo_adjunto, PATHINFO_EXTENSION);
+        $this->tipoDocumento = strtolower($extension);
+
+        $this->modalDocumentoVisible = true;
+    }
+
+    public function cerrarModalDocumento()
+    {
+        $this->modalDocumentoVisible = false;
+        $this->documentoActual = null;
+        $this->tipoDocumento = null;
+        $this->nombreDocumento = null;
+    }
+
+    public function descargarDocumento()
+    {
+        if ($this->documentoActual) {
+            // Cambiar de redirect a dispatch con JavaScript
+            $this->dispatch('open-in-new-tab', url: $this->documentoActual);
+        }
+    }
+
 
 }; ?>
 
 <section class="w-full">
-   
+
     <!-- <div class="relative mb-6 w-full">
         <flux:heading size="xl" level="1">{{ __('Ingreso Hora Extra') }}</flux:heading>
         <flux:subheading size="lg" class="mb-6">{{ __('Manage your profile and account settings') }}</flux:subheading>
@@ -203,10 +242,25 @@ new class extends Component {
                             <flux:checkbox wire:model="propone_pago" :label="__('Propone Pago')" />
                         </div>
                     </div>
+                     <!-- Campo de archivo actualizado -->
                     <div>
-                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-200 mb-1">Adjuntar imagen</label>
-                        <input type="file" class="w-full text-xs border rounded-md">
-                        <span class="text-xs text-gray-400">* Adjuntar imagen del control horario</span>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-200 mb-1">Adjuntar archivo</label>
+                        <input
+                            type="file"
+                            wire:model="archivo_adjunto"
+                            class="w-full text-xs border border-gray-300 dark:border-gray-600 rounded-md p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+                        >
+                        <span class="text-xs text-gray-400">* Adjuntar imagen del control horario (JPG, PNG, PDF, DOC - Máx: 5MB)</span>
+
+                        @error('archivo_adjunto')
+                            <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
+                        @enderror
+
+                        <!-- Indicador de carga -->
+                        <div wire:loading wire:target="archivo_adjunto" class="text-xs text-blue-600 mt-1">
+                            Cargando archivo...
+                        </div>
                     </div>
                     <div class="flex items-center justify-center gap-4">
                         <flux:button variant="primary" type="submit" class="px-8">{{ __('Ingresar') }}</flux:button>
@@ -230,7 +284,14 @@ new class extends Component {
                                 </div>
                                 <div>
                                     <h4 class="font-semibold text-emerald-900 dark:text-emerald-100 text-sm">Bolsón de Tiempo</h4>
-                                    <p class="text-xs text-emerald-700 dark:text-emerald-300">{{ $saldoDisponible }} min disponibles</p>
+                                    <div class="flex items-center space-x-2">
+                                        <p class="text-xs text-emerald-700 dark:text-emerald-300">{{ $saldoDisponible }} min disponibles</p>
+                                        @if($saldoPendiente > 0)
+                                            <span class="bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 px-1.5 py-0.5 rounded-full text-xs font-medium">
+                                                +{{ $saldoPendiente }} pendientes
+                                            </span>
+                                        @endif
+                                    </div>
                                 </div>
                             </div>
                             <div class="flex items-center space-x-2">
@@ -251,14 +312,20 @@ new class extends Component {
                             <div class="bg-emerald-200/50 dark:bg-emerald-800/50 rounded-lg p-3">
                                 <div class="grid grid-cols-2 gap-2 text-xs">
                                     <div>
-                                        <div class="text-emerald-700 dark:text-emerald-300 font-medium">Total Disponible</div>
+                                        <div class="text-emerald-700 dark:text-emerald-300 font-medium">Disponible</div>
                                         <div class="text-emerald-900 dark:text-emerald-100 font-bold">{{ $saldoDisponible }} min</div>
                                     </div>
                                     <div>
-                                        <div class="text-emerald-700 dark:text-emerald-300 font-medium">Bolsones Activos</div>
-                                        <div class="text-emerald-900 dark:text-emerald-100 font-bold">{{ count($detalleBolson) }}</div>
+                                        <div class="text-emerald-700 dark:text-emerald-300 font-medium">Por Aprobar</div>
+                                        <div class="text-emerald-900 dark:text-emerald-100 font-bold">{{ $saldoPendiente }} min</div>
                                     </div>
                                 </div>
+                                @if($saldoPendiente > 0)
+                                    <div class="mt-2 pt-2 border-t border-emerald-300/50 dark:border-emerald-600/50">
+                                        <div class="text-emerald-700 dark:text-emerald-300 font-medium">Total Proyectado</div>
+                                        <div class="text-emerald-900 dark:text-emerald-100 font-bold">{{ $saldoDisponible + $saldoPendiente }} min</div>
+                                    </div>
+                                @endif
                             </div>
 
                             @if($bolsonesProximosVencer > 0)
@@ -270,6 +337,31 @@ new class extends Component {
                                         <span class="text-xs text-amber-800 dark:text-amber-200 font-medium">
                                             {{ $bolsonesProximosVencer }} bolsón(es) próximo(s) a vencer
                                         </span>
+                                    </div>
+                                </div>
+                            @endif
+
+                            <!-- Bolsones pendientes -->
+                            @if($saldoPendiente > 0 && count($resumenCompleto['detalle_pendientes']) > 0)
+                                <div class="bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg p-3">
+                                    <h5 class="text-xs font-medium text-yellow-800 dark:text-yellow-200 mb-2 flex items-center">
+                                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        Tiempo por aprobar:
+                                    </h5>
+                                    <div class="space-y-1">
+                                        @foreach($resumenCompleto['detalle_pendientes'] as $bolson)
+                                            <div class="bg-yellow-50 dark:bg-yellow-800/20 rounded-md p-2 text-xs">
+                                                <div class="flex justify-between items-center">
+                                                    <span class="font-medium text-yellow-900 dark:text-yellow-100">HE #{{ $bolson['solicitud_he_id'] }}</span>
+                                                    <span class="text-yellow-700 dark:text-yellow-300">{{ $bolson['minutos_pendientes'] }} min</span>
+                                                </div>
+                                                <div class="text-yellow-600 dark:text-yellow-400 mt-1">
+                                                    Ingresado: {{ \Carbon\Carbon::parse($bolson['fecha_crea'])->format('d/m/Y') }}
+                                                </div>
+                                            </div>
+                                        @endforeach
                                     </div>
                                 </div>
                             @endif
@@ -319,7 +411,7 @@ new class extends Component {
             <!-- FIN Cuadro Flotante del Bolsón de Tiempo -->
 
 
-            
+
             <div class="bg-white dark:bg-gray-800 rounded-xl border border-neutral-200 dark:border-neutral-700 w-full">
                 <div class="p-6 border-b border-neutral-200 dark:border-neutral-700">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Solicitudes Ingresadas</h3>
@@ -343,6 +435,7 @@ new class extends Component {
                                     <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Min. 25%</th>
                                     <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Min. 50%</th>
                                     <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Total Min.</th>
+                                    <th scope="col" class="px-2 py-2 text-center whitespace-nowrap">Documento</th>
                                 </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
@@ -403,6 +496,46 @@ new class extends Component {
                                             <td class="px-2 py-2 text-center whitespace-nowrap">{{ $solicitud->min_25 ? number_format($solicitud->min_25, 0) : '-' }}</td>
                                             <td class="px-2 py-2 text-center whitespace-nowrap">{{ $solicitud->min_50 ? number_format($solicitud->min_50, 0) : '-' }}</td>
                                             <td class="px-2 py-2 text-center font-semibold whitespace-nowrap">{{ $solicitud->total_min ? number_format($solicitud->total_min, 0) : '-' }}</td>
+                                             <!-- Columna de documento actualizada -->
+                                            <td class="px-2 py-2 text-center whitespace-nowrap">
+                                                @if($solicitud->tieneArchivo())
+                                                    <button wire:click="verDocumento({{ $solicitud->id }})"
+                                                            class="inline-flex items-center justify-center w-8 h-8 text-blue-600 hover:text-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900 rounded-full transition-colors duration-200"
+                                                            title="Ver documento: {{ $solicitud->nombre_archivo_original }}">
+                                                        @php
+                                                            $extension = pathinfo($solicitud->archivo_adjunto, PATHINFO_EXTENSION);
+                                                        @endphp
+
+                                                        @if(in_array(strtolower($extension), ['jpg', 'jpeg', 'png']))
+                                                            <!-- Icono para imágenes -->
+                                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                                            </svg>
+                                                        @elseif(strtolower($extension) === 'pdf')
+                                                            <!-- Icono para PDF -->
+                                                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                                                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"></path>
+                                                            </svg>
+                                                        @elseif(in_array(strtolower($extension), ['doc', 'docx']))
+                                                            <!-- Icono para documentos Word -->
+                                                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                                                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"></path>
+                                                            </svg>
+                                                        @else
+                                                            <!-- Icono genérico -->
+                                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                            </svg>
+                                                        @endif
+                                                    </button>
+                                                @else
+                                                    <span class="inline-flex items-center justify-center w-8 h-8 text-gray-400">
+                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                        </svg>
+                                                    </span>
+                                                @endif
+                                            </td>
                                         </tr>
                                     @empty
                                         <tr>
@@ -417,6 +550,87 @@ new class extends Component {
                 </div>
             </div>
         </div>
+
+        <!-- Modal para ver documentos -->
+        @if($modalDocumentoVisible)
+            <div class="fixed inset-0 z-50 overflow-y-auto" x-data="{ show: @entangle('modalDocumentoVisible') }">
+                <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                    <!-- Overlay -->
+                    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" wire:click="cerrarModalDocumento"></div>
+
+                    <!-- Modal -->
+                    {{-- <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full"> --}}
+                    <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-7xl sm:w-full">
+                        <!-- Header -->
+                        <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+                                    {{ $nombreDocumento }}
+                                </h3>
+                                <div class="flex space-x-2">
+                                    <button wire:click="descargarDocumento"
+                                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm">
+                                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                        </svg>
+                                        Descargar
+                                    </button>
+                                    <button wire:click="cerrarModalDocumento"
+                                            class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded text-sm">
+                                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                        </svg>
+                                        Cerrar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contenido del documento -->
+                        <div class="bg-gray-50 dark:bg-gray-700 px-4 py-5 sm:p-6">
+                            <div class="max-h-96 overflow-auto">
+                                @if(in_array($tipoDocumento, ['jpg', 'jpeg', 'png']))
+                                    <!-- Vista para imágenes -->
+                                    <div class="text-center">
+                                        <img src="{{ $documentoActual }}"
+                                             alt="{{ $nombreDocumento }}"
+                                             class="max-w-full h-auto rounded-lg shadow-lg mx-auto">
+                                    </div>
+                                @elseif($tipoDocumento === 'pdf')
+                                    <!-- Vista para PDF -->
+                                    <div class="text-center">
+                                        <iframe src="{{ $documentoActual }}"
+                                                class="w-full h-96 border rounded-lg"
+                                                frameborder="0">
+                                        </iframe>
+                                        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                                            Si el PDF no se muestra correctamente, haz clic en "Descargar" para verlo en tu navegador.
+                                        </p>
+                                    </div>
+                                @else
+                                    <!-- Vista para otros documentos -->
+                                    <div class="text-center py-8">
+                                        <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                        </svg>
+                                        <h4 class="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                                            Documento: {{ $nombreDocumento }}
+                                        </h4>
+                                        <p class="text-gray-600 dark:text-gray-400 mb-4">
+                                            Este tipo de archivo no se puede previsualizar en el navegador.
+                                        </p>
+                                        <button wire:click="descargarDocumento"
+                                                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                            Descargar para ver
+                                        </button>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
     </x-sistema.layout>
 
     <!-- Modal de estados -->
@@ -425,3 +639,11 @@ new class extends Component {
     @endif
 
 </section>
+
+<script>
+document.addEventListener('livewire:init', () => {
+    Livewire.on('open-in-new-tab', (event) => {
+        window.open(event.url, '_blank');
+    });
+});
+</script>
