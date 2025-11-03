@@ -34,11 +34,33 @@ class AprobacionesMasivas extends Component
         $this->cargarSolicitudes();
     }
 
+    /**
+     * Query base para listar (se puede sobreescribir en hijos).
+     * Muestra solo solicitudes con id_tipo_compensacion = 0.
+     */
+    protected function baseQuery()
+    {
+        return TblSolicitudHe::with(['tipoTrabajo', 'estado'])
+            ->where('id_tipo_compensacion', 0)
+            ->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Query base para estadísticas (se puede sobreescribir en hijos).
+     * Limita a id_tipo_compensacion = 0.
+     */
+    protected function statsQuery()
+    {
+        return TblSolicitudHe::query()->where('id_tipo_compensacion', 0);
+       
+    }
+
     public function cargarSolicitudes()
     {
-        $query = TblSolicitudHe::with(['tipoTrabajo', 'estado'])
-            ->orderBy('created_at', 'desc');
+        // usar query base (heredable)
+        $query = $this->baseQuery();
 
+        // -- eliminar aquí cualquier filtro fijo de tipo de compensación --
         // Filtro por estado
         if ($this->filtroEstado) {
             $query->where('id_estado', $this->filtroEstado);
@@ -48,7 +70,7 @@ class AprobacionesMasivas extends Component
         if ($this->filtroBusqueda) {
             $query->where(function($q) {
                 $q->where('username', 'like', '%' . $this->filtroBusqueda . '%')
-                  ->orWhere('id', 'like', '%' . $this->filtroBusqueda . '%');
+                ->orWhere('id', 'like', '%' . $this->filtroBusqueda . '%');
             });
         }
 
@@ -63,13 +85,14 @@ class AprobacionesMasivas extends Component
 
     public function actualizarEstadisticas()
     {
-        $query = TblSolicitudHe::query();
+        // usar statsQuery() que puede añadir filtros (ej: id_tipo_compensacion)
+        $query = $this->statsQuery();
 
         $pendientes = (clone $query)->where('id_estado', 1)->count();
-        $aprobadas = (clone $query)->where('id_estado', 3)->count(); // APROBADO_JEFE
-        $rechazadas = (clone $query)->where('id_estado', 4)->count(); // RECHAZADO_JEFE
-        $compensacionSolicitada = (clone $query)->where('id_estado', 5)->count(); // Si existe
-        $compensacionAprobada = (clone $query)->where('id_estado', 6)->count(); // Si existe
+        $aprobadas = (clone $query)->where('id_estado', 3)->count();
+        $rechazadas = (clone $query)->where('id_estado', 4)->count();
+        $compensacionSolicitada = (clone $query)->where('id_estado', 5)->count();
+        $compensacionAprobada = (clone $query)->where('id_estado', 6)->count();
 
         $minutosAprobados = (clone $query)->where('id_estado', 3)->sum('total_min');
         $minutosPendientes = (clone $query)->where('id_estado', 1)->sum('total_min');

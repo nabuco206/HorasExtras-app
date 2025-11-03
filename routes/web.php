@@ -49,6 +49,11 @@ Route::middleware(['auth'])->group(function () {
         ->middleware(['auth'])
         ->name('sistema.aprobaciones-compensacion');
 
+    // // Nueva ruta: Aprobacion Pago
+    Route::get('sistema/aprobacion-pago', \App\Livewire\Sistema\AprobacionPago::class)
+        ->middleware(['auth'])
+        ->name('sistema.aprobacion-pago');
+
     // Rutas del sistema de workflow
     Route::prefix('workflow')->name('workflow.')->group(function () {
         Route::get('/demo', [App\Http\Controllers\WorkflowController::class, 'demo'])->name('demo');

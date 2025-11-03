@@ -119,11 +119,11 @@ class TblPersonaSeeder extends Seeder
         ]);
 
         // Crear algunos usuarios adicionales para pruebas masivas
-        for ($i = 1; $i <= 5; $i++) {
+        for ($i = 2; $i <= 15; $i++) {
             TblPersona::create([
                 'Nombre' => "Usuario Test {$i}",
                 'Apellido' => "Apellido {$i}",
-                'username' => "usertest{$i}",
+                'username' => "persona0{$i}",
                 'cod_fiscalia' => 501,
                 'id_escalafon' => 1,
                 'flag_lider' => false,

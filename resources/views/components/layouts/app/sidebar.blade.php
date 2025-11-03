@@ -48,16 +48,23 @@
             //     'current' => Route::has('sistema.ciclo-aprobacion') && request()->routeIs('sistema.ciclo-aprobacion')
             // ],
             [
-                'name' => 'Aprobaciones Compensaciones',
+                'name' => 'Aprobar Compensaciones',
                 'icon' => 'clipboard-document-check',
                 'url' => Route::has('sistema.aprobaciones-compensacion') ? route('sistema.aprobaciones-compensacion') : '#',
                 'current' => Route::has('sistema.aprobaciones-compensacion') && request()->routeIs('sistema.aprobaciones-compensacion')
             ],
             [
-                'name' => 'Aprobaciones Masivas',
+                'name' => 'Aprobar HE',
                 'icon' => 'check-circle',
                 'url' => Route::has('sistema.aprobaciones-masivas') ? route('sistema.aprobaciones-masivas') : '#',
                 'current' => Route::has('sistema.aprobaciones-masivas') && request()->routeIs('sistema.aprobaciones-masivas')
+            ],
+            // Nueva opción: Aprobacion Pago
+            [
+                'name' => 'Aprobar Pago',
+                'icon' => 'banknotes',
+                'url' => Route::has('sistema.aprobacion-pago') ? route('sistema.aprobacion-pago') : '#',
+                'current' => Route::has('sistema.aprobacion-pago') && request()->routeIs('sistema.aprobacion-pago')
             ],
         ];
     }
