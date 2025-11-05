@@ -1,10 +1,19 @@
 <div class="container mx-auto p-6">
+    <style>
+        /* Fix temporal: forzar columnas en pantallas >= md si Tailwind no se está aplicando */
+        @media (min-width: 768px) {
+            .force-grid-md-2 { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 1rem !important; }
+            .force-grid-md-3 { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 1rem !important; }
+            .force-grid-md-5 { display: grid !important; grid-template-columns: repeat(5, minmax(0, 1fr)) !important; gap: 1rem !important; }
+        }
+    </style>
+
     {{-- Header con estadísticas --}}
     <div class="mb-6">
         <h1 class="text-3xl font-bold text-gray-800 mb-4">🔍 Aprobación de Compensaciones</h1>
 
         @if($estadisticas)
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mb-6 force-grid-md-5">
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div class="text-blue-600 text-sm font-medium">Total Solicitudes</div>
                 <div class="text-2xl font-bold font-mono text-blue-700">{{ $estadisticas['total_solicitudes'] }}</div>
@@ -33,7 +42,7 @@
 
     {{-- Filtros y controles --}}
     <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4 force-grid-md-3">
             {{-- Filtro por estado --}}
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
@@ -216,7 +225,7 @@
 
                 {{-- Información de la solicitud --}}
                 <div class="bg-gray-50 rounded-lg p-4 mb-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-4 force-grid-md-2">
                         <div>
                             <strong>Usuario:</strong> {{ $solicitudSeleccionada->username }}<br>
                             <strong>Nombre:</strong>

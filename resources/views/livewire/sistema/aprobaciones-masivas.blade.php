@@ -1,4 +1,14 @@
 <div class="container mx-auto p-6">
+    <style>
+        /* Fix temporal: forzar columnas en pantallas >= md si Tailwind no se está aplicando */
+        @media (min-width: 768px) {
+            .force-grid-md-2 { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 1rem !important; }
+            .force-grid-md-3 { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 1rem !important; }
+            .force-grid-md-4 { display: grid !important; grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 1rem !important; }
+            .force-grid-md-5 { display: grid !important; grid-template-columns: repeat(5, minmax(0, 1fr)) !important; gap: 1rem !important; }
+        }
+    </style>
+
     {{-- Header con estadísticas --}}
     <div class="mb-6">
         <div class="flex justify-between items-start mb-4">
@@ -13,7 +23,7 @@
         </div>
 
         @if($estadisticas)
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mb-6 force-grid-md-5">
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 cursor-pointer hover:bg-blue-100 transition-colors"
                  wire:click="$set('filtroEstado', '')" title="Ver todas las solicitudes">
                 <div class="text-blue-600 text-sm font-medium">Total Solicitudes</div>
@@ -50,7 +60,7 @@
 
     {{-- Filtros y controles --}}
     <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4 force-grid-md-3">
             {{-- Filtro por estado --}}
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
@@ -278,7 +288,7 @@
                     <!-- Resumen Principal -->
                     <div class="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-6">
                         <h4 class="text-lg font-semibold text-green-800 mb-3">✅ Procesamiento Completado</h4>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 force-grid-md-4">
                             <div class="text-center">
                                 <div class="text-2xl font-bold font-mono text-green-700">{{ $ultimaOperacion['procesadas'] ?? 0 }}</div>
                                 <div class="text-sm text-green-600">Procesadas</div>

@@ -62,7 +62,7 @@
                 </div>
             </div>
 
-            <div class="grid auto-rows-min gap-6 md:grid-cols-5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 auto-rows-min gap-6">
                 <!-- Saldo Bolsón de Tiempo -->
                 <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 rounded-xl border border-emerald-200 dark:border-emerald-700 p-6">
                     <div class="flex items-center justify-between mb-4">

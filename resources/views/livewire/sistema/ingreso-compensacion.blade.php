@@ -1,4 +1,10 @@
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <style>
+        /* Fix temporal: forzar columnas en pantallas >= md si Tailwind no se está aplicando */
+        @media (min-width: 768px) {
+            .force-grid-md { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 1.5rem !important; }
+        }
+    </style>
     <!-- Encabezado -->
     <div class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Solicitud de Compensación</h1>
@@ -69,7 +75,7 @@
     @endif
 
     <!-- Panel de saldo disponible -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-8 force-grid-md">
         <!-- Saldo disponible -->
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border-l-4 {{ $puedeCompensar ? 'border-green-400' : 'border-red-400' }}">
             <div class="flex items-center">
@@ -149,7 +155,7 @@
         <div class="p-6">
             @if($puedeCompensar)
             <form wire:submit.prevent="save" class="space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-6">
                     <!-- Fecha de compensación -->
                     <div>
                         <label for="fecha_solicitud" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -183,7 +189,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                     <!-- Hora inicial -->
                     <div>
                         <label for="hrs_inicial" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
