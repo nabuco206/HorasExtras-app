@@ -247,9 +247,12 @@
                     <button
                         type="submit"
                         @disabled(!$puedeCompensar || $minutos_solicitados <= 0 || $minutos_solicitados > $saldoDisponible)
-                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:cursor-not-allowed"
+                        aria-disabled="{{ !$puedeCompensar || $minutos_solicitados <= 0 || $minutos_solicitados > $saldoDisponible ? 'true' : 'false' }}"
+                        title="{{ !$puedeCompensar ? 'No dispone de saldo' : ($minutos_solicitados <= 0 ? 'Ingrese horas' : ($minutos_solicitados > $saldoDisponible ? 'Excede saldo disponible' : '')) }}"
+                        style="{{ (!$puedeCompensar || $minutos_solicitados <= 0 || $minutos_solicitados > $saldoDisponible) ? 'background:#6366f1;color:#fff;opacity:0.9;border-color:transparent;' : 'background:#4f46e5;color:#fff;' }}"
                     >
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="stroke:currentColor;">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                         </svg>
                         Solicitar Compensación

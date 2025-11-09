@@ -174,6 +174,28 @@ class AprobacionesCompensacion extends Component
         $this->actualizarEstadisticas();
     }
 
+    public function rechazarSeleccionadas()
+    {
+        if (empty($this->solicitudesSeleccionadas)) {
+            $this->dispatchBrowserEvent('notify', ['type' => 'error', 'message' => 'No hay solicitudes seleccionadas']);
+            return;
+        }
+
+        foreach ($this->solicitudesSeleccionadas as $id) {
+            $sol = \App\Models\Solicitud::find($id); // ajusta el modelo
+            if ($sol && $sol->id_estado == 8) {
+                $sol->id_estado = 10; // estado Rechazada
+                $sol->aprobado_por = auth()->user()->name ?? null;
+                $sol->fecha_aprobacion = now();
+                $sol->save();
+            }
+        }
+
+        $this->solicitudesSeleccionadas = [];
+        session()->flash('success', 'Solicitudes rechazadas correctamente');
+        $this->emit('refreshList');
+    }
+
     public function actualizarEstadisticas()
     {
         $this->estadisticas = $this->compensacionService->obtenerEstadisticas();

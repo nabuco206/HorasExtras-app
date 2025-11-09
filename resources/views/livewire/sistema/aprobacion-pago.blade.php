@@ -60,7 +60,7 @@
 
     {{-- Filtros y controles --}}
     <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4 force-grid-md-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4 force-grid-md-4">
             {{-- Filtro por estado --}}
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
@@ -79,15 +79,25 @@
                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
 
-            {{-- Acciones masivas --}}
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Acciones Masivas</label>
+                        {{-- Acciones masivas --}}
+                                    <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Aprobar Seleccionadas</label>
                 <div class="space-y-2">
                     <button wire:click="aprobarSeleccionados"
                             @if(empty($seleccionados)) disabled @endif
                             class="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed">
-                        ✅ Aprobar Seleccionadas ({{ count($seleccionados) }})
+                        ✅ Aprobar ({{ count($seleccionados) }})
                     </button>
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Rechazar Seleccionadas</label>
+                <div class="space-y-2">
+                    <button wire:click="rechazarSeleccionados"
+                            @if(empty($seleccionados)) disabled @endif
+                            class="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed">
+                            ❌ Rechazar ({{ count($seleccionados) }})
+                     </button>
                 </div>
             </div>
         </div>
@@ -95,11 +105,7 @@
         {{-- Botones adicionales --}}
         <div class="border-t pt-4">
             <div class="flex flex-wrap gap-3">
-                <button wire:click="rechazarSeleccionados"
-                        @if(empty($seleccionados)) disabled @endif
-                        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed">
-                    ❌ Rechazar Seleccionadas ({{ count($seleccionados) }})
-                </button>
+
 
                 {{-- <button wire:click="exportarSeleccionados"
                         @if(empty($seleccionados)) disabled @endif

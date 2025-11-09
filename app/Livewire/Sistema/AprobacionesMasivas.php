@@ -52,7 +52,7 @@ class AprobacionesMasivas extends Component
     protected function statsQuery()
     {
         return TblSolicitudHe::query()->where('id_tipo_compensacion', 0);
-       
+
     }
 
     public function cargarSolicitudes()
@@ -137,69 +137,45 @@ class AprobacionesMasivas extends Component
 
     public function aprobarSeleccionados()
     {
+        // Log temporal para depuración
+        Log::info('AprobacionesMasivas::aprobarSeleccionados invocado', [
+            'seleccionados' => $this->seleccionados,
+            'usuario_id' => auth()->id(),
+            'usuario_rol' => auth()->user()?->rol
+        ]);
+
         if (empty($this->seleccionados)) {
-            session()->flash('error', 'Debe seleccionar al menos una solicitud');
+            session()->flash('warning', 'No hay solicitudes seleccionadas.');
             return;
         }
 
-        try {
-            $flujoService = app(FlujoEstadoService::class);
+        $usuarioId = auth()->id() ?? null;
+        $flujoService = app(FlujoEstadoService::class);
 
-            // Obtener usuario autenticado
-            $usuarioId = Auth::id() ?? 1; // Fallback a 1 si no hay usuario autenticado
+        Log::info("Iniciando aprobación masiva", [
+            'seleccionados' => $this->seleccionados,
+            'usuario_id' => $usuarioId,
+            'total' => count($this->seleccionados)
+        ]);
+        Log::info('Aprobación masiva - seleccionados', $this->seleccionados);
+        Log::info('Aprobación masiva - auth user', ['id'=>auth()->id(),'rol'=>auth()->user()?->rol]);
 
-            Log::info("Iniciando aprobación masiva", [
-                'seleccionados' => $this->seleccionados,
-                'usuario_id' => $usuarioId,
-                'total_seleccionados' => count($this->seleccionados)
-            ]);
+        // No pasar estado destino: permitir que el servicio determine por solicitud según flujo/rol/condiciones
+        $resultado = $flujoService->ejecutarTransicionesMultiples($this->seleccionados, null, $usuarioId, 'Aprobación masiva desde interfaz');
 
-            // Usar el nuevo método de aprobaciones masivas
-            $resultado = $flujoService->ejecutarTransicionesMultiples(
-                $this->seleccionados,
-                3, // APROBADO_JEFE
-                $usuarioId,
-                'Aprobación masiva desde interfaz'
-            );
+        $this->ultimaOperacion = $resultado;
+        $this->mostrarResultados = true;
 
-            Log::info("Resultado de aprobación masiva", [
-                'exitoso' => $resultado['exitoso'],
-                'procesadas' => $resultado['procesadas'] ?? 0,
-                'bolsones_creados' => count($resultado['bolsones_creados'] ?? []),
-                'mensaje' => $resultado['mensaje'] ?? 'Sin mensaje'
-            ]);
+        $this->actualizarEstadisticas();
+        $this->cargarSolicitudes();
 
-            if ($resultado['exitoso']) {
-                $this->ultimaOperacion = $resultado;
-                $this->mostrarResultados = true;
-
-                session()->flash('mensaje', $resultado['mensaje']);
-
-                // Recargar datos
-                $this->cargarSolicitudes();
-                $this->actualizarEstadisticas();
-
-                Log::info("Aprobación masiva completada desde interfaz", [
-                    'procesadas' => $resultado['procesadas'],
-                    'bolsones_creados' => count($resultado['bolsones_creados']),
-                    'seleccionados' => $this->seleccionados
-                ]);
-
-            } else {
-                session()->flash('error', $resultado['mensaje']);
-                Log::warning("Aprobación masiva falló", [
-                    'resultado' => $resultado,
-                    'seleccionados' => $this->seleccionados
-                ]);
-            }
-
-        } catch (\Exception $e) {
-            session()->flash('error', 'Error al procesar aprobaciones: ' . $e->getMessage());
-            Log::error("Error en aprobación masiva desde interfaz", [
-                'error' => $e->getMessage(),
-                'seleccionados' => $this->seleccionados
-            ]);
+        if (!empty($resultado['exitoso'])) {
+            session()->flash('mensaje', $resultado['mensaje'] ?? 'Operación completada');
+        } else {
+            session()->flash('error', $resultado['mensaje'] ?? 'Error en la operación');
         }
+
+        Log::info('Resultado aprobación masiva', ['resultado' => $resultado]);
     }
 
     public function rechazarSeleccionados()
@@ -436,6 +412,15 @@ class AprobacionesMasivas extends Component
         } catch (\Exception $e) {
             session()->flash('error', 'Error en verificación del sistema: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Delegar obtención de siguientes estados al servicio de flujo.
+     */
+    protected function obtenerSiguientesEstados(int $flujoId, int $estadoActualId, ?string $rol = null)
+    {
+        $service = app(\App\Services\FlujoEstadoService::class);
+        return $service->obtenerSiguientesEstados($flujoId, $estadoActualId, $rol);
     }
 
     public function render()

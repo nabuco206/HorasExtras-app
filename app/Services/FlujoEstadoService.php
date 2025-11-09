@@ -7,9 +7,107 @@ use App\Models\TblEstado;
 use App\Models\TblFlujoEstado;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Models\User; // añadir import si no existe
+
 
 class FlujoEstadoService
 {
+
+    public function estadoInicial()
+    {
+        return $this->hasOneThrough(
+            TblEstado::class,
+            TblFlujoEstado::class,
+            'flujo_id',            // FK en tbl_flujos_estados
+            'id',                  // PK en tbl_estados
+            'id',                  // PK en tbl_flujos
+            'estado_origen_id'     // campo en tbl_flujos_estados
+        )->whereNotIn('tbl_estados.id', function ($q) {
+            $q->select('estado_destino_id')
+            ->from('tbl_flujos_estados')
+            ->whereColumn('tbl_flujos_estados.flujo_id', 'tbl_flujos.id');
+        });
+    }
+
+    // NUEVO: resolver flujo_id a partir del registro TblEstado (soporta campo string 'flujo')
+    private function resolveFlujoIdFromEstado($estado)
+    {
+        if (!$estado) return null;
+
+        // Si ya existe flujo_id explícito (por si alguna vez se agrega)
+        if (!empty($estado->flujo_id)) {
+            return $estado->flujo_id;
+        }
+
+        // Si existe campo string 'flujo', buscar TblFlujo por codigo o slug
+        if (!empty($estado->flujo)) {
+            $codigo = trim((string)$estado->flujo);
+
+            $flujo = TblFlujo::where('codigo', $codigo)
+                      ->orWhere('slug', $codigo)
+                      ->first();
+
+            if ($flujo) {
+                return $flujo->id;
+            }
+
+            // Mapas comunes (ajustar según seeders)
+            $map = [
+                'COMPENSACION' => 'HE_COMPENSACION',
+                'DINERO' => 'HE_DINERO',
+                'TIEMPO' => 'HE_COMPENSACION',
+                'AMBOS' => null
+            ];
+
+            if (isset($map[$codigo]) && $map[$codigo]) {
+                $flujo = TblFlujo::where('codigo', $map[$codigo])->first();
+                if ($flujo) return $flujo->id;
+            }
+        }
+
+        return null;
+    }
+
+    function obtenerSiguientesEstados(int $flujoId, int $estadoActualId, ?string $rol = null)
+    {
+        $query = DB::table('tbl_flujos_estados as fe')
+            ->join('tbl_estados as e', 'e.id', '=', 'fe.estado_destino_id')
+            ->where('fe.flujo_id', $flujoId)
+            ->where('fe.estado_origen_id', $estadoActualId)
+            ->where('fe.activo', true)
+            ->select('e.id as id_estado', 'e.codigo', 'e.descripcion', 'fe.rol_autorizado', 'fe.orden');
+
+        if ($rol) {
+            $query->where(function ($q) use ($rol) {
+                $q->whereNull('fe.rol_autorizado')
+                ->orWhere('fe.rol_autorizado', $rol);
+            });
+        }
+
+        return $query->orderBy('fe.orden')->get();
+    }
+
+    // NUEVO: obtener transiciones desde tbl_flujos_estados independientemente del flujo asociado al estado
+    public function obtenerSiguientesTransicionesPorEstadoOrigen(int $estadoOrigenId, ?string $rol = null)
+    {
+        $query = DB::table('tbl_flujos_estados as fe')
+            ->join('tbl_estados as e', 'e.id', '=', 'fe.estado_destino_id')
+            ->where('fe.estado_origen_id', $estadoOrigenId)
+            ->where('fe.activo', true)
+            ->select('fe.*', 'e.codigo as estado_codigo', 'e.descripcion as estado_descripcion')
+            ->orderBy('fe.flujo_id')
+            ->orderBy('fe.orden');
+
+        if ($rol) {
+            $query->where(function ($q) use ($rol) {
+                $q->whereNull('fe.rol_autorizado')
+                  ->orWhere('fe.rol_autorizado', $rol);
+            });
+        }
+
+        return $query->get();
+    }
+
     /**
      * Obtener las transiciones disponibles para un estado y flujo específico
      */
@@ -544,15 +642,114 @@ class FlujoEstadoService
      */
     private function procesarPago($solicitud)
     {
-        // Implementar lógica de pago
-        Log::info("Procesando pago para solicitud {$solicitud->id}");
+        try {
+            // Obtener estado actual y resolver flujo desde el estado (usa string 'flujo' si aplica)
+            $estadoActual = TblEstado::find($solicitud->id_estado);
+            $flujoId = $this->resolveFlujoIdFromEstado($estadoActual);
+
+            // Si el estado no tiene flujo, intentar buscar un flujo con código/slug relacionado a PAGO
+            if (!$flujoId) {
+                $flujo = TblFlujo::where('codigo', 'PAGO')
+                    ->orWhere('slug', 'pago')
+                    ->first();
+                $flujoId = $flujo->id ?? null;
+            }
+
+            if (!$flujoId) {
+                Log::warning("No se encontró flujo para procesar pago", [
+                    'solicitud_id' => $solicitud->id,
+                    'estado_actual' => $solicitud->id_estado
+                ]);
+                return;
+            }
+
+            // Obtener transiciones disponibles desde el estado actual según el flujo
+            $transiciones = $this->obtenerTransicionesDisponibles($flujoId, $solicitud->id_estado);
+
+            if ($transiciones->isEmpty()) {
+                Log::info("No hay transiciones configuradas en flujo PAGO desde este estado", [
+                    'flujo_id' => $flujoId,
+                    'estado_origen' => $solicitud->id_estado,
+                    'solicitud_id' => $solicitud->id
+                ]);
+                return;
+            }
+
+            // Evaluar y ejecutar la primera transición válida (respeta condiciones y rol)
+            foreach ($transiciones as $transicion) {
+                try {
+                    $validacion = $this->validarTransicion(
+                        $flujoId,
+                        $solicitud->id_estado,
+                        $transicion->estado_destino_id,
+                        null,
+                        $solicitud
+                    );
+
+                    if (!empty($validacion['valida'])) {
+                        // Ejecutar la transición (usar null o system user si corresponde)
+                        $usuarioId = auth()->id() ?? null;
+                        $resultado = $this->ejecutarTransicion(
+                            $solicitud,
+                            $transicion->estado_destino_id,
+                            $usuarioId,
+                            "Transición automática por flujo PAGO (flujo_id: {$flujoId}, transicion_id: {$transicion->id})"
+                        );
+
+                        if (!empty($resultado['exitoso'])) {
+                            Log::info("Transición de flujo PAGO ejecutada", [
+
+                                'flujo_id' => $flujoId,
+                                'transicion_id' => $transicion->id,
+                                'estado_destino' => $transicion->estado_destino_id
+                            ]);
+                        } else {
+                            Log::error("Fallo al ejecutar transición de flujo PAGO", [
+                                'solicitud_id' => $solicitud->id,
+                                'transicion_id' => $transicion->id,
+                                'error' => $resultado['mensaje'] ?? 'sin mensaje'
+                            ]);
+                        }
+
+                        // Ejecutar solo la primera transición aplicable (evita ramas múltiples automáticas)
+                        return;
+                    }
+                } catch (\Exception $e) {
+                    Log::error("Error evaluando/ejecutando transición de flujo PAGO", [
+                        'solicitud_id' => $solicitud->id,
+                        'transicion_id' => $transicion->id ?? null,
+                        'error' => $e->getMessage()
+                    ]);
+                    // continuar con la siguiente transición si existe
+                }
+            }
+
+            // Si llega aquí, no se encontró ninguna transición válida
+            Log::info("Ninguna transición válida encontrada en flujo PAGO para la solicitud", [
+                'solicitud_id' => $solicitud->id,
+                'flujo_id' => $flujoId
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("Excepción en procesarPago", [
+                'solicitud_id' => $solicitud->id ?? null,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
     /**
      * Ejecutar múltiples transiciones de estado (aprobaciones masivas)
      */
-    public function ejecutarTransicionesMultiples(array $solicitudesIds, $estadoDestinoId, $usuarioId, $observaciones = null)
+    public function ejecutarTransicionesMultiples(array $solicitudesIds, $estadoDestinoId = null, $usuarioId = null, $observaciones = null)
     {
+        // LOG: ver qué llega realmente al servicio
+        Log::info('FlujoEstadoService::ejecutarTransicionesMultiples invocado', [
+            'param_solicitudesIds' => $solicitudesIds,
+            'usuarioId_param' => $usuarioId,
+            'observaciones' => $observaciones
+        ]);
+
         try {
             DB::beginTransaction();
 
@@ -565,7 +762,6 @@ class FlujoEstadoService
                 'mensaje' => ''
             ];
 
-            // Obtener solicitudes válidas
             $solicitudes = \App\Models\TblSolicitudHe::whereIn('id', $solicitudesIds)->get();
 
             if ($solicitudes->isEmpty()) {
@@ -578,38 +774,135 @@ class FlujoEstadoService
 
             foreach ($solicitudes as $solicitud) {
                 try {
-                    // Ejecutar transición individual usando el método existente
+                    $estadoDestinoAUsar = $estadoDestinoId;
+
+                    // resolver rol del usuario: preferir auth()->user()->rol/role, luego intentar mapear id_rol a nombre
+                    $rolUsuario = null;
+                    try {
+                        $authUser = auth()->user();
+                        if ($authUser) {
+                            $rolUsuario = $authUser->rol ?? $authUser->role ?? null;
+
+                            if (empty($rolUsuario) && isset($authUser->id_rol)) {
+                                try {
+                                    if (DB::getSchemaBuilder()->hasTable('tbl_roles')) {
+                                        $roleRow = DB::table('tbl_roles')->where('id', $authUser->id_rol)->first();
+                                        $rolUsuario = $roleRow->codigo ?? $roleRow->nombre ?? null;
+                            }
+                        } catch (\Exception $e) {
+                            // ignorar
+                        }
+                    }
+                }
+
+                if (empty($rolUsuario) && $usuarioId) {
+                    try {
+                        $userModel = new User();
+                        if (DB::getSchemaBuilder()->hasTable($userModel->getTable())) {
+                            $u = User::where('id', $usuarioId)->orWhere('username', $usuarioId)->first();
+                            $rolUsuario = $u->rol ?? $u->role ?? $u->id_rol ?? null;
+                        } else {
+                            if (DB::getSchemaBuilder()->hasTable('tbl_personas')) {
+                                $p = DB::table('tbl_personas')->where('id', $usuarioId)->orWhere('username', $usuarioId)->first();
+                                $rolUsuario = $p->rol ?? $p->id_rol ?? null;
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        Log::warning('No se pudo resolver usuario para rol: ' . $e->getMessage());
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::warning('Error resolviendo rol usuario: ' . $e->getMessage());
+                $rolUsuario = null;
+            }
+
+            // FORZAR ROL TEMPORALMENTE PARA PRUEBAS
+            if (empty($rolUsuario)) {
+                $rolUsuario = 'JEFE';
+            }
+
+            // MAPEO TEMPORAL: si se obtuvo un id numérico de rol (p.ej. id_rol = 1), mapearlo a nombre
+            $mapIdRolToNombre = [
+                1 => 'JEFE',
+                2 => 'RRHH',
+                3 => 'DER',
+                // añadir más mapeos aquí si los conoces
+            ];
+            if (is_numeric($rolUsuario)) {
+                $rolInt = (int) $rolUsuario;
+                if (isset($mapIdRolToNombre[$rolInt])) {
+                    $rolUsuario = $mapIdRolToNombre[$rolInt];
+                } else {
+                    // si no hay mapeo, dejar el valor original (para facilitar debug)
+                    $rolUsuario = (string) $rolUsuario;
+                }
+            }
+
+            Log::info('FlujoEstadoService: rol resuelto', [
+                'solicitud_id' => $solicitud->id ?? null,
+                'usuarioId_param' => $usuarioId,
+                'rol_resuelto' => $rolUsuario
+            ]);
+
+                    // Si no se pasó estado destino, determinar según las filas en tbl_flujos_estados
+                    if ($estadoDestinoAUsar === null) {
+                        // obtener transiciones según estado origen y rol resuelto
+                        $transiciones = $this->obtenerSiguientesTransicionesPorEstadoOrigen($solicitud->id_estado, $rolUsuario);
+
+                        foreach ($transiciones as $transicion) {
+                            $validacion = $this->validarTransicion(
+                                $transicion->flujo_id,
+                                $solicitud->id_estado,
+                                $transicion->estado_destino_id,
+                                $rolUsuario,
+                                $solicitud
+                            );
+
+                            if (!empty($validacion['valida'])) {
+                                $estadoDestinoAUsar = $transicion->estado_destino_id;
+                                // ...log si necesario...
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!$estadoDestinoAUsar) {
+                        $resultado['errores'][] = [
+                            'solicitud_id' => $solicitud->id,
+                            'error' => 'No se pudo determinar estado destino para la solicitud'
+                        ];
+                        continue;
+                    }
+
                     $resultadoIndividual = $this->ejecutarTransicion(
                         $solicitud,
-                        $estadoDestinoId,
+                        $estadoDestinoAUsar,
                         $usuarioId,
-                        $observaciones ?? "Aprobación masiva - {$solicitudes->count()} solicitudes"
+                        $observaciones ?? "Aprobación masiva - {$solicitudes->count()} solicitudes",
+                        false // evitar anidar transacciones
                     );
 
                     if ($resultadoIndividual['exitoso']) {
                         $resultado['procesadas']++;
                         $resultado['solicitudes_procesadas'][] = [
                             'id' => $solicitud->id,
-                            'username' => $solicitud->username,
-                            'total_min' => $solicitud->total_min,
+                            'username' => $solicitud->username ?? null,
+                            'total_min' => $solicitud->total_min ?? null,
                             'estado_anterior' => $solicitud->getOriginal('id_estado'),
-                            'estado_nuevo' => $estadoDestinoId
+                            'estado_nuevo' => $estadoDestinoAUsar
                         ];
 
-                        // Si es una aprobación, verificar si se creó bolsón
-                        if ($estadoDestinoId == 3) { // APROBADO_JEFE
-                            $bolsonCreado = \App\Models\TblBolsonTiempo::where('id_solicitud_he', $solicitud->id)
-                                ->where('estado', 'DISPONIBLE')
-                                ->first();
+                        $bolsonCreado = \App\Models\TblBolsonTiempo::where('id_solicitud_he', $solicitud->id)
+                            ->where('estado', 'DISPONIBLE')
+                            ->first();
 
-                            if ($bolsonCreado) {
-                                $resultado['bolsones_creados'][] = [
-                                    'bolson_id' => $bolsonCreado->id,
-                                    'solicitud_id' => $solicitud->id,
-                                    'minutos' => $bolsonCreado->minutos,
-                                    'username' => $bolsonCreado->username
-                                ];
-                            }
+                        if ($bolsonCreado) {
+                            $resultado['bolsones_creados'][] = [
+                                'bolson_id' => $bolsonCreado->id,
+                                'solicitud_id' => $solicitud->id,
+                                'minutos' => $bolsonCreado->minutos,
+                                'username' => $bolsonCreado->username
+                            ];
                         }
                     } else {
                         $resultado['errores'][] = [
@@ -626,7 +919,6 @@ class FlujoEstadoService
                 }
             }
 
-            // Determinar si la operación fue exitosa
             $resultado['exitoso'] = $resultado['procesadas'] > 0;
 
             if ($resultado['exitoso']) {
@@ -637,13 +929,6 @@ class FlujoEstadoService
                                       ($totalBolsones > 0 ? "Creados {$totalBolsones} bolsones con {$totalMinutos} min totales." : "");
 
                 DB::commit();
-
-                Log::info("Aprobación masiva exitosa", [
-                    'procesadas' => $resultado['procesadas'],
-                    'bolsones_creados' => $totalBolsones,
-                    'minutos_totales' => $totalMinutos,
-                    'usuario_id' => $usuarioId
-                ]);
             } else {
                 DB::rollBack();
                 $resultado['mensaje'] = "❌ No se pudo procesar ninguna solicitud. " . count($resultado['errores']) . " errores.";

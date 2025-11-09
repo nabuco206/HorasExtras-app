@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+            DB::statement('PRAGMA foreign_keys = OFF;');
 
             DB::table('tbl_rol')->insert([
                            ['gls_rol' => 'Usuario']
@@ -183,6 +184,7 @@ class DatabaseSeeder extends Seeder
 
         // Crear solicitudes de compensación de prueba
         // $this->call(TblSolicitudCompensaSeeder::class);
+        DB::statement('PRAGMA foreign_keys = ON;');
 
 
     }

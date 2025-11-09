@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\Rule;
 use Livewire\Volt\Component;
 use Livewire\WithFileUploads;
+use App\Services\FlujoEstadoService;
 
 new class extends Component {
     use WithFileUploads;
@@ -127,8 +128,21 @@ new class extends Component {
             $validated['min_50'] = $resultado['min_50'];
             $validated['total_min'] = $resultado['total_min'];
 
+            // Intentar obtener el estado inicial desde el flujo de compensación HE
+            // Preparar estado pendiente por defecto (se usa como fallback y en el log)
             $estadoPendiente = \App\Models\TblEstado::where('codigo', 'INGRESADO')->first();
-            $validated['id_estado'] = $estadoPendiente ? $estadoPendiente->id : 1;
+
+            // Seleccionar flujo según si el usuario propone pago (dinero) o compensación (tiempo)
+            $codigoFlujo = $this->propone_pago ? 'HE_DINERO' : 'HE_COMPENSACION';
+            $flujo = \App\Models\TblFlujo::where('codigo', $codigoFlujo)->first();
+            $estadoInicial = $flujo ? $flujo->estadoInicial : null;
+
+            if ($estadoInicial && isset($estadoInicial->id)) {
+                $validated['id_estado'] = $estadoInicial->id;
+            } else {
+                // Fallback al estado INGRESADO por compatibilidad
+                $validated['id_estado'] = $estadoPendiente ? $estadoPendiente->id : 1;
+            }
 
             // Procesar archivo adjunto
             if ($this->archivo_adjunto) {

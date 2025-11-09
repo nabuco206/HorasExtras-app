@@ -104,16 +104,51 @@ class AprobacionPago extends AprobacionesMasivas
             ->layout('components.layouts.app');
     }
 
-    // Sobrescribir para deshabilitar aprobación masiva en esta vista
+    // Sobrescribir para aprobar seleccionados siguiendo el flujo en DB
     public function aprobarSeleccionados()
     {
-        Log::info('Intento de aprobar en AprobacionPago deshabilitado', [
-            'seleccionados' => $this->seleccionados
+        // Log previo
+        Log::info('AprobacionPago::aprobarSeleccionados invocado', [
+            'seleccionados' => $this->seleccionados,
+            'auth_id' => auth()->id(),
+            'auth_user' => auth()->user()?->toArray()
         ]);
 
-        session()->flash('warning', 'Acción deshabilitada: no se pueden aprobar solicitudes desde Aprobación Pago por ahora.');
-        // refrescar la lista para mantener UI coherente
+        if (empty($this->seleccionados)) {
+            session()->flash('warning', 'No hay solicitudes seleccionadas.');
+            return;
+        }
+
+        // Asegurar que pasamos un array de IDs simples al servicio
+        $solicitudesIds = array_values($this->seleccionados);
+        $usuarioId = auth()->user()?->id ?? auth()->id();
+        $flujoService = app(\App\Services\FlujoEstadoService::class);
+
+        // Llamada explícita al servicio (estadoDestino = null para que el servicio decida)
+        $resultado = $flujoService->ejecutarTransicionesMultiples($solicitudesIds, null, $usuarioId, 'Aprobación desde AprobacionPago');
+
+        // Log posterior para verificar lo que devolvió el servicio
+        Log::info('AprobacionPago::resultado ejecucion servicio', [
+            'solicitudes_enviadas' => $solicitudesIds,
+            'resultado' => $resultado
+        ]);
+
+        $this->ultimaOperacion = $resultado;
+        $this->mostrarResultados = true;
+
+        $this->actualizarEstadisticas();
         $this->cargarSolicitudes();
+
+        if (!empty($resultado['exitoso'])) {
+            session()->flash('mensaje', $resultado['mensaje'] ?? 'Operación completada');
+        } else {
+            session()->flash('error', $resultado['mensaje'] ?? 'Error en la operación');
+        }
+
+        Log::info('Aprobación masiva desde AprobacionPago', [
+            'seleccionados' => $this->seleccionados,
+            'resultado' => $resultado
+        ]);
     }
 
     // Sobrescribir para deshabilitar rechazo masivo en esta vista

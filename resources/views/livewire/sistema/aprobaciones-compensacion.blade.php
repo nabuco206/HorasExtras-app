@@ -1,12 +1,5 @@
 <div class="container mx-auto p-6">
-    <style>
-        /* Fix temporal: forzar columnas en pantallas >= md si Tailwind no se está aplicando */
-        @media (min-width: 768px) {
-            .force-grid-md-2 { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 1rem !important; }
-            .force-grid-md-3 { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 1rem !important; }
-            .force-grid-md-5 { display: grid !important; grid-template-columns: repeat(5, minmax(0, 1fr)) !important; gap: 1rem !important; }
-        }
-    </style>
+    {{-- Estilos centralizados en resources/css/app.css --}}
 
     {{-- Header con estadísticas --}}
     <div class="mb-6">
@@ -42,7 +35,7 @@
 
     {{-- Filtros y controles --}}
     <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4 force-grid-md-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4 force-grid-md-4">
             {{-- Filtro por estado --}}
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
@@ -63,12 +56,22 @@
 
             {{-- Acciones masivas --}}
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Acciones Masivas</label>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Aprobar Seleccion</label>
                 <div class="space-y-2">
                     <button wire:click="aprobarSeleccionadas"
                             @if(empty($solicitudesSeleccionadas)) disabled @endif
                             class="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed">
-                        ✅ Aprobar Seleccionadas ({{ count($solicitudesSeleccionadas) }})
+                        ✅ Aprobar ({{ count($solicitudesSeleccionadas) }})
+                    </button>
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Rechazar Seleccion</label>
+                <div class="space-y-2">
+                    <button wire:click="rechazarSeleccionadas"
+                        @if(empty($solicitudesSeleccionadas)) disabled @endif
+                        class="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed">
+                        ❌ Rechazar ({{ count($solicitudesSeleccionadas) }})
                     </button>
                 </div>
             </div>
@@ -164,8 +167,14 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 @if($solicitud->id_estado == 8)
                                 <div class="flex space-x-2">
+                                    {{-- <button wire:click="abrirModalAprobacion({{ $solicitud->id }})"
+                                            class="text-red-600 hover:text-red-900 px-2 py-1 border border-red-600 rounded hover:bg-red-50"
+                                            title="Rechazar solicitud (abrir modal)">
+                                        ❌ Rechazar
+                                    </button> --}}
                                     <button wire:click="abrirModalAprobacion({{ $solicitud->id }})"
-                                            class="text-green-600 hover:text-green-900 px-2 py-1 border border-green-600 rounded hover:bg-green-50">
+                                            class="text-green-600 hover:text-green-900 px-2 py-1 border border-green-600 rounded hover:bg-green-50"
+                                            title="Evaluar solicitud">
                                         ✅ Evaluar
                                     </button>
                                 </div>
@@ -215,16 +224,17 @@
 
     {{-- Modal de aprobación/rechazo --}}
     @if($mostrarModal && $solicitudSeleccionada)
-    <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" wire:click="cerrarModal">
-        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white"
-             wire:click.stop>
-            <div class="mt-3">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">
+    <div class="modal-overlay" wire:click="cerrarModal">
+        <div class="modal-panel" wire:click.stop>
+            <div class="modal-header">
+                <h3 class="text-lg font-medium text-gray-900 mb-2">
                     📋 Aprobar/Rechazar Compensación
                 </h3>
+            </div>
 
+            <div class="modal-body">
                 {{-- Información de la solicitud --}}
-                <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                <div class="bg-gray-50 rounded-lg p-4 mb-4">
                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-4 force-grid-md-2">
                         <div>
                             <strong>Usuario:</strong> {{ $solicitudSeleccionada->username }}<br>
@@ -244,7 +254,7 @@
                 </div>
 
                 {{-- Formulario de aprobación --}}
-                <div class="space-y-4">
+                <div class="space-y-4 mb-2">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
                             Minutos a Aprobar
@@ -269,22 +279,21 @@
                                   placeholder="Observaciones adicionales..."></textarea>
                     </div>
                 </div>
+            </div>
 
-                {{-- Botones de acción --}}
-                <div class="flex justify-end space-x-3 mt-6">
-                    <button wire:click="cerrarModal"
-                            class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
-                        Cancelar
-                    </button>
-                    <button wire:click="rechazarSolicitud"
-                            class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
-                        ❌ Rechazar
-                    </button>
-                    <button wire:click="aprobarSolicitud"
-                            class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
-                        ✅ Aprobar
-                    </button>
-                </div>
+            <div class="modal-actions">
+                <button wire:click="cerrarModal"
+                        class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+                    Cancelar
+                </button>
+                <button wire:click="rechazarSolicitud"
+                        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                    ❌ Rechazar
+                </button>
+                <button wire:click="aprobarSolicitud"
+                        class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                    ✅ Aprobar
+                </button>
             </div>
         </div>
     </div>

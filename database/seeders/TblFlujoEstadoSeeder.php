@@ -2,38 +2,18 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 class TblFlujoEstadoSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Mapeo de códigos de estado a IDs (basado en TblEstadoSeeder)
-        $estados = [
-            'INGRESADO' => 1,
-            'APROBADO_LIDER' => 2,
-            'APROBADO_JEFE' => 3,
-            'RECHAZADO_JEFE' => 4,
-            'APROBADO_RRHH' => 5,
-            'RECHAZADO_RRHH' => 6,
-            'APROBADO_DER' => 7,
-        ];
+        $estados = DB::table('tbl_estados')->pluck('id', 'codigo')->toArray();
+        $flujos = DB::table('tbl_flujos')->pluck('id', 'codigo')->toArray();
 
-        // Mapeo de códigos de flujo a IDs (basado en TblFlujoSeeder)
-        $flujos = [
-            'HE_COMPENSACION' => 1,
-            'HE_DINERO' => 2,
-            'SOLICITUD_COMPENSACION' => 3,
-        ];
-
-        DB::table('tbl_flujos_estados')->insert([
-            // === FLUJO SIMPLE: HE por Compensación (Solo 2 estados) ===
-            // INGRESADO -> APROBADO_JEFE (aprobación simple, tiempo va al bolsón)
+        $data = [
+            // === HE por Compensación ===
             [
                 'flujo_id' => $flujos['HE_COMPENSACION'],
                 'estado_origen_id' => $estados['INGRESADO'],
@@ -45,8 +25,6 @@ class TblFlujoEstadoSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-
-            // INGRESADO -> RECHAZADO_JEFE (rechazo por el jefe)
             [
                 'flujo_id' => $flujos['HE_COMPENSACION'],
                 'estado_origen_id' => $estados['INGRESADO'],
@@ -59,8 +37,7 @@ class TblFlujoEstadoSeeder extends Seeder
                 'updated_at' => now(),
             ],
 
-            // === FLUJOS COMPLEJOS (mantenemos los otros para comparación) ===
-            // HE con Pago - Flujo completo
+            // === HE por Dinero ===
             [
                 'flujo_id' => $flujos['HE_DINERO'],
                 'estado_origen_id' => $estados['INGRESADO'],
@@ -88,14 +65,14 @@ class TblFlujoEstadoSeeder extends Seeder
                 'estado_origen_id' => $estados['APROBADO_RRHH'],
                 'estado_destino_id' => $estados['APROBADO_DER'],
                 'rol_autorizado' => 'DIRECCION',
-                'condicion_sql' => 'total_minutos > 240',
+                'condicion_sql' => "total_minutos > 240", // ✅ forzado texto
                 'orden' => 3,
                 'activo' => true,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
 
-            // Solicitud de compensación
+            // === Solicitud de Compensación ===
             [
                 'flujo_id' => $flujos['SOLICITUD_COMPENSACION'],
                 'estado_origen_id' => $estados['INGRESADO'],
@@ -118,36 +95,13 @@ class TblFlujoEstadoSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+        ];
 
-            // Rechazos para otros flujos
-            [
-                'flujo_id' => $flujos['HE_DINERO'],
-                'estado_origen_id' => $estados['INGRESADO'],
-                'estado_destino_id' => $estados['RECHAZADO_JEFE'],
-                'rol_autorizado' => 'JEFE',
-                'condicion_sql' => null,
-                'orden' => 10,
-                'activo' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'flujo_id' => $flujos['SOLICITUD_COMPENSACION'],
-                'estado_origen_id' => $estados['INGRESADO'],
-                'estado_destino_id' => $estados['RECHAZADO_JEFE'],
-                'rol_autorizado' => 'JEFE',
-                'condicion_sql' => null,
-                'orden' => 10,
-                'activo' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        ]);
+        // Inserción segura (una por una) para SQLite
+        foreach ($data as $item) {
+            DB::table('tbl_flujos_estados')->insert($item);
+        }
 
-        $this->command->info('✅ Flujos de estados configurados correctamente');
-        $this->command->info('   • HE_COMPENSACION (SIMPLE): INGRESADO → APROBADO_JEFE (tiempo al bolsón)');
-        $this->command->info('   • HE_DINERO: INGRESADO → APROBADO_LIDER → APROBADO_RRHH → APROBADO_DER');
-        $this->command->info('   • SOLICITUD_COMPENSACION: INGRESADO → APROBADO_LIDER → APROBADO_RRHH');
-        $this->command->info('   • Flujo simple de HE_COMPENSACION listo para pruebas');
+        $this->command->info('✅ Flujos de estados insertados correctamente.');
     }
 }

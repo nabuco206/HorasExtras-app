@@ -1,4 +1,3 @@
-
 @import 'tailwindcss';
 @import '../../vendor/livewire/flux/dist/flux.css';
 @import "flowbite/src/themes/default";
@@ -66,3 +65,56 @@ select:focus[data-flux-control] {
 /* \[:where(&)\]:size-4 {
     @apply size-4;
 } */
+
+/* --- Styles movidos desde blades: forzar grids y modal --- */
+/* Forzar columnas en pantallas >= md (fallback cuando Tailwind no carga) */
+@media (min-width: 768px) {
+  .force-grid-md-2 { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 1rem !important; }
+  .force-grid-md-3 { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 1rem !important; }
+  .force-grid-md-4 { display: grid !important; grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 1rem !important; }
+  .force-grid-md-5 { display: grid !important; grid-template-columns: repeat(5, minmax(0, 1fr)) !important; gap: 1rem !important; }
+}
+
+/* Botones y utilidades temporales */
+.action-buttons,
+.action-buttons > * { display: inline-flex !important; align-items: center !important; gap: .5rem !important; }
+.btn-rechazar { display: inline-flex !important; background: #ef4444 !important; color: #fff !important; border: 1px solid rgba(0,0,0,.06) !important; padding: .45rem .75rem !important; border-radius: .375rem !important; }
+
+/* Modal: centrado, tamaño máximo y scroll interno */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 9999;
+  -webkit-overflow-scrolling: touch;
+}
+.modal-panel {
+  width: 100%;
+  max-width: 720px;
+  background: #ffffff;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.18);
+  overflow: auto;
+  max-height: calc(100vh - 3rem);
+  border: 1px solid rgba(0,0,0,0.06);
+}
+.modal-body { padding: 1rem 1.25rem; }
+.modal-header { padding: 1rem 1.25rem 0; }
+.modal-actions {
+  display: flex;
+  gap: .5rem;
+  justify-content: flex-end;
+  padding: .75rem 1.25rem 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* Dark mode */
+.dark .modal-panel { background: #111827; color: #e5e7eb; border-color: rgba(255,255,255,0.04); }
+.dark .modal-actions { border-top-color: rgba(255,255,255,0.04); }
+
+/* Evitar que contenedores con overflow oculten botones críticos */
+.overflow-hidden { overflow: visible !important; }
