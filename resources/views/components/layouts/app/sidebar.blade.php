@@ -2,7 +2,7 @@
     $user = auth()->user();
     // echo $user->cod_fiscalia;
     $groups = [
-        'Platform' => [
+        'Usuario' => [
             [
                 'name' => 'Dashboard',
                 'icon' => 'home',
@@ -15,12 +15,6 @@
                 'url' => Route::has('sistema.ingreso-he') ? route('sistema.ingreso-he') : '#',
                 'current' => Route::has('sistema.ingreso-he') && request()->routeIs('sistema.ingreso-he')
             ],
-        // [
-        //     'name' => 'Demo Ciclo Aprobación',
-        //     'icon' => 'cube-transparent',
-        //     'url' => route('demo.ciclo-aprobacion'), // si tienes una ruta, o usa url('/demo-ciclo-aprobacion')
-        //     'current' => request()->is('demo-ciclo-aprobacion')
-        // ],
          [
             'name' => 'Solicitud Compensación',
             'icon' => 'cube-transparent',
@@ -36,6 +30,12 @@
                 'current' => false,
                 'target' => '_blank'
             ],
+             [
+                'name' => 'Aprobar Pago UDP',
+                'icon' => 'banknotes',
+                'url' => route('sistema.aprobaciones-unificadas', ['tipo' => 2, 'rol' => 1, 'estado' => 2]),
+                'current' => request()->fullUrlIs(route('sistema.aprobaciones-unificadas', ['tipo' => 2, 'rol' => 1]))
+            ],
             [
                 'name' => 'Aprobar Compensaciones',
                 'icon' => 'clipboard-document-check',
@@ -46,6 +46,23 @@
         ]
     ];
     if ($user->id_rol == 1) {
+        $groups['Jefatura'] = [
+             [
+                'name' => 'Aprobar HE JD',
+                'icon' => 'check-circle',
+                'url' => route('sistema.aprobaciones-unificadas', ['tipo' => 1, 'rol' => 1, 'estado' => 1]),
+                'current' => request()->fullUrlIs(route('sistema.aprobaciones-unificadas', ['tipo' => 1, 'rol' => 1]))
+            ],
+            [
+                'name' => 'Aprobar Pago JD',
+                'icon' => 'banknotes',
+                'url' => route('sistema.aprobaciones-unificadas', ['tipo' => 2, 'rol' => 1, 'estado' => 1]),
+                'current' => request()->fullUrlIs(route('sistema.aprobaciones-unificadas', ['tipo' => 2, 'rol' => 1]))
+            ],
+
+        ];
+    }
+    if ($user->id_rol == 1) {
         $groups['Aprobaciones'] = [
             // [
             //     'name' => 'Aprobar Compensaciones 01',
@@ -53,47 +70,32 @@
             //     'url' => route('sistema.aprobaciones-unificadas', ['tipo' => 1, 'rol' => 1]),
             //     'current' => request()->fullUrlIs(route('sistema.aprobaciones-unificadas', ['tipo' => 1, 'rol' => 1]))
             // ],
+
             [
-                'name' => 'Aprobar HE 01',
-                'icon' => 'check-circle',
-                'url' => route('sistema.aprobaciones-unificadas', ['tipo' => 1, 'rol' => 1, 'estado' => 1]),
-                'current' => request()->fullUrlIs(route('sistema.aprobaciones-unificadas', ['tipo' => 1, 'rol' => 1]))
-            ],
-            [
-                'name' => 'Aprobar HE 02',
+                'name' => 'Aprobar HE UDP',
                 'icon' => 'check-circle',
                 'url' => route('sistema.aprobaciones-unificadas', ['tipo' => 1, 'rol' => 1, 'estado' => 3]),
                 'current' => request()->fullUrlIs(route('sistema.aprobaciones-unificadas', ['tipo' => 1, 'rol' => 1, ]))
             ],
-            [
-                'name' => 'Aprobar Pago 01',
-                'icon' => 'banknotes',
-                'url' => route('sistema.aprobaciones-unificadas', ['tipo' => 2, 'rol' => 1, 'estado' => 1]),
-                'current' => request()->fullUrlIs(route('sistema.aprobaciones-unificadas', ['tipo' => 2, 'rol' => 1]))
-            ],
-            [
-                'name' => 'Aprobar Pago 02',
-                'icon' => 'banknotes',
-                'url' => route('sistema.aprobaciones-unificadas', ['tipo' => 2, 'rol' => 1, 'estado' => 2]),
-                'current' => request()->fullUrlIs(route('sistema.aprobaciones-unificadas', ['tipo' => 2, 'rol' => 1]))
-            ],
+
+
              [
-                'name' => 'Aprobar Pago 04',
-                'icon' => 'banknotes',
+                'name' => 'Pago Rechzados',
+                'icon' => 'x-mark',
                 'url' => route('sistema.aprobaciones-unificadas', ['tipo' => 2, 'rol' => 1,'estado' => 4]),
                 'current' => request()->fullUrlIs(route('sistema.aprobaciones-unificadas', ['tipo' => 2, 'rol' => 1]))
             ],
              [
-                'name' => 'Aprobar Pago 05',
+                'name' => 'Aprobar Pago JUDP',
                 'icon' => 'banknotes',
                 'url' => route('sistema.aprobaciones-unificadas', ['tipo' => 2, 'rol' => 1,'estado' => 5]),
                 'current' => request()->fullUrlIs(route('sistema.aprobaciones-unificadas', ['tipo' => 2, 'rol' => 1]))
             ],
             [
-                'name' => 'Aprobar Pago 07',
+                'name' => 'Aprobar Pago DER',
                 'icon' => 'banknotes',
                 'url' => route('sistema.aprobaciones-unificadas', ['tipo' => 2, 'rol' => 1,'estado' => 7]),
-                'current' => request()->fullUrlIs(route('sistema.aprobaciones-unificadas', ['tipo' => 2, 'rol' => 'USUARIO']))
+                'current' => request()->fullUrlIs(route('sistema.aprobaciones-unificadas', ['tipo' => 2, 'rol' => 1]))
             ],
         ];
     }
