@@ -2,16 +2,25 @@
 
 namespace App\Livewire\Sistema;
 
-use App\Livewire\Sistema\AprobacionesMasivas;
+use Livewire\Component;
 use App\Models\TblSolicitudHe;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+use App\Services\FlujoEstadoService;
 
 class AprobacionPago extends AprobacionesMasivas
 {
     // Marcar origen para la vista si hace falta
     public $origen = 'pago';
 
-    public function mount()
+    // hacer públicas las propiedades usadas en la vista
+    public $solicitudes = [];
+    public $seleccionados = [];
+    public $filtroEstado = '';
+    public $filtroBusqueda = '';
+    public $estadisticas = [];
+
+    public function mount(): void
     {
         // Llamar al mount del padre para inicializar tipos/estados, etc.
         if (method_exists(get_parent_class($this), 'mount')) {
@@ -26,14 +35,13 @@ class AprobacionPago extends AprobacionesMasivas
 
     /**
      * Cargar solo solicitudes marcadas como 'pago'.
-     * Ahora filtra por id_tipo_compensacion = 1
      */
     public function cargarSolicitudes()
     {
         $query = $this->baseQuery();
 
         // filtro específico: solo solicitudes a pago
-        $query->where('id_tipo_compensacion', 1);
+        $query->where('id_tipo_compensacion', 2);
 
         // Filtro por estado (heredado del padre)
         if ($this->filtroEstado) {
@@ -50,6 +58,7 @@ class AprobacionPago extends AprobacionesMasivas
 
         $this->solicitudes = $query->get();
         $this->reset(['seleccionados', 'selectAll']);
+
     }
 
     /**
@@ -86,96 +95,97 @@ class AprobacionPago extends AprobacionesMasivas
         ];
     }
 
+    // Sobrescribe la consulta base para este componente (solo tipo_pago = 2)
     protected function baseQuery()
     {
         return TblSolicitudHe::with(['tipoTrabajo', 'estado'])
-            ->where('id_tipo_compensacion', 1)
+            ->where('id_tipo_compensacion', 2)
             ->orderBy('created_at', 'desc');
     }
 
     protected function statsQuery()
     {
-        return TblSolicitudHe::query()->where('id_tipo_compensacion', 1);
+        return TblSolicitudHe::query()->where('id_tipo_compensacion', 2);
     }
 
-    public function render()
+    // seleccionar / deseleccionar todas las visibles
+    public function seleccionarTodas(): void
     {
-        return view('livewire.sistema.aprobacion-pago')
-            ->layout('components.layouts.app');
+        $this->seleccionados = $this->solicitudes->pluck('id')->map(fn($v) => (string)$v)->toArray();
     }
 
-    // Sobrescribir para aprobar seleccionados siguiendo el flujo en DB
-    public function aprobarSeleccionados()
+    public function deseleccionarTodas(): void
     {
-        // Log previo
-        Log::info('AprobacionPago::aprobarSeleccionados invocado', [
-            'seleccionados' => $this->seleccionados,
-            'auth_id' => auth()->id(),
-            'auth_user' => auth()->user()?->toArray()
-        ]);
+        $this->seleccionados = [];
+    }
 
+    // Acción: aprobar seleccionadas (usa el servicio ya existente)
+    public function aprobarSeleccionados(): void
+    {
         if (empty($this->seleccionados)) {
             session()->flash('warning', 'No hay solicitudes seleccionadas.');
             return;
         }
 
-        // Asegurar que pasamos un array de IDs simples al servicio
-        $solicitudesIds = array_values($this->seleccionados);
-        $usuarioId = auth()->user()?->id ?? auth()->id();
-        $flujoService = app(\App\Services\FlujoEstadoService::class);
+        $usuarioId = Auth::id();
+        $svc = app(FlujoEstadoService::class);
+        $res = $svc->ejecutarTransicionesMultiples($this->seleccionados, null, $usuarioId, 'Aprobación desde UI');
 
-        // Llamada explícita al servicio (estadoDestino = null para que el servicio decida)
-        $resultado = $flujoService->ejecutarTransicionesMultiples($solicitudesIds, null, $usuarioId, 'Aprobación desde AprobacionPago');
-
-        // Log posterior para verificar lo que devolvió el servicio
-        Log::info('AprobacionPago::resultado ejecucion servicio', [
-            'solicitudes_enviadas' => $solicitudesIds,
-            'resultado' => $resultado
-        ]);
-
-        $this->ultimaOperacion = $resultado;
-        $this->mostrarResultados = true;
-
-        $this->actualizarEstadisticas();
-        $this->cargarSolicitudes();
-
-        if (!empty($resultado['exitoso'])) {
-            session()->flash('mensaje', $resultado['mensaje'] ?? 'Operación completada');
+        if (!empty($res['exitoso'])) {
+            session()->flash('mensaje', $res['mensaje'] ?? 'Aprobadas correctamente.');
         } else {
-            session()->flash('error', $resultado['mensaje'] ?? 'Error en la operación');
+            session()->flash('error', $res['mensaje'] ?? 'Error en la aprobación.');
         }
 
-        Log::info('Aprobación masiva desde AprobacionPago', [
-            'seleccionados' => $this->seleccionados,
-            'resultado' => $resultado
-        ]);
-    }
-
-    // Sobrescribir para deshabilitar rechazo masivo en esta vista
-    public function rechazarSeleccionados()
-    {
-        Log::info('Intento de rechazar en AprobacionPago deshabilitado', [
-            'seleccionados' => $this->seleccionados
-        ]);
-
-        session()->flash('warning', 'Acción deshabilitada: no se pueden rechazar solicitudes desde Aprobación Pago por ahora.');
         $this->cargarSolicitudes();
     }
 
-    // Sobrescribir exportación para deshabilitarla en esta vista (si hay botón)
-    public function exportarSeleccionados()
+    public function rechazarSeleccionados(): void
     {
-        Log::info('Intento de exportar en AprobacionPago deshabilitado', [
-            'seleccionados' => $this->seleccionados
-        ]);
+        if (empty($this->seleccionados)) {
+            session()->flash('warning', 'No hay solicitudes seleccionadas.');
+            return;
+        }
 
-        session()->flash('warning', 'Exportación deshabilitada en Aprobación Pago por ahora.');
+        $usuarioId = Auth::id();
+        $svc = app(FlujoEstadoService::class);
+        // suponiendo que en el servicio pasar estadoDestino o un flag para rechazo; si no, adaptar
+        $res = $svc->ejecutarTransicionesMultiples($this->seleccionados, /* estadoDestinoRechazo */ 4, $usuarioId, 'Rechazo desde UI');
+
+        if (!empty($res['exitoso'])) {
+            session()->flash('mensaje', $res['mensaje'] ?? 'Rechazadas correctamente.');
+        } else {
+            session()->flash('error', $res['mensaje'] ?? 'Error en el rechazo.');
+        }
+
+        $this->cargarSolicitudes();
     }
 
-    // Sobrescribir método de prueba si existe en padre
-    public function probarAprobacion()
+    // monitor cambios en seleccionados para depuración
+    public function updatedSeleccionados()
     {
-        Log::info('Intento de prueba en AprobacionPago deshabilitado');
-        session()->flash('warning', 'Pruebas deshabilitadas en Aprobación Pago por ahora.');
+         $this->selectAll = count($this->seleccionados) === count($this->solicitudes) && count($this->solicitudes) > 0;
+    //     \Log::info('AprobacionPago::updatedSeleccionados', ['seleccionados' => $this->seleccionados]);
+    //     // opcional: emitir para forzar re-render en la UI
+    //     $this->emitSelf('seleccionadosActualizados');
+    }
+
+    public function render()
+    {
+        // recalcular estadísticas si tu componente las usa (opcional)
+        $this->estadisticas = [
+            'total_solicitudes' => $this->statsQuery()->count(),
+            'pendientes' => $this->statsQuery()->where('id_estado', 1)->count(),
+            'aprobadas' => $this->statsQuery()->where('id_estado', 3)->count(),
+            'rechazadas' => $this->statsQuery()->where('id_estado', 4)->count(),
+            'minutos_pendientes_total' => (int)$this->statsQuery()->where('id_estado', 1)->sum('total_min'),
+            'minutos_aprobados_total' => (int)$this->statsQuery()->where('id_estado', 3)->sum('total_min'),
+            'porcentaje_aprobacion' => 0
+        ];
+
+        $totales = $this->estadisticas['aprobadas'] + $this->estadisticas['rechazadas'];
+        $this->estadisticas['porcentaje_aprobacion'] = $totales > 0 ? round($this->estadisticas['aprobadas'] * 100 / $totales) : 0;
+
+        return view('livewire.sistema.aprobacion-pago');
     }
 }

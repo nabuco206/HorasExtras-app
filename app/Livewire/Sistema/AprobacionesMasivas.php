@@ -26,6 +26,9 @@ class AprobacionesMasivas extends Component
     public $ultimaOperacion = null;
     public $mostrarResultados = false;
 
+    public $modalEstadosVisible = false;
+    public $estadosSolicitud = [];
+
     public function mount()
     {
         $this->tipos_trabajo = TblTipoTrabajo::all();
@@ -41,7 +44,7 @@ class AprobacionesMasivas extends Component
     protected function baseQuery()
     {
         return TblSolicitudHe::with(['tipoTrabajo', 'estado'])
-            ->where('id_tipo_compensacion', 0)
+            ->where('id_tipo_compensacion', 1)
             ->orderBy('created_at', 'desc');
     }
 
@@ -51,7 +54,7 @@ class AprobacionesMasivas extends Component
      */
     protected function statsQuery()
     {
-        return TblSolicitudHe::query()->where('id_tipo_compensacion', 0);
+        return TblSolicitudHe::query()->where('id_tipo_compensacion', 1);
 
     }
 
@@ -378,14 +381,14 @@ class AprobacionesMasivas extends Component
     /**
      * Filtro rápido para mostrar solo las solicitudes con minutos altos
      */
-    public function filtrarMinutosAltos($minimo = 480) // 8 horas por defecto
-    {
-        $this->solicitudes = $this->solicitudes->filter(function($solicitud) use ($minimo) {
-            return ($solicitud->total_min ?? 0) >= $minimo;
-        });
+    // public function filtrarMinutosAltos($minimo = 480) // 8 horas por defecto
+    // {
+    //     $this->solicitudes = $this->solicitudes->filter(function($solicitud) use ($minimo) {
+    //         return ($solicitud->total_min ?? 0) >= $minimo;
+    //     });
 
-        session()->flash('mensaje', "Filtrado: {$this->solicitudes->count()} solicitudes con {$minimo}+ minutos");
-    }
+    //     session()->flash('mensaje', "Filtrado: {$this->solicitudes->count()} solicitudes con {$minimo}+ minutos");
+    // }
 
     /**
      * Verificar estado del sistema antes de operaciones masivas
@@ -421,6 +424,13 @@ class AprobacionesMasivas extends Component
     {
         $service = app(\App\Services\FlujoEstadoService::class);
         return $service->obtenerSiguientesEstados($flujoId, $estadoActualId, $rol);
+    }
+
+    public function verEstados($idSolicitud)
+    {
+        $service = app(\App\Services\SolicitudHeService::class);
+        $this->estadosSolicitud = $service->obtenerEstados($idSolicitud);
+        $this->modalEstadosVisible = true;
     }
 
     public function render()

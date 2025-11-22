@@ -1,11 +1,18 @@
 <div class="container mx-auto p-6">
-
+    <style>
+        /* Fix temporal: forzar columnas en pantallas >= md si Tailwind no se está aplicando */
+        @media (min-width: 768px) {
+            .force-grid-md-2 { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 1rem !important; }
+            .force-grid-md-3 { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 1rem !important; }
+            .force-grid-md-4 { display: grid !important; grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 1rem !important; }
+            .force-grid-md-5 { display: grid !important; grid-template-columns: repeat(5, minmax(0, 1fr)) !important; gap: 1rem !important; }
+        }
+    </style>
 
     {{-- Header con estadísticas --}}
     <div class="mb-6">
         <div class="flex justify-between items-start mb-4">
-            {{-- <h1 class="text-3xl font-bold text-gray-800">🚀 Aprobaciones Masivas de HEEEE</h1>--}}
-            <h1 class="text-3xl font-bold text-gray-800">{{ $titulo }}</h1>
+            <h1 class="text-3xl font-bold text-gray-800">💰 Aprobacion de Pago</h1>
             <div class="flex space-x-2">
                 <button wire:click="actualizarDatos"
                         class="px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200 transition-colors"
@@ -72,8 +79,8 @@
                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
 
-            {{-- Acciones masivas --}}
-            <div>
+                        {{-- Acciones masivas --}}
+                                    <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Aprobar Seleccionadas</label>
                 <div class="space-y-2">
                     <button wire:click="aprobarSeleccionados"
@@ -89,8 +96,8 @@
                     <button wire:click="rechazarSeleccionados"
                             @if(empty($seleccionados)) disabled @endif
                             class="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed">
-                        ❌ Rechazar ({{ count($seleccionados) }})
-                    </button>
+                            ❌ Rechazar ({{ count($seleccionados) }})
+                     </button>
                 </div>
             </div>
         </div>
@@ -232,11 +239,6 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 🏢 {{ $solicitud->fiscalia?->nombre ?? $solicitud->cod_fiscalia ?? '-' }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <button wire:click="verEstados({{ $solicitud->id }})" class="text-blue-600 hover:text-blue-800">
-                                    🔍 Ver Historia
-                                </button>
                             </td>
                         </tr>
                     @empty
@@ -427,10 +429,5 @@
         <div class="fixed bottom-4 right-4 bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded z-50">
             {{ session('warning') }}
         </div>
-    @endif
-
-    {{-- Modal de estados --}}
-    @if($modalEstadosVisible)
-        <x-sistema.modal-estados :estados-solicitud="$estadosSolicitud" :modal-estados-visible="$modalEstadosVisible" />
     @endif
 </div>

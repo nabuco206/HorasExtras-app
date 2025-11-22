@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('descripcion', 150);
             $table->string('tipo_accion', 50)->nullable(); // 'SUMA', 'RESTA', 'NINGUNA'
             $table->string('flujo', 50)->nullable(); // 'TIEMPO', 'DINERO', 'AMBOS'
+            $table->foreignId('flujo_id')->nullable()->constrained('tbl_flujos');
             $table->boolean('es_final')->default(false);
             $table->boolean('activo')->default(true);
             $table->timestamps();

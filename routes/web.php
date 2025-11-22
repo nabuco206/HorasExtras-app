@@ -81,7 +81,9 @@ Route::view('sistema/profile', 'sistema.profile')
     ->middleware(['auth', 'verified'])
     ->name('sistema.profile');
 
-
+Route::get('/sistema/aprobaciones', function () {
+    return view('sistema.aprobaciones-unificadas');
+})->name('sistema.aprobaciones-unificadas');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // Route::get('solicitud-hes/create', [SolicitudHeController::class, 'create'])->name('solicitud-hes.create');

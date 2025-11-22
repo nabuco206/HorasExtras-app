@@ -28,7 +28,16 @@ class DatabaseSeeder extends Seeder
                     ]);
 
             DB::table('tbl_rol')->insert([
-                           ['gls_rol' => 'Lider']
+                           ['gls_rol' => 'JEFE']
+                    ]);
+            DB::table('tbl_rol')->insert([
+                           ['gls_rol' => 'UDP']
+                    ]);
+            DB::table('tbl_rol')->insert([
+                           ['gls_rol' => 'JUDP']
+                    ]);
+            DB::table('tbl_rol')->insert([
+                           ['gls_rol' => 'DER']
                     ]);
 
 
@@ -99,11 +108,11 @@ class DatabaseSeeder extends Seeder
 
         TblTipoCompensacion::truncate();
         TblTipoCompensacion::create([
-            'id' => 0,
+            'id' => 1,
             'gls_tipo_compensacion' => 'Compensación en Hrs',
         ]);
         TblTipoCompensacion::create([
-            'id' => 1,
+            'id' => 2,
             'gls_tipo_compensacion' => 'Pago',
         ]);
 

@@ -53,7 +53,7 @@ class TblFlujoEstadoSeeder extends Seeder
                 'flujo_id' => $flujos['HE_DINERO'],
                 'estado_origen_id' => $estados['APROBADO_LIDER'],
                 'estado_destino_id' => $estados['APROBADO_RRHH'],
-                'rol_autorizado' => 'UPER',
+                'rol_autorizado' => 'JEFE',
                 'condicion_sql' => null,
                 'orden' => 2,
                 'activo' => true,
@@ -64,8 +64,8 @@ class TblFlujoEstadoSeeder extends Seeder
                 'flujo_id' => $flujos['HE_DINERO'],
                 'estado_origen_id' => $estados['APROBADO_RRHH'],
                 'estado_destino_id' => $estados['APROBADO_DER'],
-                'rol_autorizado' => 'DIRECCION',
-                'condicion_sql' => "total_minutos > 240", // ✅ forzado texto
+                'rol_autorizado' => 'JEFE',
+                'condicion_sql' => null, // ✅ forzado texto
                 'orden' => 3,
                 'activo' => true,
                 'created_at' => now(),
@@ -88,7 +88,7 @@ class TblFlujoEstadoSeeder extends Seeder
                 'flujo_id' => $flujos['SOLICITUD_COMPENSACION'],
                 'estado_origen_id' => $estados['APROBADO_LIDER'],
                 'estado_destino_id' => $estados['APROBADO_RRHH'],
-                'rol_autorizado' => 'UPER',
+                'rol_autorizado' => 'JEFE',
                 'condicion_sql' => null,
                 'orden' => 2,
                 'activo' => true,

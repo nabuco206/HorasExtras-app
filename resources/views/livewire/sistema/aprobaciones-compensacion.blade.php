@@ -1,4 +1,4 @@
-<div class="container mx-auto p-6">
+<div class="container mx-auto p-2">
     {{-- Estilos centralizados en resources/css/app.css --}}
 
     {{-- Header con estadísticas --}}

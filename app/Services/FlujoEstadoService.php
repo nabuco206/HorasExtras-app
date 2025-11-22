@@ -88,15 +88,17 @@ class FlujoEstadoService
     }
 
     // NUEVO: obtener transiciones desde tbl_flujos_estados independientemente del flujo asociado al estado
-    public function obtenerSiguientesTransicionesPorEstadoOrigen(int $estadoOrigenId, ?string $rol = null)
+    public function obtenerSiguientesTransicionesPorEstadoOrigen(int $estadoOrigenId, ?string $rol = null, ?int $flujoId = null)
     {
         $query = DB::table('tbl_flujos_estados as fe')
             ->join('tbl_estados as e', 'e.id', '=', 'fe.estado_destino_id')
             ->where('fe.estado_origen_id', $estadoOrigenId)
-            ->where('fe.activo', true)
-            ->select('fe.*', 'e.codigo as estado_codigo', 'e.descripcion as estado_descripcion')
-            ->orderBy('fe.flujo_id')
-            ->orderBy('fe.orden');
+            ->where('fe.activo', 1)
+            ->select('fe.*', 'e.codigo as estado_codigo', 'e.descripcion as estado_descripcion');
+
+        if ($flujoId !== null) {
+            $query->where('fe.flujo_id', $flujoId);
+        }
 
         if ($rol) {
             $query->where(function ($q) use ($rol) {
@@ -105,6 +107,7 @@ class FlujoEstadoService
             });
         }
 
+        $query->orderBy('fe.orden');
         return $query->get();
     }
 
@@ -776,79 +779,64 @@ class FlujoEstadoService
                 try {
                     $estadoDestinoAUsar = $estadoDestinoId;
 
-                    // resolver rol del usuario: preferir auth()->user()->rol/role, luego intentar mapear id_rol a nombre
+                    // Resolver rol del usuario: preferir auth user, si no usar $usuarioId
+                    $authUser = auth()->user();
                     $rolUsuario = null;
-                    try {
-                        $authUser = auth()->user();
-                        if ($authUser) {
-                            $rolUsuario = $authUser->rol ?? $authUser->role ?? null;
-
-                            if (empty($rolUsuario) && isset($authUser->id_rol)) {
-                                try {
-                                    if (DB::getSchemaBuilder()->hasTable('tbl_roles')) {
-                                        $roleRow = DB::table('tbl_roles')->where('id', $authUser->id_rol)->first();
-                                        $rolUsuario = $roleRow->codigo ?? $roleRow->nombre ?? null;
-                            }
-                        } catch (\Exception $e) {
-                            // ignorar
-                        }
+                    if ($authUser) {
+                        $rolUsuario = $authUser->rol ?? $authUser->role ?? $authUser->id_rol ?? null;
                     }
-                }
-
-                if (empty($rolUsuario) && $usuarioId) {
-                    try {
-                        $userModel = new User();
-                        if (DB::getSchemaBuilder()->hasTable($userModel->getTable())) {
-                            $u = User::where('id', $usuarioId)->orWhere('username', $usuarioId)->first();
-                            $rolUsuario = $u->rol ?? $u->role ?? $u->id_rol ?? null;
-                        } else {
+                    if (empty($rolUsuario) && $usuarioId) {
+                        // intentar traer id_rol/rol desde tbl_personas o dejar null (no lanzar)
+                        try {
                             if (DB::getSchemaBuilder()->hasTable('tbl_personas')) {
                                 $p = DB::table('tbl_personas')->where('id', $usuarioId)->orWhere('username', $usuarioId)->first();
-                                $rolUsuario = $p->rol ?? $p->id_rol ?? null;
+                                if ($p) {
+                                    $rolUsuario = $p->rol ?? $p->id_rol ?? $rolUsuario;
+                                }
                             }
+                        } catch (\Exception $e) {
+                            Log::warning('No se pudo resolver rol desde tbl_personas: ' . $e->getMessage());
                         }
-                    } catch (\Exception $e) {
-                        Log::warning('No se pudo resolver usuario para rol: ' . $e->getMessage());
                     }
-                }
-            } catch (\Exception $e) {
-                Log::warning('Error resolviendo rol usuario: ' . $e->getMessage());
-                $rolUsuario = null;
-            }
 
-            // FORZAR ROL TEMPORALMENTE PARA PRUEBAS
-            if (empty($rolUsuario)) {
-                $rolUsuario = 'JEFE';
-            }
+                    // Mapeo temporal si vino numérico (mantener compatibilidad)
+                    $mapIdRolToNombre = [
+                        1 => 'JEFE',
+                        2 => 'RRHH',
+                        3 => 'DER',
+                    ];
+                    if (is_numeric($rolUsuario)) {
+                        $rolUsuario = $mapIdRolToNombre[(int)$rolUsuario] ?? (string)$rolUsuario;
+                    }
 
-            // MAPEO TEMPORAL: si se obtuvo un id numérico de rol (p.ej. id_rol = 1), mapearlo a nombre
-            $mapIdRolToNombre = [
-                1 => 'JEFE',
-                2 => 'RRHH',
-                3 => 'DER',
-                // añadir más mapeos aquí si los conoces
-            ];
-            if (is_numeric($rolUsuario)) {
-                $rolInt = (int) $rolUsuario;
-                if (isset($mapIdRolToNombre[$rolInt])) {
-                    $rolUsuario = $mapIdRolToNombre[$rolInt];
-                } else {
-                    // si no hay mapeo, dejar el valor original (para facilitar debug)
-                    $rolUsuario = (string) $rolUsuario;
-                }
-            }
+                    // resolver flujoId preferente para ESTA solicitud a partir del estado
+                    $estadoActual = \App\Models\TblEstado::find($solicitud->id_estado);
+                    $flujoId = $this->resolveFlujoIdFromEstado($estadoActual);
 
-            Log::info('FlujoEstadoService: rol resuelto', [
-                'solicitud_id' => $solicitud->id ?? null,
-                'usuarioId_param' => $usuarioId,
-                'rol_resuelto' => $rolUsuario
-            ]);
+                    // Si el estado no define flujo, intentar inferirlo desde la solicitud (propone_pago / id_tipo_compensacion)
+                    if (!$flujoId) {
+                        if (isset($solicitud->propone_pago)) {
+                            $flujoId = $solicitud->propone_pago ? TblFlujo::where('codigo','HE_DINERO')->value('id') : TblFlujo::where('codigo','HE_COMPENSACION')->value('id');
+                        } elseif (isset($solicitud->id_tipo_compensacion)) {
+                            $flujoId = ($solicitud->id_tipo_compensacion == 2) ? TblFlujo::where('codigo','HE_DINERO')->value('id') : TblFlujo::where('codigo','HE_COMPENSACION')->value('id');
+                        }
+                    }
 
-                    // Si no se pasó estado destino, determinar según las filas en tbl_flujos_estados
                     if ($estadoDestinoAUsar === null) {
-                        // obtener transiciones según estado origen y rol resuelto
-                        $transiciones = $this->obtenerSiguientesTransicionesPorEstadoOrigen($solicitud->id_estado, $rolUsuario);
+                        // 1) Intentar obtener transiciones filtrando por flujo resuelto (si lo tenemos)
+                        $transiciones = $this->obtenerSiguientesTransicionesPorEstadoOrigen($solicitud->id_estado, $rolUsuario, $flujoId);
 
+                        // 2) Si no se encontraron transiciones y teníamos un flujoId, intentar fallback sin filtrar por flujo
+                        if ($transiciones->isEmpty() && $flujoId !== null) {
+                            Log::info('FlujoEstadoService: no se encontraron transiciones con flujoId, intentando fallback sin filtrar por flujo', [
+                                'solicitud_id' => $solicitud->id,
+                                'estado_origen' => $solicitud->id_estado,
+                                'flujoId_intentado' => $flujoId,
+                            ]);
+                            $transiciones = $this->obtenerSiguientesTransicionesPorEstadoOrigen($solicitud->id_estado, $rolUsuario, null);
+                        }
+
+                        // 3) Evaluar transiciones (si las hay)
                         foreach ($transiciones as $transicion) {
                             $validacion = $this->validarTransicion(
                                 $transicion->flujo_id,
@@ -860,7 +848,12 @@ class FlujoEstadoService
 
                             if (!empty($validacion['valida'])) {
                                 $estadoDestinoAUsar = $transicion->estado_destino_id;
-                                // ...log si necesario...
+                                Log::info('Transición seleccionada', [
+                                    'solicitud_id' => $solicitud->id,
+                                    'transicion_id' => $transicion->id,
+                                    'flujo_id' => $transicion->flujo_id,
+                                    'estado_destino' => $estadoDestinoAUsar
+                                ]);
                                 break;
                             }
                         }
@@ -878,8 +871,7 @@ class FlujoEstadoService
                         $solicitud,
                         $estadoDestinoAUsar,
                         $usuarioId,
-                        $observaciones ?? "Aprobación masiva - {$solicitudes->count()} solicitudes",
-                        false // evitar anidar transacciones
+                        $observaciones ?? "Aprobación masiva - {$solicitudes->count()} solicitudes"
                     );
 
                     if ($resultadoIndividual['exitoso']) {

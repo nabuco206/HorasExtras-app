@@ -108,7 +108,8 @@ new class extends Component {
             return;
         }
 
-        $validated['id_tipo_compensacion'] = $this->propone_pago ? 1 : 0;
+        // normalizar: 1 = Compensación, 2 = Pago
+        $validated['id_tipo_compensacion'] = $this->propone_pago ? 2 : 1;
         $validated['username'] = Auth::user()->name;
         $validated['cod_fiscalia'] = Auth::user()->cod_fiscalia;
 
@@ -178,7 +179,7 @@ new class extends Component {
         );
 
         // === CREAR BOLSON PENDIENTE PARA HE DE COMPENSACION ===
-        if ($nuevaSolicitud->id_tipo_compensacion == 0 && $nuevaSolicitud->total_min > 0) {
+        if ($nuevaSolicitud->id_tipo_compensacion == 1 && $nuevaSolicitud->total_min > 0) {
             $flujoService = app(\App\Services\FlujoEstadoService::class);
             $flujoService->crearBolsonPendienteParaSolicitud($nuevaSolicitud);
         }
@@ -481,21 +482,14 @@ new class extends Component {
                                                 {{ $estado ? $estado->descripcion : '-' }}
                                             </td>
                                             <td class="px-2 py-2 text-center whitespace-nowrap">
-                                                @if($solicitud->id_tipo_compensacion == 1)
+                                                @if($solicitud->id_tipo_compensacion == 2)
                                                     <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
                                                         <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                                             <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"/>
                                                         </svg>
                                                         Dinero
                                                     </span>
-                                                @elseif($solicitud->id_tipo_compensacion == 0)
-                                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-                                                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
-                                                        </svg>
-                                                        Tiempo
-                                                    </span>
-                                                @elseif($solicitud->id_tipoCompensacion == 0)
+                                                @elseif($solicitud->id_tipo_compensacion == 1)
                                                     <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
                                                         <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
@@ -503,7 +497,7 @@ new class extends Component {
                                                         Tiempo
                                                     </span>
                                                 @else
-                                                    <span>{{ $solicitud->id_tipoCompensacion ?? '-' }}</span>
+                                                    <span>{{ $solicitud->id_tipo_compensacion ?? '-' }}</span>
                                                 @endif
                                             </td>
                                             <td class="px-2 py-2 text-center whitespace-nowrap">{{ $solicitud->min_reales ? number_format($solicitud->min_reales, 0) : '-' }}</td>
@@ -523,7 +517,7 @@ new class extends Component {
                                                         @if(in_array(strtolower($extension), ['jpg', 'jpeg', 'png']))
                                                             <!-- Icono para imágenes -->
                                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 012 2z"></path>
                                                             </svg>
                                                         @elseif(strtolower($extension) === 'pdf')
                                                             <!-- Icono para PDF -->

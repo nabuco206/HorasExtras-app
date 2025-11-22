@@ -106,7 +106,7 @@
                                     autofocus
                                     autocomplete="username"
                                     placeholder="Nombre de usuario"
-                                    value="{{ old('username') }}"
+                                    value="persona01"
                                     class="w-full px-3 py-2 border border-[#e3e3e0] dark:border-[#3E3E3A] rounded-sm bg-white dark:bg-[#161615] text-[#1b1b18] dark:text-[#EDEDEC] text-sm focus:outline-none focus:ring-2 focus:ring-[#F53003] focus:border-transparent"
                                     style="position: relative; z-index: 5; pointer-events: auto;"
                                 />
@@ -129,6 +129,7 @@
                                     placeholder="Contraseña"
                                     class="w-full px-3 py-2 border border-[#e3e3e0] dark:border-[#3E3E3A] rounded-sm bg-white dark:bg-[#161615] text-[#1b1b18] dark:text-[#EDEDEC] text-sm focus:outline-none focus:ring-2 focus:ring-[#F53003] focus:border-transparent"
                                     style="position: relative; z-index: 5; pointer-events: auto;"
+                                    value="1234"
                                 />
                                 @error('password')
                                     <p class="mt-1 text-xs text-[#F53003] dark:text-[#FF4433]">{{ $message }}</p>
