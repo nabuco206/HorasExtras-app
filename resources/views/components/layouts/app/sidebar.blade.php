@@ -1,6 +1,25 @@
 @php
     $user = auth()->user();
-    // echo $user->cod_fiscalia;
+    
+    // Verificar si es líder activo
+    $esLider = \App\Models\TblLider::whereHas('persona', function($query) use ($user) {
+        $query->where('username', $user->username);
+    })->where('flag_activo', true)->exists();
+
+    // Log para debugging
+    \Log::info('Sidebar - Usuario actual:', [
+        'user_id' => $user->id,
+        'username' => $user->username,
+        'email' => $user->email,
+    ]);
+
+    \Log::info('Sidebar - Detección de líder:', [
+        'esLider' => $esLider,
+        'query_count' => \App\Models\TblLider::whereHas('persona', function($query) use ($user) {
+            $query->where('username', $user->username);
+        })->where('flag_activo', true)->count()
+    ]);
+    
     $groups = [
         'Usuario' => [
             [
@@ -15,39 +34,54 @@
                 'url' => Route::has('sistema.ingreso-he') ? route('sistema.ingreso-he') : '#',
                 'current' => Route::has('sistema.ingreso-he') && request()->routeIs('sistema.ingreso-he')
             ],
-         [
-            'name' => 'Solicitud Compensación',
-            'icon' => 'cube-transparent',
-            'url' => route('sistema.ingreso-compensacion'),
-            'current' => request()->is('sistema/ingreso-compensacion')
-        ]
-                ],
-        'Administración UDP' => [
             [
-                'name' => 'Panel de Admin',
-                'icon' => 'shield-check',
-                'url' => '/admin',
-                'current' => false,
-                'target' => '_blank'
-            ],
-             [
-                'name' => 'Aprobar Pago UDP',
-                'icon' => 'banknotes',
-                'url' => route('sistema.aprobaciones-unificadas', ['tipo' => 2, 'rol' => 1, 'estado' => 2]),
-                'current' => request()->fullUrlIs(route('sistema.aprobaciones-unificadas', ['tipo' => 2, 'rol' => 1]))
-            ],
-            [
-                'name' => 'Aprobar Compensaciones',
-                'icon' => 'clipboard-document-check',
-                'url' => Route::has('sistema.aprobaciones-compensacion') ? route('sistema.aprobaciones-compensacion') : '#',
-                'current' => Route::has('sistema.aprobaciones-compensacion') && request()->routeIs('sistema.aprobaciones-compensacion')
-            ],
-
-        ]
+                'name' => 'Solicitud Compensación',
+                'icon' => 'cube-transparent',
+                'url' => route('sistema.ingreso-compensacion'),
+                'current' => request()->is('sistema/ingreso-compensacion')
+            ]
+        ],
     ];
+    
+    // Agregar sección "Liderazgo" si es líder
+    if ($esLider) {
+        $groups['Liderazgo'] = [
+            [
+                'name' => 'Mi Equipo',
+                'icon' => 'user-group',
+                'url' => route('sistema.mi-equipo'),
+                'current' => request()->routeIs('sistema.mi-equipo')
+            ]
+        ];
+    }
+
+    
+    
+    $groups['Administración UDP'] = [
+        [
+            'name' => 'Panel de Admin',
+            'icon' => 'shield-check',
+            'url' => '/admin',
+            'current' => false,
+            'target' => '_blank'
+        ],
+        [
+            'name' => 'Aprobar Pago UDP',
+            'icon' => 'banknotes',
+            'url' => route('sistema.aprobaciones-unificadas', ['tipo' => 2, 'rol' => 1, 'estado' => 2]),
+            'current' => request()->fullUrlIs(route('sistema.aprobaciones-unificadas', ['tipo' => 2, 'rol' => 1]))
+        ],
+        [
+            'name' => 'Aprobar Compensaciones',
+            'icon' => 'clipboard-document-check',
+            'url' => Route::has('sistema.aprobaciones-compensacion') ? route('sistema.aprobaciones-compensacion') : '#',
+            'current' => Route::has('sistema.aprobaciones-compensacion') && request()->routeIs('sistema.aprobaciones-compensacion')
+        ],
+    ];
+    
     if ($user->id_rol == 1) {
         $groups['Jefatura'] = [
-             [
+            [
                 'name' => 'Aprobar HE JD',
                 'icon' => 'check-circle',
                 'url' => route('sistema.aprobaciones-unificadas', ['tipo' => 1, 'rol' => 1, 'estado' => 1]),
@@ -59,33 +93,22 @@
                 'url' => route('sistema.aprobaciones-unificadas', ['tipo' => 2, 'rol' => 1, 'estado' => 1]),
                 'current' => request()->fullUrlIs(route('sistema.aprobaciones-unificadas', ['tipo' => 2, 'rol' => 1]))
             ],
-
         ];
-    }
-    if ($user->id_rol == 1) {
+        
         $groups['Aprobaciones'] = [
-            // [
-            //     'name' => 'Aprobar Compensaciones 01',
-            //     'icon' => 'clipboard-document-check',
-            //     'url' => route('sistema.aprobaciones-unificadas', ['tipo' => 1, 'rol' => 1]),
-            //     'current' => request()->fullUrlIs(route('sistema.aprobaciones-unificadas', ['tipo' => 1, 'rol' => 1]))
-            // ],
-
             [
                 'name' => 'Aprobar HE UDP',
                 'icon' => 'check-circle',
                 'url' => route('sistema.aprobaciones-unificadas', ['tipo' => 1, 'rol' => 1, 'estado' => 3]),
                 'current' => request()->fullUrlIs(route('sistema.aprobaciones-unificadas', ['tipo' => 1, 'rol' => 1, ]))
             ],
-
-
-             [
-                'name' => 'Pago Rechzados',
+            [
+                'name' => 'Pago Rechazados',
                 'icon' => 'x-mark',
                 'url' => route('sistema.aprobaciones-unificadas', ['tipo' => 2, 'rol' => 1,'estado' => 4]),
                 'current' => request()->fullUrlIs(route('sistema.aprobaciones-unificadas', ['tipo' => 2, 'rol' => 1]))
             ],
-             [
+            [
                 'name' => 'Aprobar Pago JUDP',
                 'icon' => 'banknotes',
                 'url' => route('sistema.aprobaciones-unificadas', ['tipo' => 2, 'rol' => 1,'estado' => 5]),
@@ -132,7 +155,6 @@
                                                 @if(!empty($link['iconTrailing']))
                                                     <flux:icon name="{{ $link['iconsubmenu'] }}" class="w-4 h-4 text-zinc-500" />
                                                 @endif
-                                                <!-- <flux:icon name="bars-3" variant="micro" /> -->
                                             </div>
                                         </div>
                                     </flux:navlist.item>

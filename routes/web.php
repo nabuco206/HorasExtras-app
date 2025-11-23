@@ -2,10 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
-// use App\Http\Controllers\SolicitudHeController;
 use App\Http\Controllers\SistemaController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\ProfileController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -21,38 +21,44 @@ Route::get('dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
     Route::redirect('settings', 'settings/profile');
 
     Volt::route('settings/profile', 'settings.profile')->name('settings.profile');
     Volt::route('settings/password', 'settings.password')->name('settings.password');
     Volt::route('settings/appearance', 'settings.appearance')->name('settings.appearance');
+    
+    // Sistema routes usando Volt
     Volt::route('sistema/ingreso-he', 'sistema.ingreso-he')->name('sistema.ingreso-he');
-
     Volt::route('sistema/ciclo-aprobacion', 'sistema.ciclo-aprobacion')->name('sistema.ciclo-aprobacion');
 
-    // Nueva ruta para aprobaciones masivas mejoradas
+    // Sistema routes usando Livewire
     Route::get('sistema/aprobaciones-masivas', \App\Livewire\Sistema\AprobacionesMasivas::class)
-        ->middleware(['auth'])
         ->name('sistema.aprobaciones-masivas');
-
-    Route::get('/demo-ciclo-aprobacion', \App\Livewire\DemoCicloAprobacion::class)
-    ->middleware(['auth'])
-    ->name('demo.ciclo-aprobacion');
-
+    
     Route::get('sistema/ingreso-compensacion', \App\Livewire\Sistema\IngresoCompensacion::class)
-    ->middleware(['auth'])
-    ->name('sistema.ingreso-compensacion');
-
-    // Nueva ruta para aprobaciones de compensación
+        ->name('sistema.ingreso-compensacion');
+    
     Route::get('sistema/aprobaciones-compensacion', \App\Livewire\Sistema\AprobacionesCompensacion::class)
-        ->middleware(['auth'])
         ->name('sistema.aprobaciones-compensacion');
-
-    // // Nueva ruta: Aprobacion Pago
+    
     Route::get('sistema/aprobacion-pago', \App\Livewire\Sistema\AprobacionPago::class)
-        ->middleware(['auth'])
         ->name('sistema.aprobacion-pago');
+    
+    Route::get('sistema/aprobaciones-unificadas', \App\Livewire\Sistema\AprobacionesUnificadas::class)
+        ->name('sistema.aprobaciones-unificadas');
+    
+    // Nueva ruta para Mi Equipo (Líderes)
+    Route::get('sistema/mi-equipo', \App\Livewire\Sistema\MiEquipo::class)
+        ->name('sistema.mi-equipo');
+
+    // Demo routes
+    Route::get('/demo-ciclo-aprobacion', \App\Livewire\DemoCicloAprobacion::class)
+        ->name('demo.ciclo-aprobacion');
 
     // Rutas del sistema de workflow
     Route::prefix('workflow')->name('workflow.')->group(function () {
@@ -64,30 +70,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/solicitud/{solicitudId}/historial', [App\Http\Controllers\WorkflowController::class, 'obtenerHistorial'])->name('historial');
         Route::post('/crear-solicitud-prueba', [App\Http\Controllers\WorkflowController::class, 'crearSolicitudPrueba'])->name('crear-solicitud-prueba');
     });
-});
-
-
-
-// Route::get('sistema/ingreso_he', [SistemaController::class, 'menu'])
-//     ->middleware(['auth', 'verified'])
-//     ->name('ingreso_he');
-
-
-// Route::get('sistema', [SistemaController::class, 'menu'])
-//     ->middleware(['auth', 'verified'])
-//     ->name('sistema');
-
-Route::view('sistema/profile', 'sistema.profile')
-    ->middleware(['auth', 'verified'])
-    ->name('sistema.profile');
-
-Route::get('/sistema/aprobaciones', function () {
-    return view('sistema.aprobaciones-unificadas');
-})->name('sistema.aprobaciones-unificadas');
-
-Route::middleware(['auth', 'verified'])->group(function () {
-    // Route::get('solicitud-hes/create', [SolicitudHeController::class, 'create'])->name('solicitud-hes.create');
-    // Route::post('solicitud-hes', [SolicitudHeController::class, 'store'])->name('solicitud-hes.store');
 });
 
 require __DIR__.'/auth.php';

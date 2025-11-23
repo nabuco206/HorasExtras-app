@@ -39,35 +39,51 @@ class TblLiderResource extends Resource
                 Forms\Components\Select::make('cod_fiscalia')
                     ->label('Fiscalía')
                     ->required()
-                    ->relationship('fiscalia', 'gls_fiscalia')
+                    ->relationship('fiscalia', 'gls_fiscalia', fn ($query) => $query->orderBy('gls_fiscalia'))
+                    ->searchable()
                     ->preload()
                     ->live()
-                    ->afterStateUpdated(fn (Set $set) => $set('persona_id', null))
+                    ->afterStateUpdated(function (Set $set) {
+                        $set('persona_id', null);
+                    })
                     ->helperText('Seleccione primero la fiscalía para ver las personas habilitadas'),
                     
                 Forms\Components\Select::make('persona_id')
                     ->label('Persona')
                     ->required()
-                    ->options(function (Get $get) {
+                    ->disabled(fn (Get $get) => !$get('cod_fiscalia'))
+                    ->options(function (Get $get, ?string $operation, $record) {
                         $fiscaliaId = $get('cod_fiscalia');
                         if (!$fiscaliaId) {
                             return [];
                         }
                         
+                        // Obtener IDs de personas que ya son líderes activos en cualquier fiscalía
+                        $personasYaLideres = TblLider::where('flag_activo', true)
+                            ->pluck('persona_id')
+                            ->toArray();
+                        
+                        // Si estamos editando, excluir el registro actual para permitir edición
+                        if ($operation === 'edit' && $record) {
+                            $personasYaLideres = array_diff($personasYaLideres, [$record->persona_id]);
+                        }
+                        
                         return TblPersona::where('flag_lider', true)
                             ->where('flag_activo', true)
                             ->where('cod_fiscalia', $fiscaliaId)
+                            ->whereNotIn('id', $personasYaLideres)
+                            ->orderBy('Nombre')
+                            ->orderBy('Apellido')
                             ->get()
-                            ->mapWithKeys(function ($record) {
-                                return [$record->id => "{$record->Nombre} {$record->Apellido}"];
-                            });
+                            ->mapWithKeys(fn ($persona) => [
+                                $persona->id => "{$persona->Nombre} {$persona->Apellido} ({$persona->username})"
+                            ])
+                            ->toArray();
                     })
                     ->searchable()
-                    ->helperText('Solo se muestran personas habilitadas como líderes y activas en la fiscalía seleccionada'),
-                    
-                Forms\Components\TextInput::make('gls_unidad')
-                    ->label('Unidad')
-                    ->maxLength(255),
+                    ->preload()
+                    ->placeholder('Seleccione una persona')
+                    ->helperText('Solo personas habilitadas como líderes, activas y sin asignación actual'),
                     
                 Forms\Components\Toggle::make('flag_activo')
                     ->label('Estado Activo')
@@ -84,13 +100,15 @@ class TblLiderResource extends Resource
                     ->label('ID')
                     ->sortable(),
                     
-                Tables\Columns\TextColumn::make('persona.Nombre')
+                Tables\Columns\TextColumn::make('persona_nombre_completo')
                     ->label('Persona')
-                    ->searchable()
+                    ->searchable(['persona.Nombre', 'persona.Apellido'])
                     ->sortable()
-                    ->formatStateUsing(fn ($record) => $record->persona ? "{$record->persona->Nombre} {$record->persona->Apellido}" : 'Sin persona'),
+                    ->getStateUsing(fn ($record) => $record->persona 
+                        ? "{$record->persona->Nombre} {$record->persona->Apellido}" 
+                        : 'Sin persona'),
                     
-                Tables\Columns\TextColumn::make('username')
+                Tables\Columns\TextColumn::make('persona.username')
                     ->label('Usuario')
                     ->searchable()
                     ->sortable(),
@@ -103,7 +121,8 @@ class TblLiderResource extends Resource
                 Tables\Columns\TextColumn::make('gls_unidad')
                     ->label('Unidad')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->default('—'),
                     
                 Tables\Columns\IconColumn::make('flag_activo')
                     ->label('Estado')
@@ -112,11 +131,23 @@ class TblLiderResource extends Resource
                     ->falseIcon('heroicon-o-x-circle')
                     ->trueColor('success')
                     ->falseColor('danger'),
+                    
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Creado')
+                    ->dateTime('d/m/Y H:i')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('cod_fiscalia')
                     ->label('Fiscalía')
                     ->relationship('fiscalia', 'gls_fiscalia'),
+                    
+                Tables\Filters\TernaryFilter::make('flag_activo')
+                    ->label('Estado')
+                    ->placeholder('Todos')
+                    ->trueLabel('Activos')
+                    ->falseLabel('Inactivos'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -152,7 +183,8 @@ class TblLiderResource extends Resource
                         })
                         ->requiresConfirmation(),
                 ]),
-            ]);
+            ])
+            ->defaultSort('id', 'desc');
     }
 
     public static function getPages(): array
