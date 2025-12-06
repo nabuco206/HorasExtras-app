@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('flujo_id')->constrained('tbl_flujos')->onDelete('cascade');
             $table->foreignId('estado_origen_id')->constrained('tbl_estados')->onDelete('cascade');
             $table->foreignId('estado_destino_id')->constrained('tbl_estados')->onDelete('cascade');
-            $table->string('rol_autorizado', 50)->nullable(); // Ej: 'JEFE', 'UPER', 'DIRECCION'
+            $table->integer('rol_autorizado')->nullable(); // Ej: 'JEFE', 'UPER', 'DIRECCION'
             $table->text('condicion_sql')->nullable(); // Reglas adicionales (ej: total_min > 60)
             $table->integer('orden')->default(1);
             $table->boolean('activo')->default(true);

@@ -59,50 +59,50 @@ class TblPersonaSeeder extends Seeder
         TblPersona::create([
             'Nombre' => 'Andrea',
             'Apellido' => 'Silva',
-            'username' => 'andrea.silva',
+            'username' => 'udp',
             'cod_fiscalia' => 504, // Fiscalia de Quilpue
             'id_escalafon' => 1,
             'flag_lider' => true,
             'flag_activo' => true,
             'password' => bcrypt('1234'),
-            'id_rol' => 1,
+            'id_rol' => 3,
         ]);
 
         // Crear algunas personas regulares
         TblPersona::create([
-            'Nombre' => 'Ana',
-            'Apellido' => 'López',
-            'username' => 'ana.lopez',
-            'cod_fiscalia' => 501, // Fiscalia de Valparaiso
+            'Nombre' => 'DER',
+            'Apellido' => '',
+            'username' => 'DER',
+            'cod_fiscalia' => 1,
             'id_escalafon' => 1,
             'flag_lider' => false,
             'flag_activo' => true,
             'password' => bcrypt('1234'),
-            'id_rol' => 1,
+            'id_rol' => 5,
         ]);
 
         TblPersona::create([
-            'Nombre' => 'Luis',
-            'Apellido' => 'Martínez',
-            'username' => 'luis.martinez',
-            'cod_fiscalia' => 507, // Fiscalia de Villa Alemana
+            'Nombre' => 'JUDP',
+            'Apellido' => '',
+            'username' => 'JUDP',
+            'cod_fiscalia' => 2,
             'id_escalafon' => 1,
             'flag_lider' => false,
             'flag_activo' => true,
             'password' => bcrypt('1234'),
-            'id_rol' => 1,
+            'id_rol' => 4,
         ]);
 
         TblPersona::create([
-            'Nombre' => 'Carmen',
-            'Apellido' => 'Morales',
-            'username' => 'carmen.morales',
-            'cod_fiscalia' => 503, // Fiscalia de San Antonio
+            'Nombre' => 'JD',
+            'Apellido' => 'Vergas',
+            'username' => 'jd',
+            'cod_fiscalia' => 501,
             'id_escalafon' => 1,
             'flag_lider' => false,
             'flag_activo' => true,
             'password' => bcrypt('1234'),
-            'id_rol' => 1,
+            'id_rol' => 2,
         ]);
 
         // Crear usuarios de prueba para desarrollo

@@ -24,11 +24,11 @@ class DatabaseSeeder extends Seeder
             DB::statement('PRAGMA foreign_keys = OFF;');
 
             DB::table('tbl_rol')->insert([
-                           ['gls_rol' => 'Usuario']
+                           ['gls_rol' => 'USER']
                     ]);
 
             DB::table('tbl_rol')->insert([
-                           ['gls_rol' => 'JEFE']
+                           ['gls_rol' => 'JD']
                     ]);
             DB::table('tbl_rol')->insert([
                            ['gls_rol' => 'UDP']
@@ -88,7 +88,7 @@ class DatabaseSeeder extends Seeder
             'flag_lider' => true,
             'flag_activo' => true,
             'password' => bcrypt('1234'),
-            'id_rol' => 1,
+            'id_rol' => 2,
         ]);
 
         // TblTipoEstado::truncate();
@@ -116,29 +116,7 @@ class DatabaseSeeder extends Seeder
             'gls_tipo_compensacion' => 'Pago',
         ]);
 
-        // TblEstado::truncate();
-        // TblEstado::create([
-        //     'id' => 0,
-        //     'gls_estado' => 'Ingreso',
-        // ]);
 
-        // TblEstado::create([
-        //     'id' => 1,
-        //     'gls_estado' => 'Aprobado',
-        // ]);
-        // TblEstado::create([
-        //     'id' => 2,
-        //     'gls_estado' => 'Cerrado',
-        // ]);
-        // TblEstado::create([
-        //     'id' => 3,
-        //     'gls_estado' => 'Rechazado',
-        // ]);
-        // TblEstado::create([
-        //     'id' => 4,
-        //     'gls_estado' => 'Boton Apr',
-        // ]);
-        // TblTipoTrabajo::truncate();
         TblTipoTrabajo::create([
             'id' => 0,
             'gls_tipo_trabajo' => 'EIVG',

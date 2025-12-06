@@ -49,7 +49,9 @@ new class extends Component {
         $this->username = Auth::user()->name;
         $this->tipos_trabajo = TblTipoTrabajo::all();
         $this->estados = TblEstado::all();
-        $this->solicitudes = \App\Models\TblSolicitudHe::orderByDesc('id')->get();
+        $this->solicitudes = TblSolicitudHe::where('username', $this->username) // Filtrar por el usuario autenticado
+            ->orderByDesc('id')
+            ->get();
         $this->propone_pago = false;
 
         // Cargar datos del bolsón
@@ -230,15 +232,11 @@ new class extends Component {
 
 }; ?>
 
-<section class="w-full">
+<section class="w-full min-h-screen">
 
-    <!-- <div class="relative mb-6 w-full">
-        <flux:heading size="xl" level="1">{{ __('Ingreso Hora Extra') }}</flux:heading>
-        <flux:subheading size="lg" class="mb-6">{{ __('Manage your profile and account settings') }}</flux:subheading>
-        <flux:separator variant="subtle" /> -->
-    <!-- </div> -->
 
-    <x-sistema.layout :heading="__('Ingreso Hora Extra')">
+    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Ingreso Hora Extra</h1>
+    <x-sistema.layout :heading="__('Ingreso de trabajos extraordinarios')">
         <!-- Formulario -->
         <div class="bg-white dark:bg-gray-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6 mb-8 max-w-6xl">
             <form wire:submit="saveSolicitud" class="w-full space-y-6" enctype="multipart/form-data">

@@ -1,4 +1,5 @@
-<div class="p-6">
+{{-- <div class="p-6">--}}
+<section class="w-full min-h-screen">
     @if($esLider)
         <div class="space-y-6">
             <!-- Header -->
@@ -9,7 +10,7 @@
                         Fiscalía: <span class="font-semibold">{{ $fiscalia->gls_fiscalia ?? 'N/A' }}</span>
                     </p>
                 </div>
-                
+
                 <div class="inline-flex items-center gap-2 px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-lg text-sm font-semibold">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
@@ -35,17 +36,15 @@
                                         Usuario
                                     </th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
-                                        Correo
+                                        Escalafón
                                     </th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
-                                        Cargo
+                                     <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
+                                        Tiempo disponible
                                     </th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
+                                     <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
                                         Estado
                                     </th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
-                                        Acciones
-                                    </th>
+
                                 </tr>
                             </thead>
                             <tbody class="bg-white dark:bg-zinc-900 divide-y divide-zinc-200 dark:divide-zinc-700">
@@ -55,18 +54,19 @@
                                             {{ $persona->id }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                                            {{ $persona->Nombre }} {{ $persona->Apellido }}
+                                            {{ $persona->nombre }} {{ $persona->apellido }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-600 dark:text-zinc-400">
                                             {{ $persona->username }}
                                         </td>
+
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-600 dark:text-zinc-400">
-                                            {{ $persona->email ?? 'N/A' }}
+                                            {{ $persona->escalafon->gls_escalafon ?? 'N/A' }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-600 dark:text-zinc-400">
-                                            {{ $persona->cargo ?? 'N/A' }}
+                                            {{ isset($persona->tiempo_disponible) ? $persona->tiempo_disponible . ' min / ' . number_format($persona->tiempo_disponible / 60, 2) . ' hrs' : '0 min / 0.00 hrs' }}
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
+                                         <td class="px-6 py-4 whitespace-nowrap">
                                             @if($persona->flag_activo)
                                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
                                                     Activo
@@ -76,14 +76,6 @@
                                                     Inactivo
                                                 </span>
                                             @endif
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">
-                                            <button type="button" class="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100" title="Ver detalles">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                                </svg>
-                                            </button>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -106,6 +98,9 @@
                     </div>
                 </div>
             @endif
+
+            <!-- Tabla de escalafón -->
+
         </div>
     @else
         <!-- Mensaje si no es líder -->

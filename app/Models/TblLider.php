@@ -42,6 +42,7 @@ class TblLider extends Model
         'cod_fiscalia',
         'gls_unidad',
         'flag_activo',
+        'tipo_lider',
     ];
 
     /**

@@ -11,7 +11,7 @@ class DemoCicloAprobacion extends Component
 {
     public $selectAll = false;
     public $seleccionados = [];
-    public $solicitudes = []; 
+    public $solicitudes = [];
     public $tipos_trabajo = [];
     public $estados = [];
     public $modalEstadosVisible = false;
@@ -25,7 +25,7 @@ class DemoCicloAprobacion extends Component
         $this->solicitudes = \App\Models\TblSolicitudHe::where('cod_fiscalia', $codFiscalia)
                 ->orderByDesc('id')
                 ->get();
-       
+
     }
 
     // public function updatedSelectAll($value)
@@ -50,7 +50,7 @@ class DemoCicloAprobacion extends Component
         foreach ($this->seleccionados as $id) {
             TblSeguimientoSolicitud::create([
                 'id_solicitud_he' => $id,
-                'username' => auth()->user()->name,
+                'username' => auth()->user()->username,
                 'id_estado' => $nuevoEstado,
             ]);
         }
@@ -77,7 +77,7 @@ class DemoCicloAprobacion extends Component
         $this->estadosSolicitud = $service->obtenerEstados($idSolicitud);
         \Log::info($idSolicitud);
         $this->modalEstadosVisible = true;
-         
+
     }
 
     public function render()

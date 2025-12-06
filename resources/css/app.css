@@ -56,10 +56,11 @@
     @apply  !mb-0 !leading-tight;
 }
 
+/* Ajuste de estilos de enfoque para el menú */
 input:focus[data-flux-control],
 textarea:focus[data-flux-control],
 select:focus[data-flux-control] {
-    @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
+    @apply outline-none ring-2 ring-blue-500 ring-offset-2 ring-offset-white;
 }
 
 /* \[:where(&)\]:size-4 {
@@ -118,3 +119,16 @@ select:focus[data-flux-control] {
 
 /* Evitar que contenedores con overflow oculten botones críticos */
 .overflow-hidden { overflow: visible !important; }
+
+/* Ajuste de estilos para el atributo data-current */
+[data-current="data-current"] {
+    background-color: transparent; /* Fondo transparente */
+    border: 1px solid transparent; /* Borde del mismo color que el fondo */
+    color: #374151; /* Texto gris oscuro */
+}
+
+[data-current="data-current"]:hover {
+    background-color: #f9fafb; /* Fondo gris muy claro al pasar el cursor */
+    border-color: #f9fafb; /* Borde del mismo color que el fondo */
+    color: #111827; /* Texto gris más oscuro */
+}

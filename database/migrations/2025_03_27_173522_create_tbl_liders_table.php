@@ -17,7 +17,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('persona_id')->nullable()->constrained('tbl_personas');
             $table->bigInteger('cod_fiscalia');
-            $table->string('gls_unidad');
+            $table->string('tipo_lider')->nullable();
             $table->boolean('flag_activo')->default(true)->comment('Indica si el líder está activo en el sistema');
             $table->timestamps();
         });

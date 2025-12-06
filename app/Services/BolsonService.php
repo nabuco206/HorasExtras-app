@@ -52,11 +52,12 @@ class BolsonService
             // Registrar en historial
             $this->registrarHistorial(
                 $bolson,
-                'CREACION_PENDIENTE',
+                'SOLICITUD_USUARIO',
                 $minutosCalculados,
                 0,
                 $minutosCalculados,
-                "Bolsón pendiente creado por solicitud HE #{$solicitud->id} - En espera de aprobación"
+                "Bolsón pendiente creado por solicitud HE #{$solicitud->id} - En espera de aprobación",
+                null
             );
 
             DB::commit();
@@ -106,7 +107,8 @@ class BolsonService
                     0,
                     $bolsonExistente->saldo_min,
                     $bolsonExistente->saldo_min,
-                    "Bolsón aprobado - Tiempo disponible para compensación"
+                    "Bolsón aprobado - Tiempo disponible para compensación",
+                    null
                 );
 
                 DB::commit();
@@ -149,7 +151,8 @@ class BolsonService
                 $minutosAprobados,
                 0,
                 $minutosAprobados,
-                "Bolsón creado y aprobado por solicitud HE #{$solicitud->id}"
+                "Bolsón creado y aprobado por solicitud HE #{$solicitud->id}",
+                null
             );
 
             DB::commit();
@@ -173,7 +176,7 @@ class BolsonService
     /**
      * Descontar minutos del bolsón usando lógica FIFO
      */
-    public function descontarMinutos(string $username, int $minutosADescontar, string $concepto = 'Descuento'): array
+    public function descontarMinutos(string $username, int $minutosADescontar, string $concepto = 'Descuento', ?int $idSolicitudCompensa = null): array
     {
         try {
             DB::beginTransaction();
@@ -226,11 +229,12 @@ class BolsonService
                 // Registrar en historial
                 $this->registrarHistorial(
                     $bolson,
-                    'DESCUENTO',
+                    'DESCUENTO_POR_SOLICITUD',
                     $descontarDeBolson,
                     $saldoAnterior,
                     $nuevoSaldo,
-                    $concepto
+                    $concepto,
+                    $idSolicitudCompensa
                 );
 
                 $resultado['bolsones_afectados'][] = [
@@ -292,7 +296,8 @@ class BolsonService
                 $saldoAnterior,
                 $saldoAnterior,
                 0,
-                'Bolsón expirado por vencimiento'
+                'Bolsón expirado por vencimiento',
+                null
             );
 
             $expirados[] = [
@@ -424,8 +429,27 @@ class BolsonService
         int $minutos,
         int $saldoAnterior,
         int $saldoNuevo,
-        string $observaciones = null
+        string $observaciones = null,
+        ?int $idSolicitudCompensa = null
     ): TblBolsonHist {
+        // Si estamos registrando una creación de devolución y no se pasó el id de compensación,
+        // loggear el backtrace para identificar la llamada que no propagó el id.
+        if ($tipoMovimiento === 'CREACION_DEVOLUCION' && empty($idSolicitudCompensa)) {
+            try {
+                Log::warning('registrarHistorial: CREACION_DEVOLUCION sin id_solicitud_compensa', [
+                    'bolson_id' => $bolson->id ?? null,
+                    'username' => $bolson->username ?? null,
+                    'minutos' => $minutos,
+                    'observaciones' => $observaciones,
+                    'backtrace' => collect(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10))->map(function($b) {
+                        return isset($b['file']) ? ($b['file'] . ':' . ($b['line'] ?? '')) : (isset($b['class']) ? $b['class'] : json_encode($b));
+                    })->toArray()
+                ]);
+            } catch (\Exception $e) {
+                Log::warning('registrarHistorial: fallo al loggear backtrace: ' . $e->getMessage());
+            }
+        }
+
         return TblBolsonHist::create([
             'id_bolson_tiempo' => $bolson->id,
             'username' => $bolson->username,
@@ -433,7 +457,8 @@ class BolsonService
             'minutos_afectados' => $minutos,
             'saldo_anterior' => $saldoAnterior,
             'saldo_nuevo' => $saldoNuevo,
-            'observaciones' => $observaciones
+            'observaciones' => $observaciones,
+            'id_solicitud_compensa' => $idSolicitudCompensa
         ]);
     }
 
@@ -644,7 +669,7 @@ class BolsonService
     /**
      * Crear bolsón de devolución cuando se rechaza una compensación
      */
-    public function crearBolsonDevolución($username, $minutos, $concepto = 'Devolución por compensación rechazada'): array
+    public function crearBolsonDevolución($username, $minutos, $concepto = 'Devolución por compensación rechazada', ?int $idSolicitudCompensa = null): array
     {
         try {
             DB::beginTransaction();
@@ -652,7 +677,9 @@ class BolsonService
             // Crear nuevo bolsón con los minutos devueltos usando campos correctos
             $bolsonDevolucion = new TblBolsonTiempo();
             $bolsonDevolucion->username = $username;
-            $bolsonDevolucion->id_solicitud_he = 999; // ID especial para devoluciones (debe existir en tbl_solicitud_hes)
+            // Para devoluciones no asociadas a una solicitud HE concreta, dejar NULL
+            // (la columna se hará nullable mediante migración). Evita usar IDs "mágicos".
+            $bolsonDevolucion->id_solicitud_he = null;
             $bolsonDevolucion->fecha_crea = now()->format('Y-m-d');
             $bolsonDevolucion->fecha_vence = now()->addYear()->format('Y-m-d'); // 1 año de vigencia
             $bolsonDevolucion->minutos = $minutos;
@@ -662,14 +689,15 @@ class BolsonService
             $bolsonDevolucion->activo = true;
             $bolsonDevolucion->save();
 
-            // Registrar en el historial
+            // Registrar en el historial (incluir id de compensación si está disponible)
             $this->registrarHistorial(
                 $bolsonDevolucion,
-                'CREACION',
+                'CREACION_DEVOLUCION',
                 $minutos,
                 0,
                 $minutos,
-                $concepto . ' - Bolsón ID: ' . $bolsonDevolucion->id
+                $concepto . ' - Bolsón ID: ' . $bolsonDevolucion->id,
+                $idSolicitudCompensa
             );
 
             DB::commit();
@@ -689,15 +717,18 @@ class BolsonService
 
         } catch (\Exception $e) {
             DB::rollBack();
+            // Registrar error completo y propagar resultado claro al llamador
             Log::error("Error al crear bolsón de devolución", [
                 'username' => $username,
                 'minutos' => $minutos,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
 
             return [
                 'success' => false,
-                'mensaje' => 'Error al crear bolsón de devolución: ' . $e->getMessage()
+                'mensaje' => 'Error al crear bolsón de devolución: ' . $e->getMessage(),
+                'error' => $e->getMessage()
             ];
         }
     }

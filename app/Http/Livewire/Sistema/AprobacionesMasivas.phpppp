@@ -1,0 +1,50 @@
+<?php
+
+namespace App\Http\Livewire\Sistema;
+
+use Livewire\Component;
+use App\Services\FlujoEstadoService;
+use App\Models\TblTipoTrabajo;
+use App\Models\TblEstado;
+use App\Models\TblSolicitudHe;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+
+class AprobacionesMasivas extends Component
+{
+    public $tipos_trabajo = [];
+    public $estados = [];
+    public $solicitudes = [];
+    public $seleccionados = [];
+    public $mostrarSoloPendientes = true;
+
+    public function mount(): void
+    {
+        $this->cargarSolicitudes();
+    }
+
+    public function cargarSolicitudes(): void
+    {
+        $user = Auth::user();
+        $rol = $user->rol;
+        $username = $user->username;
+        $codFiscalia = $user->cod_fiscalia ?? null;
+
+        $query = TblSolicitudHe::with(['tipoTrabajo', 'estado'])
+            ->porRol($rol, $username, $codFiscalia) // Aplicar filtro por rol
+            ->where('id_tipo_compensacion', 1)
+            ->orderByDesc('id');
+
+        if ($this->mostrarSoloPendientes) {
+            $query->where('id_estado', 1); // INGRESADO
+        }
+
+        $this->solicitudes = $query->get();
+        $this->reset(['seleccionados']);
+    }
+
+    public function render()
+    {
+        return view('livewire.sistema.aprobaciones-masivas');
+    }
+}

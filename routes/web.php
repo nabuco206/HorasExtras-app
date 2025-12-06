@@ -31,7 +31,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Volt::route('settings/profile', 'settings.profile')->name('settings.profile');
     Volt::route('settings/password', 'settings.password')->name('settings.password');
     Volt::route('settings/appearance', 'settings.appearance')->name('settings.appearance');
-    
+
     // Sistema routes usando Volt
     Volt::route('sistema/ingreso-he', 'sistema.ingreso-he')->name('sistema.ingreso-he');
     Volt::route('sistema/ciclo-aprobacion', 'sistema.ciclo-aprobacion')->name('sistema.ciclo-aprobacion');
@@ -39,26 +39,50 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Sistema routes usando Livewire
     Route::get('sistema/aprobaciones-masivas', \App\Livewire\Sistema\AprobacionesMasivas::class)
         ->name('sistema.aprobaciones-masivas');
-    
+
     Route::get('sistema/ingreso-compensacion', \App\Livewire\Sistema\IngresoCompensacion::class)
         ->name('sistema.ingreso-compensacion');
-    
+
     Route::get('sistema/aprobaciones-compensacion', \App\Livewire\Sistema\AprobacionesCompensacion::class)
         ->name('sistema.aprobaciones-compensacion');
-    
+
     Route::get('sistema/aprobacion-pago', \App\Livewire\Sistema\AprobacionPago::class)
         ->name('sistema.aprobacion-pago');
-    
-    Route::get('sistema/aprobaciones-unificadas', \App\Livewire\Sistema\AprobacionesUnificadas::class)
-        ->name('sistema.aprobaciones-unificadas');
-    
+
+    Route::get('sistema/aprobaciones-unificadas', function () {
+        return view('sistema.aprobaciones-unificadas');
+    })->name('sistema.aprobaciones-unificadas');
+
     // Nueva ruta para Mi Equipo (Líderes)
     Route::get('sistema/mi-equipo', \App\Livewire\Sistema\MiEquipo::class)
         ->name('sistema.mi-equipo');
 
+    // Nueva ruta para Monitoreo de Tiempo (UDP, JUDP, DER)
+    Route::get('sistema/monitoreo-tiempo', \App\Livewire\Sistema\MonitoreoTiempo::class)
+        ->name('sistema.monitoreo-tiempo');
+
+    // Nueva ruta para Dashboard de Tiempo (UDP, JUDP, DER)
+    Route::get('sistema/dashboard-tiempo', \App\Livewire\Sistema\DashboardTiempo::class)
+        ->name('sistema.dashboard-tiempo');
+
+    // Calendario JD view
+    Route::get('sistema/calendario-jd', \App\Livewire\Sistema\CalendarioCompensaciones::class)
+        ->name('sistema.calendario-jd');
+
+    // Vista genérica: solicitudes a pago
+    Route::get('sistema/solicitudes-pago', \App\Livewire\Sistema\ListadorSolicitudesPago::class)
+        ->name('sistema.solicitudes-pago');
+
+    Route::get('sistema/solicitudes-pago/export', [App\Http\Controllers\SolicitudesPagoExportController::class, 'export'])
+        ->name('sistema.solicitudes-pago.export');
+
+    // Calendario JD - eventos JSON
+    Route::get('jd/compensaciones/events', [App\Http\Controllers\CompensacionCalendarController::class, 'events'])
+        ->name('jd.compensaciones.events');
+
     // Demo routes
-    Route::get('/demo-ciclo-aprobacion', \App\Livewire\DemoCicloAprobacion::class)
-        ->name('demo.ciclo-aprobacion');
+    // Route::get('/demo-ciclo-aprobacion', \App\Livewire\DemoCicloAprobacion::class)
+    //     ->name('demo.ciclo-aprobacion');
 
     // Rutas del sistema de workflow
     Route::prefix('workflow')->name('workflow.')->group(function () {

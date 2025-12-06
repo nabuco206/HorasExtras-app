@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Log;
 
 class TblSolicitudHe extends Model
 {
@@ -277,5 +278,42 @@ class TblSolicitudHe extends Model
 
         $this->estadosSolicitud = $estados;
         $this->modalEstadosVisible = true;
+    }
+
+    /**
+     * Scope para filtrar solicitudes según el rol del usuario.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param int $rol
+     * @param string $username
+     * @param string|null $codFiscalia
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopePorRol($query, $rol, $username, $codFiscalia = null)
+    {
+        // Normalizar rol a entero cuando sea posible
+        $rolInt = is_numeric($rol) ? (int) $rol : $rol;
+
+        // Roles sin filtro: UDP (3), JUDP (4), DER (5)
+        if (in_array($rolInt, [3, 4, 5], true)) {
+            return $query; // sin restricciones
+        }
+
+        // Jefe Directo (2): filtrar por cod_fiscalia
+        if ($rolInt === 2) {
+            if ($codFiscalia !== null) {
+                return $query->where('cod_fiscalia', $codFiscalia);
+            }
+            // Si no tenemos codFiscalia proporcionado, devolver consulta vacía como medida de seguridad
+            return $query->whereRaw('1 = 0');
+        }
+
+        // Usuario (1): ver solo sus propias solicitudes (username)
+        if ($rolInt === 1) {
+            return $query->where('username', $username);
+        }
+
+        // Por defecto (otros roles): comportarse como usuario normal
+        return $query->where('username', $username);
     }
 }

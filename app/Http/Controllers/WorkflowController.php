@@ -24,7 +24,7 @@ class WorkflowController extends Controller
     {
         try {
             $solicitud = TblSolicitudHe::findOrFail($solicitudId);
-            $rol = Auth::user()->rol ?? null; // Asumiendo que el usuario tiene un rol
+            $rol = Auth::user()->id_rol ?? Auth::user()->rol ?? null; // preferir id_rol
 
             $transiciones = $solicitud->transicionesDisponibles($rol);
 
@@ -65,7 +65,7 @@ class WorkflowController extends Controller
 
         try {
             $solicitud = TblSolicitudHe::findOrFail($solicitudId);
-            $rol = Auth::user()->rol ?? null;
+            $rol = Auth::user()->id_rol ?? Auth::user()->rol ?? null;
 
             // Validar la transición
             $validacion = $solicitud->puedeTransicionarA(

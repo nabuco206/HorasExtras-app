@@ -63,6 +63,20 @@ class DashboardController extends Controller
             ->whereBetween('created_at', [$inicioMes, $finMes])
             ->count();
 
+        // Nuevas variables para la vista
+        $solicitudesBolson = TblSolicitudHe::where('username', $username)
+            ->where('afecta_bolson', true)
+            ->get();
+
+        $ultimasSolicitudes = TblSolicitudHe::where('username', $username)
+            ->orderBy('created_at', 'desc')
+            ->take(10)
+            ->get();
+
+        $compensaciones = TblSolicitudCompensa::where('username', $username)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         return view('dashboard', compact(
             'saldoDisponible',
             'minutosDisponibles',
@@ -76,7 +90,10 @@ class DashboardController extends Controller
             'detallesBolsonesProximos',
             'compensacionesMes',
             'resumenBolson',
-            'resumenCompleto'
+            'resumenCompleto',
+            'solicitudesBolson',
+            'ultimasSolicitudes',
+            'compensaciones'
         ));
     }
 }

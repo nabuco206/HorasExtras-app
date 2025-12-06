@@ -1,8 +1,8 @@
 <x-layouts.app :title="__('Dashboard')">
     <div x-data="{
         notifications: [
-            { id: 1, show: true, color: 'green', icon: 'check', message: 'Alerta al Dashboard CRM!', detail: 'A new software version is available for download.' },
-            { id: 2, show: true, color: 'blue', icon: 'info', message: 'Recordatorio', detail: 'No olvides revisar tus solicitudes pendientes.' }
+            { id: 1, show: true, color: 'green', icon: 'check', message: 'Notificación : Sin Mensaje', detail: '' },
+            {{-- { id: 2, show: true, color: 'blue', icon: 'info', message: 'Recordatorio', detail: 'No olvides revisar tus solicitudes pendientes.' } --}}
         ],
         showAll() { this.notifications.forEach(n => n.show = true) }
     }">
@@ -22,7 +22,7 @@
                 style="pointer-events: auto;"
                 x-cloak
             >
-                <div :class="`bg-${n.color}-100 dark:bg-${n.color}-900 border border-${n.color}-200 dark:border-${n.color}-700 shadow-lg rounded-lg flex items-center px-4 py-3 mb-2`">
+                <div :class="`bg-${n.color}-100 dark:bg-${n.color}-900 border border-${n.color}-200 dark:border-${n.color}-700 shadow-lg rounded-lg flex flex-col px-4 py-3 mb-2`">
                     <div class="flex items-center">
                         <template x-if="n.icon === 'check'">
                             <svg class="h-6 w-6 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -36,13 +36,13 @@
                         </template>
                         <span :class="`text-${n.color}-800 dark:text-${n.color}-200 font-medium`" x-text="n.message"></span>
                     </div>
-                    <div class="mb-2 text-sm font-normal" x-text="n.detail"></div>
+                    <div class="mt-1 text-sm font-normal" x-text="n.detail"></div>
                     <button @click="n.show = false" class="ml-auto text-gray-500 hover:text-red-600 font-bold text-xl" title="Cerrar">&times;</button>
                 </div>
             </div>
         </template>
 
-        <div class="flex h-full w-full flex-1 flex-col gap-6 rounded-xl">
+        <div class="flex h-full w-full flex-1 flex-col gap-6 rounded-xl min-h-screen">
             <div class="flex items-center justify-between">
                 <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                     {{ __('Dashboard') }}
@@ -228,8 +228,38 @@
             </div>
             @endif
 
-            <!-- Acciones Rápidas -->
+            <!-- Solicitudes que afectan el Bolsón de Tiempo -->
+            {{-- <div class="bg-white dark:bg-gray-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ __('Solicitudes que afectan el Bolsón de Tiempo') }}</h3>
+                <ul class="list-disc pl-5 text-sm text-gray-600 dark:text-gray-400">
+                    @foreach($solicitudesBolson as $solicitud)
+                        <li>#{{ $solicitud->id }} - {{ $solicitud->descripcion }}</li>
+                    @endforeach
+                </ul>
+            </div> --}}
+
+            <!-- Últimas 10 Solicitudes -->
             <div class="bg-white dark:bg-gray-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ __('Últimas 10 Solicitudes') }}</h3>
+                <ul class="list-disc pl-5 text-sm text-gray-600 dark:text-gray-400">
+                    @foreach($ultimasSolicitudes as $solicitud)
+                        <li>#{{ $solicitud->id }} - {{ $solicitud->descripcion }}</li>
+                    @endforeach
+                </ul>
+            </div>
+
+            <!-- Compensaciones -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ __('Compensaciones') }}</h3>
+                <ul class="list-disc pl-5 text-sm text-gray-600 dark:text-gray-400">
+                    @foreach($compensaciones as $compensacion)
+                        <li>#{{ $compensacion->id }} - {{ $compensacion->descripcion }}</li>
+                    @endforeach
+                </ul>
+            </div>
+
+            <!-- Acciones Rápidas -->
+            {{-- <div class="bg-white dark:bg-gray-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ __('Acciones Rápidas') }}</h3>
                 <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
                     <a href="{{ route('sistema.ingreso-he') }}"
@@ -278,7 +308,7 @@
                             </div>
                             <span class="text-sm font-medium text-indigo-600 dark:text-indigo-400">{{ __('Aprobaciones Masivas') }}</span>
                         </div>
-                    </a>
+                    </a> --}}
 
                     {{-- Mi Perfil (Settings) temporalmente comentado --}}
                     {{-- <a href="{{ route('settings.profile') }}"
@@ -293,7 +323,7 @@
                         </div>
                     </a> --}}
 
-                    <div class="flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900/20 rounded-lg border border-gray-200 dark:border-gray-800">
+                    {{-- <div class="flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900/20 rounded-lg border border-gray-200 dark:border-gray-800">
                         <div class="text-center">
                             <div class="text-gray-600 dark:text-gray-400 mb-2">
                                 <svg class="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -304,7 +334,8 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> --}}
         </div>
     </div>
+
 </x-layouts.app>

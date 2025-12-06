@@ -49,6 +49,27 @@ class AprobacionesUnificadas extends Component
         // título: prioridad -> parametro $titulo pasado desde wrapper / query param ?titulo / generado por defecto
         $this->titulo = $titulo ?? request()->query('titulo', null) ?? $this->generarTitulo();
 
+        // Depuración: registrar el valor de los parámetros iniciales
+        // Log::info('AprobacionesUnificadas::mount', [
+        //     'tipo' => $tipo,
+        //     'rol' => $rol,
+        //     'estado' => $estado,
+        // ]);
+
+        // Depuración adicional: verificar valores después de la asignación
+        // Log::info('Valores después de asignación en mount', [
+        //     'tipo_compensacion' => $this->tipo_compensacion,
+        //     'rol' => $this->rol,
+        //     'filtroEstado' => $this->filtroEstado,
+        // ]);
+
+        // Depuración: verificar valores recibidos en mount
+        // Log::info('Valores recibidos en mount', [
+        //     'tipo' => $tipo,
+        //     'rol' => $rol,
+        //     'estado' => $estado,
+        // ]);
+
         $this->actualizarEstadisticas();
         $this->cargarSolicitudes();
     }
@@ -92,30 +113,47 @@ class AprobacionesUnificadas extends Component
 
     public function cargarSolicitudes(): void
     {
-        $query = $this->baseQuery();
+    $user = Auth::user();
+    // El provider de auth utiliza TblPersona que tiene la columna `id_rol`.
+    $userRol = $user->id_rol ?? $user->rol ?? null;
+    $username = $user->username ?? null;
+    $codFiscalia = $user->cod_fiscalia ?? null;
+
+    // Normalizar valores numéricos de rol (pueden venir como string desde query params)
+    $userRol = is_numeric($userRol) ? (int) $userRol : $userRol;
+    $routeRol = is_numeric($this->rol) ? (int) $this->rol : $this->rol;
+
+    // Determinar si el contexto indica UDP (rol 3) ya sea por el usuario autenticado (id_rol)
+    // o por el parámetro de la ruta/menu ($routeRol)
+    $isUdp = ($userRol === 3) || ($routeRol === 3);
+    $rolUsuario = $isUdp ? 3 : ($routeRol ?? $userRol ?? null);
+    $usernameParam = $isUdp ? null : $username;
+    $codFiscaliaParam = $isUdp ? null : $codFiscalia;
+        // Logs de depuración temporales
+    // Depuración removida: parámetros evaluados internamente
+        $query = TblSolicitudHe::with(['tipoTrabajo', 'estado'])
+            ->porRol($rolUsuario, $usernameParam, $codFiscaliaParam)
+            ->where('id_tipo_compensacion', $this->tipo_compensacion)
+            ->orderBy('created_at', 'desc');
 
         if (!empty($this->filtroEstado)) {
             $query->where('id_estado', $this->filtroEstado);
         }
+        // Log: SQL y bindings para depuración
+    // Depuración removida: consulta preparada
 
-        if (!empty($this->filtroBusqueda)) {
-            $query->where(function($q) {
-                $q->where('username', 'like', '%' . $this->filtroBusqueda . '%')
-                  ->orWhere('id', 'like', '%' . $this->filtroBusqueda . '%');
-            });
-        }
-
-        $this->solicitudes = $query->orderByDesc('id')->get();
+        // Obtener las solicitudes filtradas
+        $this->solicitudes = $query->get();
         $this->reset(['seleccionados', 'selectAll']);
 
         // actualizar bandera para la vista
         $this->mostrarResultados = $this->solicitudes->isNotEmpty();
 
-        Log::info('AprobacionesUnificadas::cargarSolicitudes', [
-            'tipo' => $this->tipo_compensacion,
-            'estado_filtro' => $this->filtroEstado,
-            'ids' => $this->solicitudes->pluck('id')->all()
-        ]);
+        // Log::info('AprobacionesUnificadas::cargarSolicitudes', [
+        //     'tipo' => $this->tipo_compensacion,
+        //     'estado_filtro' => $this->filtroEstado,
+        //     'ids' => $this->solicitudes->pluck('id')->all()
+        // ]);
     }
 
     public function seleccionarTodas(): void
@@ -142,7 +180,7 @@ class AprobacionesUnificadas extends Component
     public function updatedSeleccionados()
     {
         $this->selectAll = count($this->seleccionados) === count($this->solicitudes) && count($this->solicitudes) > 0;
-        Log::info('AprobacionesUnificadas::updatedSeleccionados', ['seleccionados' => $this->seleccionados]);
+        // Log::info('AprobacionesUnificadas::updatedSeleccionados', ['seleccionados' => $this->seleccionados]);
     }
 
     public function aprobarSeleccionados(): void
@@ -230,6 +268,7 @@ class AprobacionesUnificadas extends Component
 
     public function render()
     {
+        // Log::info('Renderizando la vista livewire.sistema.aprobaciones-masivas');
         return view('livewire.sistema.aprobaciones-masivas')
             ->layout('components.layouts.app');
     }

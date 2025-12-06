@@ -25,8 +25,13 @@ class AprobacionesMasivas extends Component
 
     public function cargarSolicitudes(): void
     {
-        // listar solo solicitudes de Compensación (id_tipo_compensacion = 1)
+        $user = Auth::user();
+        $rol = $user->rol;
+        $username = $user->username;
+        $codFiscalia = $user->cod_fiscalia ?? null;
+
         $query = TblSolicitudHe::with(['tipoTrabajo', 'estado'])
+            ->porRol($rol, $username, $codFiscalia) // Aplicar filtro por rol
             ->where('id_tipo_compensacion', 1)
             ->orderByDesc('id');
 
@@ -35,6 +40,8 @@ class AprobacionesMasivas extends Component
         }
 
         $this->solicitudes = $query->get();
+        Log::info('Solicitudes cargadas:', ['solicitudes' => $this->solicitudes]);
+        Log::info('Detalles de solicitudes cargadas:', $this->solicitudes->toArray());
         $this->reset(['seleccionados']);
     }
 

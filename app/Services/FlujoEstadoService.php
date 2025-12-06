@@ -32,6 +32,7 @@ class FlujoEstadoService
     // NUEVO: resolver flujo_id a partir del registro TblEstado (soporta campo string 'flujo')
     private function resolveFlujoIdFromEstado($estado)
     {
+        Log::info("REsolver estado ESTADO rol usu",[$estado]);
         if (!$estado) return null;
 
         // Si ya existe flujo_id explícito (por si alguna vez se agrega)
@@ -68,6 +69,65 @@ class FlujoEstadoService
         return null;
     }
 
+    /**
+     * Resolver un rol (string o número) al id numérico equivalente.
+     * Si se recibe un username como string, intenta buscar su id_rol en tbl_personas.
+     * Si no se encuentra, usa un mapa de fallback (ajustado a seeders comunes).
+     */
+    private function resolveRolToId($rol)
+    {
+        if ($rol === null) return null;
+
+        // Si ya es numérico, devolver int
+        if (is_numeric($rol)) {
+            return (int)$rol;
+        }
+
+        // Intentar resolver como username en tbl_personas (case-insensitive)
+        try {
+            if (DB::getSchemaBuilder()->hasTable('tbl_personas')) {
+                $r = DB::table('tbl_personas')
+                    ->select('id_rol')
+                    ->whereRaw('lower(username) = ?', [strtolower((string)$rol)])
+                    ->first();
+                if ($r && isset($r->id_rol)) {
+                    return (int)$r->id_rol;
+                }
+            }
+        } catch (\Exception $e) {
+            Log::warning('resolveRolToId: error consultando tbl_personas: ' . $e->getMessage());
+        }
+
+        // Fallback map (coincidir con valores en seeders si es necesario)
+        $map = [
+            'JEFE' => 2,
+            'RRHH' => 3,
+            // Ajustado: UDP en este proyecto usa id_rol = 3 en seeders
+            'UDP' => 3,
+            // DER suele tener id_rol = 5 en seeders
+            'DER' => 5,
+            'JUDP' => 4,
+        ];
+
+        $key = strtoupper((string)$rol);
+        return $map[$key] ?? null;
+    }
+
+    /**
+     * Verifica si una transición (flujo_estado) tiene roles asociados en la tabla pivot
+     */
+    private function tieneRolesEnPivot($flujoEstadoId)
+    {
+        try {
+            if (DB::getSchemaBuilder()->hasTable('tbl_flujos_estados_roles')) {
+                return DB::table('tbl_flujos_estados_roles')->where('flujo_estado_id', $flujoEstadoId)->exists();
+            }
+        } catch (\Exception $e) {
+            Log::warning('tieneRolesEnPivot: error consultando tabla pivot: ' . $e->getMessage());
+        }
+        return false;
+    }
+
     function obtenerSiguientesEstados(int $flujoId, int $estadoActualId, ?string $rol = null)
     {
         $query = DB::table('tbl_flujos_estados as fe')
@@ -77,13 +137,39 @@ class FlujoEstadoService
             ->where('fe.activo', true)
             ->select('e.id as id_estado', 'e.codigo', 'e.descripcion', 'fe.rol_autorizado', 'fe.orden');
 
-        if ($rol) {
-            $query->where(function ($q) use ($rol) {
-                $q->whereNull('fe.rol_autorizado')
-                ->orWhere('fe.rol_autorizado', $rol);
-            });
-        }
+             Log::info($query);
 
+        if ($rol) {
+            $rolId = $this->resolveRolToId($rol);
+
+            // Si existe la tabla pivot, preferimos filtrar por los roles allí
+            if (DB::getSchemaBuilder()->hasTable('tbl_flujos_estados_roles')) {
+                // unir pivot y permitir rol null (transiciones sin restricción)
+                $query->leftJoin('tbl_flujos_estados_roles as fer', function($join) {
+                    $join->on('fer.flujo_estado_id', '=', 'fe.id');
+                });
+
+                $query->where(function ($q) use ($rolId) {
+                    $q->whereNull('fe.rol_autorizado');
+                    if ($rolId !== null) {
+                        $q->orWhere('fer.rol_id', $rolId);
+                    }
+                });
+            } else {
+                // Fallback: filtrar por columna rol_autorizado existente
+                $query->where(function ($q) use ($rolId) {
+                    $q->whereNull('fe.rol_autorizado');
+                    if ($rolId !== null) {
+                        $q->orWhere('fe.rol_autorizado', $rolId);
+                    }
+                });
+            }
+        }
+        Log::info("FLUJO ESTADO", [
+            'estado_origen' => $estadoOrigenId,
+            'flujo_id' => $flujoId,
+            'rol' => $rol
+        ]);
         return $query->orderBy('fe.orden')->get();
     }
 
@@ -101,11 +187,30 @@ class FlujoEstadoService
         }
 
         if ($rol) {
-            $query->where(function ($q) use ($rol) {
-                $q->whereNull('fe.rol_autorizado')
-                  ->orWhere('fe.rol_autorizado', $rol);
-            });
+            $rolId = $this->resolveRolToId($rol);
+
+            if (DB::getSchemaBuilder()->hasTable('tbl_flujos_estados_roles')) {
+                $query->leftJoin('tbl_flujos_estados_roles as fer', function($join) {
+                    $join->on('fer.flujo_estado_id', '=', 'fe.id');
+                });
+
+                $query->where(function ($q) use ($rolId) {
+                    $q->whereNull('fe.rol_autorizado');
+                    if ($rolId !== null) {
+                        $q->orWhere('fer.rol_id', $rolId);
+                    }
+                });
+            } else {
+                $query->where(function ($q) use ($rolId) {
+                    $q->whereNull('fe.rol_autorizado');
+                    if ($rolId !== null) {
+                        $q->orWhere('fe.rol_autorizado', $rolId);
+                    }
+                });
+            }
         }
+
+
 
         $query->orderBy('fe.orden');
         return $query->get();
@@ -121,10 +226,27 @@ class FlujoEstadoService
             ->where('activo', true);
 
         if ($rol) {
-            $query->where(function($q) use ($rol) {
-                $q->where('rol_autorizado', $rol)
-                  ->orWhereNull('rol_autorizado');
-            });
+            $rolId = $this->resolveRolToId($rol);
+            // Si existe pivot, filtrar consultando la relación
+            if (DB::getSchemaBuilder()->hasTable('tbl_flujos_estados_roles')) {
+                $query->where(function($q) use ($rolId) {
+                    // mantener transiciones sin rol_autorizado explícito
+                    $q->whereNull('rol_autorizado');
+                    if ($rolId !== null) {
+                        // seleccionar transiciones que tengan un entry en la pivot para este rol
+                        $q->orWhereIn('id', function($sub) use ($rolId) {
+                            $sub->select('flujo_estado_id')
+                                ->from('tbl_flujos_estados_roles')
+                                ->where('rol_id', $rolId);
+                        });
+                    }
+                });
+            } else {
+                $query->where(function($q) use ($rolId) {
+                    $q->where('rol_autorizado', $rolId)
+                      ->orWhereNull('rol_autorizado');
+                });
+            }
         }
 
         return $query->with(['estadoDestino', 'flujo'])
@@ -150,12 +272,59 @@ class FlujoEstadoService
             ];
         }
 
-        // Verificar rol autorizado
-        if ($transicion->rol_autorizado && $rol !== $transicion->rol_autorizado) {
-            return [
-                'valida' => false,
-                'mensaje' => "Solo usuarios con rol '{$transicion->rol_autorizado}' pueden realizar esta acción"
-            ];
+        // Verificar rol autorizado (normalizar string/username a id numérico usando helper)
+        // Primero, si existe la tabla pivot verificar si hay roles asignados allí para esta transición
+        $pivotMatched = null;
+        try {
+            if (DB::getSchemaBuilder()->hasTable('tbl_flujos_estados_roles')) {
+                $rolesAsociados = DB::table('tbl_flujos_estados_roles')
+                    ->where('flujo_estado_id', $transicion->id)
+                    ->pluck('rol_id')
+                    ->filter()
+                    ->values()
+                    ->toArray();
+
+                if (!empty($rolesAsociados)) {
+                    // Normalizar roles asociados a enteros (evitar comparaciones tipo-string)
+                    $rolesAsociados = array_map(function($r) {
+                        return is_numeric($r) ? (int)$r : $r;
+                    }, $rolesAsociados);
+
+                    // Normalizar rol proporcionado a id numérico
+                    $rolComparar = $this->resolveRolToId($rol) ?? $rol;
+                    if (is_numeric($rolComparar)) $rolComparar = (int)$rolComparar;
+
+                    if (in_array($rolComparar, $rolesAsociados, true)) {
+                        // El rol del usuario está autorizado por la pivot
+                        $pivotMatched = true;
+                    } else {
+                        // El rol del usuario NO está autorizado por la pivot -> rechazar
+                        return [
+                            'valida' => false,
+                            'mensaje' => "Solo usuarios con uno de los roles autorizados pueden realizar esta acción"
+                        ];
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            Log::warning('validarTransicion: error consultando pivot roles: ' . $e->getMessage());
+        }
+        // Fallback histórico: si existe rol_autorizado en la fila y no hubo match por pivot, validar contra esa columna
+        if ($transicion->rol_autorizado && $pivotMatched !== true) {
+            $rolComparar = $this->resolveRolToId($rol) ?? $rol;
+            $transicionRol = $transicion->rol_autorizado;
+
+            if (is_numeric($rolComparar) && is_numeric($transicionRol)) {
+                $rolComparar = (int)$rolComparar;
+                $transicionRol = (int)$transicionRol;
+            }
+
+            if ($rolComparar !== $transicionRol) {
+                return [
+                    'valida' => false,
+                    'mensaje' => "Solo usuarios con rol '{$transicion->rol_autorizado}' pueden realizar esta acción"
+                ];
+            }
         }
 
         // Verificar condición SQL si existe
@@ -384,8 +553,14 @@ class FlujoEstadoService
     private function registrarSeguimiento($solicitud, $estadoAnterior, $estadoNuevo, $usuarioId, $observaciones)
     {
         try {
-            // Verificar si el username existe en tbl_personas
-            $usernameValido = $solicitud->username ?? 'sistema';
+            // Determinar username a usar: preferir auth user si existe
+            $authUser = auth()->user();
+            $usernameValido = $authUser ? ($authUser->username ?? $authUser->name ?? null) : null;
+
+            // Si no hay usuario autenticado, usar username en la solicitud
+            if (!$usernameValido) {
+                $usernameValido = $solicitud->username ?? 'sistema';
+            }
 
             // Verificar que el usuario existe en tbl_personas
             $existePersona = DB::table('tbl_personas')
@@ -546,7 +721,8 @@ class FlujoEstadoService
                 $resultado = $bolsonService->descontarMinutos(
                     $solicitud->username,
                     $solicitud->minutos_aprobados ?? $solicitud->minutos_solicitados,
-                    "Compensación aprobada automáticamente - Solicitud #{$solicitud->id}"
+                    "Compensación aprobada automáticamente - Solicitud #{$solicitud->id}",
+                    $solicitud->id
                 );
 
                 if ($resultado['success']) {
@@ -579,6 +755,12 @@ class FlujoEstadoService
         try {
             $bolsonService = app(\App\Services\BolsonService::class);
 
+            // Si la solicitud es HE y es tipo DINERO (id_tipo_compensacion == 2), no tocar bolsones
+            if ($solicitud instanceof \App\Models\TblSolicitudHe && isset($solicitud->id_tipo_compensacion) && (int)$solicitud->id_tipo_compensacion === 2) {
+                Log::info('agregarTiempoAlBolson: solicitud HE de tipo DINERO detectada, se omite creación/activación de bolsón', ['solicitud_id' => $solicitud->id]);
+                return;
+            }
+
             // Si es una HE, usar el método existente
             if ($solicitud instanceof \App\Models\TblSolicitudHe) {
                 $bolsonService->procesarSolicitudHeAprobada($solicitud);
@@ -601,13 +783,27 @@ class FlujoEstadoService
      */
     private function devolverMinutosAlBolson($compensacion, $bolsonService)
     {
+        // Log temporal para depuración: verificar que el método reciba la compensación y su id
+        try {
+            Log::info('DEBUG devolverMinutosAlBolson called', [
+                'class' => is_object($compensacion) ? get_class($compensacion) : gettype($compensacion),
+                'compensacion_id' => $compensacion->id ?? null,
+                'username' => $compensacion->username ?? null,
+                'minutos_aprobados' => $compensacion->minutos_aprobados ?? null,
+                'minutos_solicitados' => $compensacion->minutos_solicitados ?? null
+            ]);
+        } catch (\Exception $e) {
+            Log::warning('DEBUG devolverMinutosAlBolson: no se pudo loggear el objeto compensacion: ' . $e->getMessage());
+        }
+
         $minutosADevolver = $compensacion->minutos_aprobados ?? $compensacion->minutos_solicitados;
 
         // Crear un bolsón de "devolución"
         $resultado = $bolsonService->crearBolsonDevolución(
             $compensacion->username,
             $minutosADevolver,
-            "Devolución por compensación rechazada - Solicitud #{$compensacion->id}"
+            "Devolución por compensación rechazada - Solicitud #{$compensacion->id}",
+            $compensacion->id
         );
 
         Log::info("Minutos devueltos al bolsón por compensación rechazada", [
@@ -623,6 +819,12 @@ class FlujoEstadoService
      */
     public function crearBolsonPendienteParaSolicitud($solicitud)
     {
+        // Si es una HE tipo DINERO (id_tipo_compensacion == 2) no crear bolsón pendiente
+        if ($solicitud instanceof \App\Models\TblSolicitudHe && isset($solicitud->id_tipo_compensacion) && (int)$solicitud->id_tipo_compensacion === 2) {
+            Log::info('crearBolsonPendienteParaSolicitud: solicitud HE tipo DINERO detectada, no se crea bolsón pendiente', ['solicitud_id' => $solicitud->id]);
+            return null;
+        }
+
         // Usar el BolsonService para crear bolsón pendiente
         if (class_exists(\App\Services\BolsonService::class)) {
             $bolsonService = app(\App\Services\BolsonService::class);
@@ -753,6 +955,18 @@ class FlujoEstadoService
             'observaciones' => $observaciones
         ]);
 
+        // Validar que hay solicitudes y usuario
+        if (empty($solicitudesIds) || empty($usuarioId)) {
+            Log::warning('FlujoEstadoService::ejecutarTransicionesMultiples: faltan parámetros', [
+                'solicitudesIds' => $solicitudesIds,
+                'usuarioId' => $usuarioId
+            ]);
+            return [
+                'exitoso' => false,
+                'mensaje' => 'Faltan parámetros requeridos'
+            ];
+        }
+
         try {
             DB::beginTransaction();
 
@@ -784,6 +998,7 @@ class FlujoEstadoService
                     $rolUsuario = null;
                     if ($authUser) {
                         $rolUsuario = $authUser->rol ?? $authUser->role ?? $authUser->id_rol ?? null;
+                        // Log::info("FLUJO ESTADO rol usu",[$rolUsuario]);
                     }
                     if (empty($rolUsuario) && $usuarioId) {
                         // intentar traer id_rol/rol desde tbl_personas o dejar null (no lanzar)
@@ -799,20 +1014,16 @@ class FlujoEstadoService
                         }
                     }
 
-                    // Mapeo temporal si vino numérico (mantener compatibilidad)
-                    $mapIdRolToNombre = [
-                        1 => 'JEFE',
-                        2 => 'RRHH',
-                        3 => 'DER',
-                    ];
-                    if (is_numeric($rolUsuario)) {
-                        $rolUsuario = $mapIdRolToNombre[(int)$rolUsuario] ?? (string)$rolUsuario;
+                    // Eliminar mapeo: usar siempre el id numérico del rol
+                    // Si el rol viene como string y es numérico, convertir a int
+                    if (is_string($rolUsuario) && is_numeric($rolUsuario)) {
+                        $rolUsuario = (int)$rolUsuario;
                     }
 
                     // resolver flujoId preferente para ESTA solicitud a partir del estado
                     $estadoActual = \App\Models\TblEstado::find($solicitud->id_estado);
                     $flujoId = $this->resolveFlujoIdFromEstado($estadoActual);
-
+                    // Log::info("FLUJO ESTADO rol usu",[ $flujoId]);
                     // Si el estado no define flujo, intentar inferirlo desde la solicitud (propone_pago / id_tipo_compensacion)
                     if (!$flujoId) {
                         if (isset($solicitud->propone_pago)) {
@@ -860,6 +1071,7 @@ class FlujoEstadoService
                     }
 
                     if (!$estadoDestinoAUsar) {
+
                         $resultado['errores'][] = [
                             'solicitud_id' => $solicitud->id,
                             'error' => 'No se pudo determinar estado destino para la solicitud'

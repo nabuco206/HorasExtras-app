@@ -3,6 +3,7 @@
 namespace App\Livewire\Sistema;
 
 use App\Models\TblSolicitudCompensa;
+use App\Models\TblEstado;
 use App\Services\CompensacionService;
 use App\Services\BolsonService;
 use Livewire\Component;
@@ -16,7 +17,7 @@ class AprobacionesCompensacion extends Component
     protected $listeners = ['aprobarSolicitud', 'rechazarSolicitud'];
 
     public $solicitudesSeleccionadas = [];
-    public $filtroEstado = 8; // COMPENSACION_SOLICITADA por defecto
+    public $filtroEstado = null; // se inicializa en mount por codigo
     public $filtroBusqueda = '';
     public $mostrarModal = false;
     public $solicitudSeleccionada = null;
@@ -25,6 +26,11 @@ class AprobacionesCompensacion extends Component
     public $accionRealizada = false;
     public $mensajeResultado = '';
     public $estadisticas = null;
+
+    // ids dinámicos de estados (resueltos por codigo)
+    public $estadoSolicitadaId = null;
+    public $estadoAprobadaId = null;
+    public $estadoRechazadaId = null;
 
     protected $compensacionService;
     protected $bolsonService;
@@ -37,6 +43,16 @@ class AprobacionesCompensacion extends Component
 
     public function mount()
     {
+        // resolver ids de estados por codigo para evitar hardcodes
+        $this->estadoSolicitadaId = TblEstado::where('codigo', 'COMPENSACION_SOLICITADA')->value('id') ?? 9;
+        $this->estadoAprobadaId = TblEstado::where('codigo', 'COMPENSACION_APROBADA_JEFE')->value('id') ?? 10;
+        $this->estadoRechazadaId = TblEstado::where('codigo', 'COMPENSACION_RECHAZADA_JEFE')->value('id') ?? 11;
+
+        // establecer filtro por defecto si no hay uno
+        if (is_null($this->filtroEstado)) {
+            $this->filtroEstado = $this->estadoSolicitadaId;
+        }
+
         $this->actualizarEstadisticas();
     }
 
@@ -48,8 +64,31 @@ class AprobacionesCompensacion extends Component
 
     protected function obtenerSolicitudes()
     {
+        $user = Auth::user();
+
         $query = TblSolicitudCompensa::with(['persona', 'estado'])
             ->orderBy('fecha_solicitud', 'asc');
+
+        // Si el usuario es jefe directo (rol = 2) limitar a su fiscalía (por cod_fiscalia)
+        $isJefe = (isset($user->rol) && $user->rol == 2)
+               || (isset($user->id_rol) && $user->id_rol == 2)
+               || (isset($user->role_id) && $user->role_id == 2);
+
+        if ($isJefe) {
+            // intentar varios nombres posibles del campo en User
+            $codFiscalia = $user->cod_fiscalia ?? $user->codigo_fiscalia ?? $user->codfiscalia ?? $user->codFiscalia ?? $user->fiscalia_id ?? $user->id_fiscalia ?? null;
+
+            if ($codFiscalia) {
+                $query->whereHas('persona', function($q) use ($codFiscalia) {
+                    $q->where(function($q2) use ($codFiscalia) {
+                        $q2->where('cod_fiscalia', $codFiscalia)
+                           ->orWhere('codigo_fiscalia', $codFiscalia)
+                           ->orWhere('fiscalia_id', $codFiscalia)
+                           ->orWhere('id_fiscalia', $codFiscalia);
+                    });
+                });
+            }
+        }
 
         // Filtrar por estado
         if ($this->filtroEstado) {
@@ -181,19 +220,34 @@ class AprobacionesCompensacion extends Component
             return;
         }
 
+        $errores = [];
         foreach ($this->solicitudesSeleccionadas as $id) {
-            $sol = \App\Models\Solicitud::find($id); // ajusta el modelo
-            if ($sol && $sol->id_estado == 8) {
-                $sol->id_estado = 10; // estado Rechazada
-                $sol->aprobado_por = auth()->user()->name ?? null;
-                $sol->fecha_aprobacion = now();
-                $sol->save();
+            $sol = TblSolicitudCompensa::find($id);
+            if (!$sol) {
+                $errores[] = "Solicitud {$id} no encontrada";
+                continue;
+            }
+
+            if ($sol->id_estado != $this->estadoSolicitadaId) {
+                $errores[] = "Solicitud {$id} no está en estado solicitada";
+                continue;
+            }
+
+            $resultado = $this->compensacionService->procesarRechazoCompensacion(
+                $sol,
+                auth()->user()->username ?? auth()->user()->name ?? null,
+                'Rechazo masivo desde interfaz'
+            );
+
+            if (!$resultado['exitoso']) {
+                $errores[] = "Solicitud {$id}: {$resultado['mensaje']}";
             }
         }
 
-        $this->solicitudesSeleccionadas = [];
-        session()->flash('success', 'Solicitudes rechazadas correctamente');
-        $this->emit('refreshList');
+    $this->solicitudesSeleccionadas = [];
+    session()->flash('success', 'Solicitudes rechazadas correctamente');
+    // usar evento de navegador en vez de emit para compatibilidad
+    $this->dispatchBrowserEvent('refreshList');
     }
 
     public function actualizarEstadisticas()

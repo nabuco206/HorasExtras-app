@@ -9,6 +9,7 @@ class TblEstadoSeeder extends Seeder
 {
     public function run(): void
     {
+        DB::table('tbl_estados')->truncate();
         DB::table('tbl_estados')->insert([
             [
                 'codigo' => 'INGRESADO',
@@ -22,8 +23,8 @@ class TblEstadoSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'codigo' => 'APROBADO_LIDER',
-                'descripcion' => 'Aprobado por el jefe directo',
+                'codigo' => 'APROBADO_JD_D',
+                'descripcion' => 'Aprobado Comp. Pago por el jefe directo',
                 'tipo_accion' => 'NINGUNA',
                 'flujo' => 'HE_DINERO',
                 'flujo_id' => 2,
@@ -32,6 +33,40 @@ class TblEstadoSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            [
+                'codigo' => 'APROBADO_UDP_D',
+                'descripcion' => 'Aprobado por UDP Comp. Pago',
+                'tipo_accion' => 'NINGUNA',
+                'flujo' => 'HE_DINERO',
+                'flujo_id' => 2,
+                'es_final' => false,
+                'activo' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+             [
+                'codigo' => 'APROBADO_JUDP_D',
+                'descripcion' => 'Aprobado por JUDP',
+                'tipo_accion' => 'NINGUNA',
+                'flujo' => 'HE_DINERO',
+                'flujo_id' => 2,
+                'es_final' => false,
+                'activo' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+             [
+                'codigo' => 'APROBADO_DER_D',
+                'descripcion' => 'Aprobado por DER Comp. Pago',
+                'tipo_accion' => 'SUMA',
+                'flujo' => 'HE_DINERO',
+                'flujo_id' => 2,
+                'es_final' => true,
+                'activo' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+
             [
                 'codigo' => 'APROBADO_JEFE',
                 'descripcion' => 'Aprobado por el jefe - Tiempo disponible en bolsón',
@@ -54,34 +89,13 @@ class TblEstadoSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            [
-                'codigo' => 'APROBADO_RRHH',
-                'descripcion' => 'Aprobado por la Unidad de Personal',
-                'tipo_accion' => 'SUMA',
-                'flujo' => 'HE_DINERO',
-                'flujo_id' => 2,
-                'es_final' => false,
-                'activo' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
+
             [
                 'codigo' => 'RECHAZADO_RRHH',
-                'descripcion' => 'Rechazado por la Unidad de Personal',
+                'descripcion' => 'Rechazado por UDP',
                 'tipo_accion' => 'NINGUNA',
                 'flujo' => 'AMBOS',
                 'flujo_id' => null,
-                'es_final' => true,
-                'activo' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'codigo' => 'APROBADO_DER',
-                'descripcion' => 'Aprobado por el Director Ejecutivo Regional',
-                'tipo_accion' => 'SUMA',
-                'flujo' => 'HE_DINERO',
-                'flujo_id' => 2,
                 'es_final' => true,
                 'activo' => true,
                 'created_at' => now(),
@@ -121,17 +135,7 @@ class TblEstadoSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            [
-                'codigo' => 'APROBADO_UDP',
-                'descripcion' => 'Aprobado por UDP',
-                'tipo_accion' => 'NINGUNA',
-                'flujo' => 'HE_DINERO',
-                'flujo_id' => 2,
-                'es_final' => false,
-                'activo' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
+
         ]);
     }
 }

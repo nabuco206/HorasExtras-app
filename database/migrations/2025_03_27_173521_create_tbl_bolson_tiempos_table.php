@@ -21,11 +21,11 @@ return new class extends Migration
                         ->on('tbl_personas')
                         ->onDelete('cascade');
 
-                    $table->bigInteger('id_solicitud_he');
-                    $table->foreign('id_solicitud_he')
-                        ->references('id')
-                        ->on('tbl_solicitud_hes')
-                        ->onDelete('cascade');
+                    $table->bigInteger('id_solicitud_he')->nullable();
+                    // $table->foreign('id_solicitud_he')
+                    //     ->references('id')
+                    //     ->on('tbl_solicitud_hes')
+                    //     ->onDelete('cascade');
 
                     $table->date('fecha_crea');
                     $table->integer('minutos');

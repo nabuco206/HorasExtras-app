@@ -1,4 +1,5 @@
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+{{-- <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen"> --}}
+<section class="w-full min-h-screen">
     <style>
         /* Fix temporal: forzar columnas en pantallas >= md si Tailwind no se está aplicando */
         @media (min-width: 768px) {

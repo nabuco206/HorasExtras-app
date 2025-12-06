@@ -91,18 +91,63 @@ class SolicitudHeService
     public function obtenerEstados($idSolicitud)
     {
         $seguimientos = \App\Models\TblSeguimientoSolicitud::where('id_solicitud_he', $idSolicitud)
-            ->with('estado')
+            ->with(['estado', 'estadoAnterior', 'estadoNuevo', 'usuario'])
             ->orderBy('created_at')
             ->get();
 
         $estados = [];
 
         foreach ($seguimientos as $seguimiento) {
+            // Obtener gls_estado con prioridad: relacion estado -> estadoNuevo -> descripcion cambio accessor
+            $glsEstado = null;
+            $descripcionEstado = null;
+            if (isset($seguimiento->estado) && isset($seguimiento->estado->gls_estado)) {
+                $glsEstado = $seguimiento->estado->gls_estado;
+                $descripcionEstado = $seguimiento->estado->descripcion ?? null;
+            } elseif (isset($seguimiento->estadoNuevo) && isset($seguimiento->estadoNuevo->gls_estado)) {
+                $glsEstado = $seguimiento->estadoNuevo->gls_estado;
+                $descripcionEstado = $seguimiento->estadoNuevo->descripcion ?? null;
+            } elseif (method_exists($seguimiento, 'getDescripcionCambioAttribute')) {
+                $glsEstado = $seguimiento->descripcion_cambio ?? $seguimiento->getDescripcionCambioAttribute();
+                $descripcionEstado = null;
+            } else {
+                $glsEstado = 'Desconocido';
+            }
+
+            // Si no tenemos descripcionEstado, intentar buscar en la tabla tbl_estados usando ids disponibles
+            if (empty($descripcionEstado) || $descripcionEstado === null || $descripcionEstado === '') {
+                $posiblesIds = [
+                    $seguimiento->id_estado ?? null,
+                    $seguimiento->estado_nuevo_id ?? null,
+                    $seguimiento->estado_anterior_id ?? null,
+                ];
+                foreach ($posiblesIds as $pid) {
+                    if ($pid) {
+                        $tblEstado = \App\Models\TblEstado::find($pid);
+                        if ($tblEstado) {
+                            $descripcionEstado = $tblEstado->descripcion ?? $descripcionEstado;
+                            // también rellenar glsEstado si falta
+                            $glsEstado = $glsEstado && $glsEstado !== 'Desconocido' ? $glsEstado : ($tblEstado->gls_estado ?? $glsEstado);
+                            if ($descripcionEstado) break;
+                        }
+                    }
+                }
+            }
+
+            // Obtener nombre de usuario: preferir campo username, luego accessor nombre_usuario
+            $nombreUsuario = $seguimiento->username ?? ($seguimiento->nombre_usuario ?? null);
+            if (!$nombreUsuario && method_exists($seguimiento, 'getNombreUsuarioAttribute')) {
+                $nombreUsuario = $seguimiento->getNombreUsuarioAttribute();
+            }
+            $nombreUsuario = $nombreUsuario ?? 'Desconocido';
+
             $estados[] = [
                 'idSolicitud' => $idSolicitud,
                 'id' => $seguimiento->id,
-                'gls_estado' => $seguimiento->estado->gls_estado ,
-                'created_at' => $seguimiento->created_at->format('d/m/Y H:i'),
+                'gls_estado' => $glsEstado,
+                'descripcion' => $descripcionEstado ?? '—',
+                'username' => $nombreUsuario,
+                'created_at' => $seguimiento->created_at ? $seguimiento->created_at->format('d/m/Y H:i') : null,
             ];
         }
 

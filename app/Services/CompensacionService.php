@@ -34,7 +34,8 @@ class CompensacionService
             $minutosADescontar = $minutosAprobados ?? $solicitud->minutos_solicitados;
 
             // Verificar que la compensación esté en estado SOLICITADA (descuento ya aplicado)
-            if ($solicitud->id_estado != 8) { // 8 = COMPENSACION_SOLICITADA
+            $idSolicitada = \App\Models\TblEstado::where('codigo', 'COMPENSACION_SOLICITADA')->value('id');
+            if (!$idSolicitada || $solicitud->id_estado != $idSolicitada) {
                 DB::rollBack();
                 return [
                     'exitoso' => false,
@@ -188,7 +189,8 @@ class CompensacionService
     public function validarSolicitudParaAprobacion(TblSolicitudCompensa $solicitud): array
     {
         // Verificar que esté en estado solicitada (pendiente de aprobación)
-        if ($solicitud->id_estado != 8) { // 8 = COMPENSACION_SOLICITADA
+        $idSolicitada = \App\Models\TblEstado::where('codigo', 'COMPENSACION_SOLICITADA')->value('id');
+        if (!$idSolicitada || $solicitud->id_estado != $idSolicitada) {
             return [
                 'valida' => false,
                 'mensaje' => 'La solicitud no está pendiente de aprobación'
@@ -216,8 +218,11 @@ class CompensacionService
      */
     public function obtenerSolicitudesPendientes($codFiscalia = null): \Illuminate\Database\Eloquent\Collection
     {
+        $idSolicitada = \App\Models\TblEstado::where('codigo', 'COMPENSACION_SOLICITADA')->value('id');
         $query = TblSolicitudCompensa::with(['persona', 'estado'])
-            ->where('id_estado', 1) // PENDIENTE
+            ->when($idSolicitada, function($q) use ($idSolicitada) {
+                $q->where('id_estado', $idSolicitada);
+            })
             ->orderBy('fecha_solicitud', 'asc');
 
         if ($codFiscalia) {
@@ -314,12 +319,16 @@ class CompensacionService
             $query->where('username', $username);
         }
 
-        $pendientes = (clone $query)->where('id_estado', 8)->count(); // COMPENSACION_SOLICITADA
-        $aprobadas = (clone $query)->where('id_estado', 9)->count(); // COMPENSACION_APROBADA_JEFE
-        $rechazadas = (clone $query)->where('id_estado', 10)->count(); // COMPENSACION_RECHAZADA_JEFE
+    $idSolicitada = \App\Models\TblEstado::where('codigo', 'COMPENSACION_SOLICITADA')->value('id');
+    $idAprobada = \App\Models\TblEstado::where('codigo', 'COMPENSACION_APROBADA_JEFE')->value('id');
+    $idRechazada = \App\Models\TblEstado::where('codigo', 'COMPENSACION_RECHAZADA_JEFE')->value('id');
 
-        $minutosAprobados = (clone $query)->where('id_estado', 9)->sum('minutos_aprobados');
-        $minutosSolicitados = (clone $query)->where('id_estado', 8)->sum('minutos_solicitados');
+    $pendientes = $idSolicitada ? (clone $query)->where('id_estado', $idSolicitada)->count() : 0;
+    $aprobadas = $idAprobada ? (clone $query)->where('id_estado', $idAprobada)->count() : 0;
+    $rechazadas = $idRechazada ? (clone $query)->where('id_estado', $idRechazada)->count() : 0;
+
+    $minutosAprobados = $idAprobada ? (clone $query)->where('id_estado', $idAprobada)->sum('minutos_aprobados') : 0;
+    $minutosSolicitados = $idSolicitada ? (clone $query)->where('id_estado', $idSolicitada)->sum('minutos_solicitados') : 0;
 
         return [
             'total_solicitudes' => $pendientes + $aprobadas + $rechazadas,
