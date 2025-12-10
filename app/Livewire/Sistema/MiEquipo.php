@@ -35,18 +35,14 @@ class MiEquipo extends Component
 
             $this->personas = TblPersona::with('escalafon')
                 ->where('cod_fiscalia', $userCodFiscalia)
+                ->where('id_rol', 1)
                 ->where('flag_activo', true)
                 ->orderBy('Nombre')
                 ->orderBy('Apellido')
                 ->get();
 
             foreach ($this->personas as $p) {
-                $saldo = TblBolsonTiempo::vigentes()->where('username', $p->username)
-                    ->whereHas('solicitudHe', function($q) {
-                        $q->whereIn('id_tipo_compensacion', [1, 2])
-                          ->where('id_estado', 4);
-                    })
-                    ->sum('saldo_min');
+                $saldo = TblBolsonTiempo::vigentes()->where('username', $p->username)->sum('saldo_min');
                 $p->tiempo_disponible = (int) $saldo;
             }
 
@@ -82,12 +78,7 @@ class MiEquipo extends Component
                 ->get();
 
             foreach ($this->personas as $p) {
-                $saldo = TblBolsonTiempo::vigentes()->where('username', $p->username)
-                    ->whereHas('solicitudHe', function($q) {
-                        $q->whereIn('id_tipo_compensacion', [1, 2])
-                          ->where('id_estado', 4);
-                    })
-                    ->sum('saldo_min');
+                $saldo = TblBolsonTiempo::vigentes()->where('username', $p->username)->sum('saldo_min');
                 $p->tiempo_disponible = (int) $saldo;
             }
 

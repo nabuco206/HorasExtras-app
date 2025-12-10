@@ -2,35 +2,26 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TblFiscalia extends Model
 {
-    use HasFactory;
+    // Nombre de la tabla en la base de datos
+    protected $table = 'tbl_fiscalia';
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
-    protected $primaryKey = 'cod_fiscalia';
-    public $incrementing = false;
-    protected $keyType = 'int';
+    // Campos que se pueden asignar masivamente
     protected $fillable = [
-        'cod_fiscalia',
-        'gls_fiscalia',
+        'cod_fiscalia', // Código único de la fiscalía
+        'gls_fiscalia', // Nombre o descripción de la fiscalía
     ];
 
-    /**
-     * The attributes that should be cast to native types.
-     *
-     * @var array
-     */
-    protected $casts = [
-        'cod_fiscalia' => 'integer',
-    ];
+    // Si necesitas timestamps (created_at, updated_at), puedes habilitarlos o deshabilitarlos
+    public $timestamps = false;
 
-    // Si tienes relaciones, ajústalas aquí según corresponda
+    // Relación con otros modelos (si aplica)
+    // Por ejemplo, si hay una relación con personas:
+    public function personas()
+    {
+        return $this->hasMany(tbl_Persona::class, 'cod_fiscalia', 'cod_fiscalia');
+    }
 }

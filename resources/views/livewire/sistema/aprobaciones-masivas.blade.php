@@ -126,6 +126,7 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
+                        <th></th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             <input type="checkbox"
                                    @if(count($seleccionados) === count($solicitudes) && count($solicitudes) > 0) checked @endif
@@ -146,9 +147,9 @@
                             wire:click="filtrarMinutosAltos(480)" title="Clic para filtrar solicitudes de 8+ horas">
                             ⏱️ Minutos
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <!-- <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             📊 Estado
-                        </th>
+                        </th> -->
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             💼 Tipo Trabajo
                         </th>
@@ -162,6 +163,13 @@
                         <tr class="hover:bg-gray-50 transition-colors
                             @if(in_array($solicitud->id, $seleccionados)) bg-blue-50 @endif
                             @if(($solicitud->total_min ?? 0) >= 480) border-l-4 border-orange-400 @endif">
+                            <td>
+                                <button wire:click="verEstados({{ $solicitud->id }})" type="button" title="Ver estados">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-600 hover:text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z" />
+                                    </svg>
+                                </button>
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <input type="checkbox"
                                        wire:model.live="seleccionados"
@@ -201,44 +209,18 @@
                                     <div class="text-xs text-orange-600 font-medium">🔥 +8 horas</div>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                @if($solicitud->id_estado == 1)
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                        ⏳ Pendiente
-                                    </span>
-                                @elseif($solicitud->id_estado == 3)
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                        ✅ Aprobada
-                                    </span>
-                                @elseif($solicitud->id_estado == 4)
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                        ❌ Rechazada
-                                    </span>
-                                @elseif($solicitud->id_estado == 5)
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                                        🔄 Comp. Solicitada
-                                    </span>
-                                @elseif($solicitud->id_estado == 6)
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                        🎯 Comp. Aprobada
-                                    </span>
-                                @else
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                        {{ $solicitud->estado?->gls_estado ?? 'Estado ' . $solicitud->id_estado }}
-                                    </span>
-                                @endif
-                            </td>
+                          
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 💼 {{ $solicitud->tipoTrabajo?->gls_tipo_trabajo ?? '-' }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                🏢 {{ $solicitud->fiscalia?->nombre ?? $solicitud->cod_fiscalia ?? '-' }}
+                                {{ $solicitud->fiscaliaS?->gls_fiscalia ?? $solicitud->cod_fiscalia ?? '-' }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
+                            <!-- <td class="px-6 py-4 whitespace-nowrap">
                                 <button wire:click="verEstados({{ $solicitud->id }})" class="text-blue-600 hover:text-blue-800">
                                     🔍 Ver Historia
                                 </button>
-                            </td>
+                            </td> -->
                         </tr>
                     @empty
                         <tr>

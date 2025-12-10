@@ -186,7 +186,10 @@ new class extends Component {
             $flujoService->crearBolsonPendienteParaSolicitud($nuevaSolicitud);
         }
 
-        $this->solicitudes = \App\Models\TblSolicitudHe::orderByDesc('id')->get();
+        
+        $this->solicitudes = \App\Models\TblSolicitudHe::where('username', $this->username)
+        ->orderByDesc('id')
+        ->get();
 
         // Recargar datos del bolsón después de guardar
         $this->cargarDatosBolson();

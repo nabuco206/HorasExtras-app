@@ -1,4 +1,4 @@
-<x-layouts.app :title="__('Dashboard')">
+
     <div x-data="{
         notifications: [
             { id: 1, show: true, color: 'green', icon: 'check', message: 'Notificación : Sin Mensaje', detail: '' },
@@ -338,4 +338,3 @@
         </div>
     </div>
 
-</x-layouts.app>

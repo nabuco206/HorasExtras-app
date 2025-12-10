@@ -18,6 +18,7 @@ class DashboardController extends Controller
 
     public function index()
     {
+        
         $user = Auth::user();
         $username = $user->username ?? $user->name;
 
@@ -77,6 +78,27 @@ class DashboardController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
+        // Inicializar el total de solicitudes pendientes
+        $totalSolicitudesPendientes = 0;
+
+        // Verificar si el usuario es JD (id_rol = 2)
+        if ($user->id_rol == 2) {
+            $codFiscalia = $user->cod_fiscalia;
+
+            // Contar solicitudes pendientes en tbl_solicitud_hes
+            $solicitudesHesPendientes = TblSolicitudHe::where('cod_fiscalia', $codFiscalia)
+                ->where('id_estado', 9) // Estado "Pendiente"
+                ->count();
+
+            // Contar solicitudes pendientes en tbl_solicitud_compensas
+            $solicitudesCompensasPendientes = TblSolicitudCompensa::where('cod_fiscalia', $codFiscalia)
+                ->where('id_estado', 9) // Estado "Pendiente"
+                ->count();
+
+            // Total de solicitudes pendientes
+            $totalSolicitudesPendientes = $solicitudesHesPendientes + $solicitudesCompensasPendientes;
+        }
+
         return view('dashboard', compact(
             'saldoDisponible',
             'minutosDisponibles',
@@ -93,7 +115,8 @@ class DashboardController extends Controller
             'resumenCompleto',
             'solicitudesBolson',
             'ultimasSolicitudes',
-            'compensaciones'
+            'compensaciones',
+            'totalSolicitudesPendientes'
         ));
     }
 }

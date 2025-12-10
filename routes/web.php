@@ -6,6 +6,7 @@ use App\Http\Controllers\SistemaController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\CompensacionController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -17,7 +18,11 @@ Route::get('/test-login', function () {
     return view('test-login');
 })->name('test-login');
 
-Route::get('dashboard', [DashboardController::class, 'index'])
+// Route::get('dashboard', [DashboardController::class, 'index'])
+//     ->middleware(['auth', 'verified'])
+//     ->name('dashboard');
+
+Route::get('dashboard', \App\Livewire\Sistema\Dashboard::class)
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
@@ -94,6 +99,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/solicitud/{solicitudId}/historial', [App\Http\Controllers\WorkflowController::class, 'obtenerHistorial'])->name('historial');
         Route::post('/crear-solicitud-prueba', [App\Http\Controllers\WorkflowController::class, 'crearSolicitudPrueba'])->name('crear-solicitud-prueba');
     });
+
+    // Reemplazo / registro de ruta para "Todas las Compensaciones" usando Livewire
+    Route::get('sistema/todas-compensaciones', \App\Livewire\Sistema\TodasCompensaciones::class)
+        ->name('sistema.todas-compensaciones')
+        ->middleware(['auth']);
 });
 
 require __DIR__.'/auth.php';

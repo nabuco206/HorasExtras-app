@@ -1,8 +1,24 @@
 <div>
+   
     @php
         $user = auth()->user();
         $rol = $user->id_rol;
-        $menuConfig = config('menu.roles.' . $rol, []);
+        $cod_fiscalia = $user->cod_fiscalia;
+
+        // Acceder a la fiscalía asociada
+        //$gls_fiscalia = $user->fiscalia->gls_fiscalia ?? 'Sin fiscalía';
+
+        // Obtener configuración de menú para el rol y deduplicar por route|url|name
+        $rawMenu = config('menu.roles.' . $rol, []);
+        $menuConfig = collect($rawMenu)->unique(function($item) {
+            // Combina los campos relevantes para deduplicar correctamente
+            return (
+                ($item['route'] ?? '') . '|' .
+                ($item['url'] ?? '') . '|' .
+                ($item['name'] ?? '')
+            );
+        })->values()->all();
+
         // Detectar la ruta actual y buscar el menú activo
         $currentRoute = \Route::currentRouteName();
         $menuActual = collect($menuConfig)->first(function($item) use ($currentRoute) {
@@ -57,9 +73,11 @@
                 </flux:navlist> -->
 
                 <!-- Desktop User Menu -->
+                {{ auth()->user()->cod_fiscalia }}
                 <flux:dropdown position="bottom" align="start">
                     <flux:profile
                         :name="auth()->user()->name"
+                        :cod_fl="auth()->user()->cod_fiscalia"
                         :initials="auth()->user()->initials()"
                         icon-trailing="chevrons-up-down"
                     />
@@ -128,7 +146,7 @@
 
                                         <div class="grid flex-1 text-left text-sm leading-tight">
                                             <span class="truncate font-semibold">{{ auth()->user()->name }}</span>
-                                            <span class="truncate text-xs">{{ auth()->user()->email }}</span>
+                                            <span class="truncate text-xs">{{ $cod_fiscalia }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -154,9 +172,25 @@
                 </flux:dropdown>
             </flux:header>
 
+            
+            
             {{ $slot }}
 
             @fluxScripts
         </body>
     </html>
 </div>
+
+@php
+    \Log::debug('DEBUG MENU CONFIG', [
+        //'user_id' => auth()->id(),
+        //'rol' => $rol,
+       // 'cod_fiscalia' => $cod_fiscalia,
+       // 'gls_fiscalia' => $gls_fiscalia,
+        'attributes' => auth()->user()->toArray(),
+        
+        
+       
+    ]);
+@endphp
+

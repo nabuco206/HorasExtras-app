@@ -64,4 +64,9 @@ class User extends Authenticatable
     {
         return $this->hasOne(\App\Models\TblPersona::class, 'username', 'name');
     }
+
+    public function fiscalia()
+    {
+        return $this->belongsTo(Fiscalia::class, 'cod_fiscalia', 'codigo');
+    }
 }

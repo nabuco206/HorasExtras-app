@@ -20,23 +20,10 @@ class TblPersonaSeeder extends Seeder
 
         // Crear usuario del sistema
         TblPersona::create([
-            'Nombre' => 'Sistema',
-            'Apellido' => 'Automatico',
-            'username' => 'SISTEMA',
-            'cod_fiscalia' => 501, // Fiscalia de Valparaiso
-            'id_escalafon' => 1,
-            'flag_lider' => true,
-            'flag_activo' => true,
-            'password' => bcrypt('sistema123'),
-            'id_rol' => 1,
-        ]);
-
-        // Crear algunos líderes
-        TblPersona::create([
-            'Nombre' => 'María',
-            'Apellido' => 'González',
-            'username' => 'maria.gonzalez',
-            'cod_fiscalia' => 501, // Fiscalia de Valparaiso
+            'Nombre' => 'Persona',
+            'Apellido' => '02',
+            'username' => 'persona02',
+            'cod_fiscalia' => 502, // Fiscalia de Valparaiso
             'id_escalafon' => 1,
             'flag_lider' => true,
             'flag_activo' => true,
@@ -44,13 +31,26 @@ class TblPersonaSeeder extends Seeder
             'id_rol' => 1,
         ]);
 
+        // Crear algunos líderes
         TblPersona::create([
-            'Nombre' => 'Carlos',
-            'Apellido' => 'Rodríguez',
-            'username' => 'carlos.rodriguez',
-            'cod_fiscalia' => 502, // Fiscalia de Viña del Mar
+            'Nombre' => 'J',
+            'Apellido' => 'D',
+            'username' => 'jd502',
+            'cod_fiscalia' => 502, // Fiscalia de Valparaiso
             'id_escalafon' => 1,
             'flag_lider' => true,
+            'flag_activo' => true,
+            'password' => bcrypt('1234'),
+            'id_rol' => 2,
+        ]);
+
+        TblPersona::create([
+            'Nombre' => 'Persona',
+            'Apellido' => '03',
+            'username' => 'persona03',
+            'cod_fiscalia' => 502, // Fiscalia de Viña del Mar
+            'id_escalafon' => 1,
+            'flag_lider' => false,
             'flag_activo' => true,
             'password' => bcrypt('1234'),
             'id_rol' => 1,
@@ -119,7 +119,7 @@ class TblPersonaSeeder extends Seeder
         ]);
 
         // Crear algunos usuarios adicionales para pruebas masivas
-        for ($i = 2; $i <= 15; $i++) {
+        for ($i = 4; $i <= 8; $i++) {
             TblPersona::create([
                 'Nombre' => "Usuario Test {$i}",
                 'Apellido' => "Apellido {$i}",

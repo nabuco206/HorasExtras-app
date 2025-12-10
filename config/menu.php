@@ -22,6 +22,11 @@ return [
         ],
         // Jefe Directo
         '2' => [
+              [
+                'name' => 'Dashboard',
+                'icon' => 'home',
+                'route' => 'dashboard',
+            ],
             [
                 'name' => 'Aprobar HE JD',
                 'icon' => 'check-circle',
@@ -55,9 +60,19 @@ return [
                 'icon' => 'banknotes',
                 'route' => 'sistema.solicitudes-pago',
             ],
+             [
+                'name' => 'Todas las Compensaciones',
+                'icon' => 'banknotes',
+                'route' => 'sistema.todas-compensaciones', // Esta ruta coincide con la definida en web.php
+            ],
         ],
         // UDP
         '3' => [
+             [
+                'name' => 'Dashboard',
+                'icon' => 'home',
+                'route' => 'dashboard',
+            ],
              [
             'name' => 'Panel de Admin',
             'icon' => 'shield-check',
@@ -96,9 +111,19 @@ return [
                 'icon' => 'presentation-chart-bar',
                 'route' => 'sistema.dashboard-tiempo',
             ],
+            [
+                'name' => 'Todas las Compensaciones',
+                'icon' => 'banknotes',
+                'route' => 'sistema.todas-compensaciones',
+            ],
         ],
         // JUDP
         '4' => [
+             [
+                'name' => 'Dashboard',
+                'icon' => 'home',
+                'route' => 'dashboard',
+            ],
             [
                 'name' => 'Aprobaciones JUDP',
                 'icon' => 'clipboard-document-check',
@@ -124,6 +149,12 @@ return [
         ],
         // DER
         '5' => [
+         
+            [
+                'name' => 'Dashboard',
+                'icon' => 'home',
+                'route' => 'dashboard',
+            ],
             [
                 'name' => 'Aprobar Pago DER',
                 'icon' => 'banknotes',
@@ -146,6 +177,12 @@ return [
                 'icon' => 'presentation-chart-bar',
                 'route' => 'sistema.dashboard-tiempo',
             ],
+            [
+                'name' => 'Todas las Compensaciones',
+                'icon' => 'banknotes',
+                'route' => 'sistema.todas-compensaciones',
+            ],
         ],
     ],
+   
 ];

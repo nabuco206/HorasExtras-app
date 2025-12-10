@@ -268,14 +268,17 @@
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 Minutos a Aprobar
                             </label>
-                            <input type="number"
+                             <label class="block text-sm font-medium text-gray-700 mb-2">
+                                {{ $solicitudSeleccionada->minutos_solicitados }}
+                            </label>
+                            <!-- <input type="number"
                                 wire:model="minutosAprobados"
                                 min="1"
                                 max="{{ $solicitudSeleccionada->minutos_solicitados }}"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <p class="text-sm text-gray-500 font-mono mt-1">
                                 Máximo: {{ number_format($solicitudSeleccionada->minutos_solicitados) }} min
-                            </p>
+                            </p> -->
                         </div>
 
                         <div>
