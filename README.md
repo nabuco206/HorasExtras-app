@@ -188,4 +188,3 @@ tail -f storage/logs/laravel.log
 
 # Reset completo para nuevas pruebas
 php artisan bolson:test-setup persona01 --reset --duration=3
-```
