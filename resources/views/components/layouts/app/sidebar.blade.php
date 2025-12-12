@@ -39,7 +39,6 @@
                 <a href="#" class="mr-5 flex items-center space-x-2" wire:navigate>
                     <x-app-logo />
                 </a>
-
                 <flux:navlist variant="outline">
                     @foreach ($menuConfig as $menuItem)
                         @php
@@ -73,7 +72,7 @@
                 </flux:navlist> -->
 
                 <!-- Desktop User Menu -->
-                {{ auth()->user()->cod_fiscalia }}
+                <span class="p-0 text-sm font-normal">Version 0.1 ::{{ auth()->user()->cod_fiscalia }}</span>
                 <flux:dropdown position="bottom" align="start">
                     <flux:profile
                         :name="auth()->user()->name"
