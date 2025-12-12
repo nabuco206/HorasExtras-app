@@ -11,6 +11,8 @@ class AprobacionesUnificadas extends Component
     public $rol;
     public $estado;
     public $titulo;
+    public $solicitudesSeleccionadas = [];
+    public $solicitudesRechazadas = []; // Aquí guardaremos las solicitudes rechazadas
 
     public function mount($tipo, $rol, $estado, $titulo)
     {
@@ -18,6 +20,20 @@ class AprobacionesUnificadas extends Component
         $this->rol = $rol;
         $this->estado = $estado;
         $this->titulo = $titulo;
+    }
+
+    public function rechazarSeleccionados(): void
+    {
+        // Suponiendo que $this->solicitudesSeleccionadas contiene los IDs seleccionados
+        $rechazadas = TblSolicitudCompensa::whereIn('id', $this->solicitudesSeleccionadas)->get();
+
+        foreach ($rechazadas as $solicitud) {
+            // ... lógica de rechazo ...
+            $solicitud->update(['id_estado' => 11]);
+        }
+
+        // Guardar las solicitudes rechazadas para acceder a sus datos en la vista
+        $this->solicitudesRechazadas = $rechazadas->toArray();
     }
 
     public function render()
@@ -46,6 +62,9 @@ class AprobacionesUnificadas extends Component
 
         $solicitudes = $query->get();
 
-        return view('livewire.sistema.aprobaciones-unificadas', compact('solicitudes'));
+        return view('livewire.sistema.aprobaciones-masivas', [
+            'solicitudes' => $solicitudes,
+            'solicitudesRechazadas' => $this->solicitudesRechazadas,
+        ]);
     }
 }

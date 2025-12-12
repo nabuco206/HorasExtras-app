@@ -65,6 +65,8 @@ return [
                 'icon' => 'banknotes',
                 'route' => 'sistema.todas-compensaciones', // Esta ruta coincide con la definida en web.php
             ],
+           
+            
         ],
         // UDP
         '3' => [

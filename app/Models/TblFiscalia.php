@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class TblFiscalia extends Model
 {
     // Nombre de la tabla en la base de datos
-    protected $table = 'tbl_fiscalia';
+    protected $table = 'tbl_fiscalias';
 
     // Campos que se pueden asignar masivamente
     protected $fillable = [

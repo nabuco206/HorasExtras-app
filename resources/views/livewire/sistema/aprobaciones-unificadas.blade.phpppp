@@ -1,5 +1,5 @@
 <x-layouts.app>
-    <title>{{ $titulo }}</title>
+    <title>{{ $titulo }}lllllll</title>
 
     <div class="w-full min-h-screen">
         <div class="mb-6">

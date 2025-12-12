@@ -15,6 +15,8 @@ class DashboardTiempo extends Component
     public $resumenFiscalias = [];
     public $detalleFiscalia = null;
     public $detalleUsuarios = [];
+    public $esJD = false;
+    public $codFiscaliaUsuario = null;
 
     public function mount()
     {
@@ -24,7 +26,11 @@ class DashboardTiempo extends Component
         $rolesPermitidos = [3, 4, 5]; // UDP, JUDP, DER
         $this->tieneAcceso = in_array($user->id_rol, $rolesPermitidos);
 
-        if (!$this->tieneAcceso) {
+        // Determinar si es JD (rol 2)
+        $this->esJD = $user->id_rol == 2;
+        $this->codFiscaliaUsuario = $user->cod_fiscalia;
+
+        if (!$this->tieneAcceso && !$this->esJD) {
             return;
         }
 
@@ -33,34 +39,42 @@ class DashboardTiempo extends Component
 
     private function cargarResumen()
     {
-        // Obtener resumen para tipo 1 (compensación) - desde bolsones
-        $tipo1 = DB::table('tbl_bolson_tiempos')
-            ->join('tbl_personas', 'tbl_bolson_tiempos.username', '=', 'tbl_personas.username')
+        // Obtener resumen para tipo 1 (compensación) - desde solicitudes
+        $queryTipo1 = DB::table('tbl_solicitud_hes')
+            ->join('tbl_personas', 'tbl_solicitud_hes.username', '=', 'tbl_personas.username')
             ->join('tbl_fiscalias', 'tbl_personas.cod_fiscalia', '=', 'tbl_fiscalias.cod_fiscalia')
-            ->join('tbl_solicitud_hes', 'tbl_bolson_tiempos.id_solicitud_he', '=', 'tbl_solicitud_hes.id')
-            ->where('tbl_bolson_tiempos.activo', true)
             ->where('tbl_personas.flag_activo', true)
             ->where('tbl_personas.id_rol', 1)
             ->where('tbl_solicitud_hes.id_tipo_compensacion', 1)
-            ->where('tbl_solicitud_hes.id_estado', 4)
-            ->select(
+            ->where('tbl_solicitud_hes.id_estado', 6);
+
+        if ($this->esJD) {
+            $queryTipo1->where('tbl_personas.cod_fiscalia', $this->codFiscaliaUsuario);
+        }
+
+        $tipo1 = $queryTipo1->select(
                 'tbl_fiscalias.cod_fiscalia',
                 'tbl_fiscalias.gls_fiscalia',
                 DB::raw('1 as id_tipo_compensacion'),
-                DB::raw('SUM(tbl_bolson_tiempos.saldo_min) as total_minutos')
+                DB::raw('SUM(tbl_solicitud_hes.total_min) as total_minutos')
             )
             ->groupBy('tbl_fiscalias.cod_fiscalia', 'tbl_fiscalias.gls_fiscalia')
             ->get();
 
         // Obtener resumen para tipo 2 (dinero) - desde solicitudes aprobadas
-        $tipo2 = DB::table('tbl_solicitud_hes')
+        $queryTipo2 = DB::table('tbl_solicitud_hes')
             ->join('tbl_personas', 'tbl_solicitud_hes.username', '=', 'tbl_personas.username')
             ->join('tbl_fiscalias', 'tbl_personas.cod_fiscalia', '=', 'tbl_fiscalias.cod_fiscalia')
             ->where('tbl_personas.flag_activo', true)
             ->where('tbl_personas.id_rol', 1)
             ->where('tbl_solicitud_hes.id_tipo_compensacion', 2)
-            ->where('tbl_solicitud_hes.id_estado', 5)
-            ->select(
+            ->where('tbl_solicitud_hes.id_estado', 5);
+
+        if ($this->esJD) {
+            $queryTipo2->where('tbl_personas.cod_fiscalia', $this->codFiscaliaUsuario);
+        }
+
+        $tipo2 = $queryTipo2->select(
                 'tbl_fiscalias.cod_fiscalia',
                 'tbl_fiscalias.gls_fiscalia',
                 DB::raw('2 as id_tipo_compensacion'),
@@ -77,35 +91,43 @@ class DashboardTiempo extends Component
     {
         $this->detalleFiscalia = $codFiscalia;
 
-        // Obtener detalle para tipo 1 (compensación) - desde bolsones
-        $tipo1 = DB::table('tbl_bolson_tiempos')
-            ->join('tbl_personas', 'tbl_bolson_tiempos.username', '=', 'tbl_personas.username')
-            ->join('tbl_solicitud_hes', 'tbl_bolson_tiempos.id_solicitud_he', '=', 'tbl_solicitud_hes.id')
-            ->where('tbl_bolson_tiempos.activo', true)
+        // Obtener detalle para tipo 1 (compensación) - desde solicitudes
+        $queryTipo1 = DB::table('tbl_solicitud_hes')
+            ->join('tbl_personas', 'tbl_solicitud_hes.username', '=', 'tbl_personas.username')
             ->where('tbl_personas.flag_activo', true)
             ->where('tbl_personas.id_rol', 1)
             ->where('tbl_personas.cod_fiscalia', $codFiscalia)
             ->where('tbl_solicitud_hes.id_tipo_compensacion', 1)
-            ->where('tbl_solicitud_hes.id_estado', 4)
-            ->select(
+            ->where('tbl_solicitud_hes.id_estado', 6);
+
+        if ($this->esJD) {
+            $queryTipo1->where('tbl_personas.cod_fiscalia', $this->codFiscaliaUsuario);
+        }
+
+        $tipo1 = $queryTipo1->select(
                 'tbl_personas.nombre',
                 'tbl_personas.apellido',
                 'tbl_personas.username',
                 DB::raw('1 as id_tipo_compensacion'),
-                DB::raw('SUM(tbl_bolson_tiempos.saldo_min) as total_minutos')
+                DB::raw('SUM(tbl_solicitud_hes.total_min) as total_minutos')
             )
             ->groupBy('tbl_personas.nombre', 'tbl_personas.apellido', 'tbl_personas.username')
             ->get();
 
         // Obtener detalle para tipo 2 (dinero) - desde solicitudes
-        $tipo2 = DB::table('tbl_solicitud_hes')
+        $queryTipo2 = DB::table('tbl_solicitud_hes')
             ->join('tbl_personas', 'tbl_solicitud_hes.username', '=', 'tbl_personas.username')
             ->where('tbl_personas.flag_activo', true)
             ->where('tbl_personas.id_rol', 1)
             ->where('tbl_personas.cod_fiscalia', $codFiscalia)
             ->where('tbl_solicitud_hes.id_tipo_compensacion', 2)
-            ->where('tbl_solicitud_hes.id_estado', 5)
-            ->select(
+            ->where('tbl_solicitud_hes.id_estado', 5);
+
+        if ($this->esJD) {
+            $queryTipo2->where('tbl_personas.cod_fiscalia', $this->codFiscaliaUsuario);
+        }
+
+        $tipo2 = $queryTipo2->select(
                 'tbl_personas.nombre',
                 'tbl_personas.apellido',
                 'tbl_personas.username',

@@ -66,7 +66,7 @@
                         </button>
                     </div>
                 </div>
-                <div>
+                <!-- <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Rechazar Seleccion</label>
                     <div class="space-y-2">
                         <button wire:click="rechazarSeleccionadas"
@@ -75,7 +75,7 @@
                             ❌ Rechazar ({{ count($solicitudesSeleccionadas) }})
                         </button>
                     </div>
-                </div>
+                </div> -->
             </div>
         </div>
 

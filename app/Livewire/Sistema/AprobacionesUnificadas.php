@@ -4,11 +4,15 @@ namespace App\Livewire\Sistema;
 
 use Livewire\Component;
 use App\Models\TblSolicitudHe;
+use App\Models\TblSolicitudCompensa;
+use App\Models\TblBolsonTiempo;
 use App\Models\TblTipoTrabajo;
 use App\Models\TblEstado;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use App\Services\FlujoEstadoService;
+use App\Services\BolsonService;
+use Livewire\Livewire;
 
 class AprobacionesUnificadas extends Component
 {
@@ -33,6 +37,17 @@ class AprobacionesUnificadas extends Component
 
     public $modalEstadosVisible = false;
     public $estadosSolicitud = [];
+
+    public $solicitudSeleccionada = null;
+    public $observaciones = '';
+    public $mostrarModal = false;
+
+    protected $bolsonService;
+
+    public function boot(BolsonService $bolsonService)
+    {
+        $this->bolsonService = $bolsonService;
+    }
 
     public function mount($tipo = 1, $rol = null, $titulo = null, $estado = null)
     {
@@ -204,9 +219,15 @@ class AprobacionesUnificadas extends Component
 
     public function rechazarSeleccionados(): void
     {
+        
+
         if (empty($this->seleccionados)) {
             session()->flash('warning', 'No hay solicitudes seleccionadas.');
             return;
+        }
+        $tipoCompensacion = $this->tipo_compensacion;
+        if ($tipoCompensacion == 1) {
+            dd('HE_COMP');
         }
 
         $usuarioId = Auth::id();
@@ -220,6 +241,61 @@ class AprobacionesUnificadas extends Component
         session()->flash($resultado['exitoso'] ? 'mensaje' : 'error', $resultado['mensaje'] ?? ($resultado['exitoso'] ? 'Rechazadas.' : 'Error en rechazo.'));
         $this->actualizarEstadisticas();
         $this->cargarSolicitudes();
+    }
+
+    public function rechazarSolicitud($solicitudId)
+    {
+        // dd($solicitudId.'::.Ziziz');
+        $model = $this->tipo_compensacion == 1 ? TblSolicitudHe::class : TblSolicitudCompensa::class;
+        $solicitud = $model::find($solicitudId);
+        if (!$solicitud) {
+            session()->flash('error', 'Solicitud no encontrada.');
+            return;
+        }
+
+        $svc = app(FlujoEstadoService::class);
+        $resultado = $svc->ejecutarTransicion($solicitud, 4, Auth::id(), $this->observaciones);
+
+        if ($resultado['exitoso']) {
+            // Si es compensación (tipo 2), devolver minutos al bolson
+            if ($this->tipo_compensacion == 2) {
+                if ($solicitud->minutos_solicitados > 0) {
+                    $devolucionResultado = $this->bolsonService->crearBolsonDevolución(
+                        $solicitud->username,
+                        $solicitud->minutos_solicitados,
+                        'Devolución por compensación rechazada',
+                        $solicitudId
+                    );
+                    if (!$devolucionResultado['success']) {
+                        Log::warning('Error al crear bolsón de devolución', $devolucionResultado);
+                    }
+                }
+            } elseif ($this->tipo_compensacion == 1) {
+                // Si es HE (tipo 1), cancelar el bolson pendiente
+                $bolsonPendiente = \App\Models\TblBolsonTiempo::where('id_solicitud_he', $solicitudId)
+                    ->where('estado', 'PENDIENTE')
+                    ->first();
+                if ($bolsonPendiente) {
+                    $bolsonPendiente->delete();
+                    Log::info("Bolsón pendiente cancelado para solicitud HE rechazada", ['bolson_id' => $bolsonPendiente->id, 'solicitud_id' => $solicitudId]);
+                }
+            }
+
+            session()->flash('success', $resultado['mensaje']);
+        } else {
+            session()->flash('error', $resultado['mensaje']);
+        }
+
+        // $this->cerrarModal();
+        $this->actualizarEstadisticas();
+        $this->cargarSolicitudes();
+    }
+
+    public function cerrarModal()
+    {
+        $this->mostrarModal = false;
+        $this->solicitudSeleccionada = null;
+        $this->observaciones = '';
     }
 
     public function cerrarResultados()

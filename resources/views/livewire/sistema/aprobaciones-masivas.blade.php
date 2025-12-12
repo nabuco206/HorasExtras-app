@@ -1,6 +1,5 @@
 <section class="w-full min-h-screen">
 
-
     {{-- Header con estadísticas --}}
     <div class="mb-6">
         <div class="flex justify-between items-start mb-4">
@@ -85,14 +84,16 @@
                 </div>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Rechazar Seleccionadas</label>
-                <div class="space-y-2">
-                    <button wire:click="rechazarSeleccionados"
-                            @if(empty($seleccionados)) disabled @endif
-                            class="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed">
-                        ❌ Rechazar ({{ count($seleccionados) }})
-                    </button>
-                </div>
+                @if($tipo_compensacion == 2)
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Rechazar Seleccionadas</label>
+                    <div class="space-y-2">
+                        <button wire:click="rechazarSeleccionados"
+                                @if(empty($seleccionados)) disabled @endif
+                                class="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed">
+                            ❌ Rechazar ({{ count($seleccionados) }})
+                        </button>
+                    </div>
+                @endif    
             </div>
         </div>
 
@@ -156,6 +157,7 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             🏢 Fiscalía
                         </th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
@@ -215,6 +217,19 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {{ $solicitud->fiscaliaS?->gls_fiscalia ?? $solicitud->cod_fiscalia ?? '-' }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                <div class="flex space-x-2">
+                                    <!-- Mostrar el botón "Rechazar" solo si el estado es 9 -->
+                                    @if($solicitud->id_tipo_compensacion != 2)
+                                        <button
+                                            wire:click="rechazarSolicitud({{ $solicitud->id }})"
+                                            class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                        >
+                                            Rechazar
+                                        </button>
+                                    @endif
+                                </div>
                             </td>
                             <!-- <td class="px-6 py-4 whitespace-nowrap">
                                 <button wire:click="verEstados({{ $solicitud->id }})" class="text-blue-600 hover:text-blue-800">
@@ -415,6 +430,20 @@
     {{-- Modal de estados --}}
     @if($modalEstadosVisible)
         <x-sistema.modal-estados :estados-solicitud="$estadosSolicitud" :modal-estados-visible="$modalEstadosVisible" />
+    @endif
+
+    @if(!empty($solicitudesRechazadas))
+    <div>
+        <h3>Solicitudes rechazadas:</h3>
+        <ul>
+            @foreach($solicitudesRechazadas as $solicitud)
+                <li>
+                    ID: {{ $solicitud['id'] }},
+                    Tipo Compensación: {{ $solicitud['tipo_compensacion'] ?? '-' }}
+                </li>
+            @endforeach
+        </ul>
+    </div>
     @endif
 
 </div>

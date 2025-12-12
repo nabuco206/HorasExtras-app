@@ -33,7 +33,7 @@
 
                         <div class="space-y-3">
                             <div class="flex justify-between items-center">
-                                <span class="text-sm text-zinc-600 dark:text-zinc-400">Compensación</span>
+                                <span class="text-sm text-zinc-600 dark:text-zinc-400">Compensación en Hrs</span>
                                 <span class="text-lg font-bold text-blue-600">{{ number_format($totalTipo1 / 60, 2) }} hrs</span>
                             </div>
                             <div class="flex justify-between items-center">

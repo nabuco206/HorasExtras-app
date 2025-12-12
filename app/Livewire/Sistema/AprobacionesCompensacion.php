@@ -14,7 +14,7 @@ class AprobacionesCompensacion extends Component
 {
     use WithPagination;
 
-    protected $listeners = ['aprobarSolicitud', 'rechazarSolicitud'];
+    protected $listeners = ['aprobarSolicitud', 'rechazarSolicitud', 'rechazarSolicitudConId'];
 
     public $solicitudesSeleccionadas = [];
     public $filtroEstado = null; // se inicializa en mount por codigo
@@ -189,6 +189,17 @@ class AprobacionesCompensacion extends Component
 
         $this->cerrarModal();
         $this->actualizarEstadisticas();
+    }
+
+    public function rechazarSolicitudConId($solicitudId)
+    {
+        $this->solicitudSeleccionada = TblSolicitudCompensa::with(['persona', 'estado'])->find($solicitudId);
+        if (!$this->solicitudSeleccionada) {
+            session()->flash('error', 'Solicitud no encontrada.');
+            return;
+        }
+        $this->observaciones = 'Rechazo desde interfaz unificada';
+        $this->rechazarSolicitud();
     }
 
     public function aprobarSeleccionadas()
