@@ -4,12 +4,14 @@ namespace App\Livewire\Sistema;
 
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
-use App\Services\BolsonService;
+use App\Services\DashboardService;
 use App\Models\TblSolicitudHe;
 use App\Models\TblSolicitudCompensa;
 use App\Models\TblPersona;
 use App\Models\TblBolsonTiempo;
+use App\Services\BolsonService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class Dashboard extends Component
 {
@@ -44,8 +46,76 @@ class Dashboard extends Component
         // Mostrar bolsón solo para rol 1 (Usuario Normal)
         $this->mostrarBolson = ($user->id_rol ?? null) == 1;
 
-        // Cargar datos del bolsón solo si corresponde
+        // Base query para solicitudes HE
+        // $heQuery = TblSolicitudHe::query()
+        //             ->whereBetween('created_at', [$inicioAnio, $finAnio]);
+
+        $dashboardService = new DashboardService();
+        $stats = $dashboardService->obtenerEstadisticasPendientes($rol, $username, $codFiscalia);
+        // log::info("Dashboard mount - EstadísticaspendientesComp: ".json_encode($stats));
+        $this->solicitudesPendientes = $stats['pendientesComp'];
+        // $this->solicitudesPendientes = $stats['pendientesComp'];
+
+       
+        log::info("Dashboard mount - Estadísticas: ".json_encode($stats));
+        // $this->solicitudesAprobadas  = (int) $stats['pendientes_comp'];
+        
+        // if ($rol == 1) {
+        //     $heQuery->where('username', $username);
+
+        //     $this->solicitudesAprobadas  = (int)  $heQuery->where('username', $username)
+        //                                     ->whereIn('id_estado', [6, 5])
+        //                                     ->count();
+        //     Log::info("Dashboard mount - Usuario: {$username}");
+            
+        // } elseif ($rol == 2) {
+        //     Log::info("Dashboard mount - JD: {$username}, Fiscalía: {$codFiscalia}");
+        // } elseif ($rol == 3) {
+        //     Log::info("Dashboard mount - UDP: {$username}");
+        // } elseif ($rol == 4) {
+        //     Log::info("Dashboard mount - JDP: {$username}");
+        // } elseif ($rol == 5) {
+        //     Log::info("Dashboard mount - DER: {$username}");
+        // }
+
+        
+
+        // $compQuery = TblSolicitudCompensa::query()
+        //     ->where('username', $username)
+        //     ->whereIn('id_estado', [10]);
+
+        // // Filtrar por fiscalía si es JD
+        // if ($rol == 2 && $codFiscalia) {
+        //     $heQuery->where('cod_fiscalia', $codFiscalia);
+        //     $compQuery->where('cod_fiscalia', $codFiscalia);
+
+            
+        // }
+
+        // // Suma de minutos aprobados en HE
+        // $minutosHeAprobados = (int) $heQuery
+        //                             ->whereIn('id_estado', [6, 5])
+        //                             ->sum('total_min');
+
+        // // Suma de minutos aprobados en compensaciones
+        // $minutosCompensados = (int) $compQuery->sum('minutos_compensados');
+
+        // // Total minutos extras (HE + compensaciones)
+        // $this->totalMinutosMes = $minutosHeAprobados + $minutosCompensados;
+
+        
+
+        // Últimos 10 ingresos de solicitudes
+        // $this->ultimasSolicitudes = $heQuery->latest('created_at')->take(10)->get();
+
+        // // Últimos 10 ingresos de compensaciones
+        // $this->compensaciones = $compQuery->latest('created_at')->take(10)->get();
+
+         // Cargar datos del bolsón solo si corresponde
         if ($this->mostrarBolson) {
+            // $heQuery->where('username', $username);
+            // $compQuery->where('username', $username);
+
             $bolsonService = app(BolsonService::class);
             $this->resumenCompleto = $bolsonService->obtenerResumenCompleto($username);
             $this->minutosDisponibles = $this->resumenCompleto['total_disponible'] ?? 0;
@@ -59,47 +129,14 @@ class Dashboard extends Component
                 ->where('fecha_vence', '<=', Carbon::now()->addDays(30))
                 ->where('fecha_vence', '>=', Carbon::now())
                 ->count();
-        } else {
+        } 
+        else {
             $this->resumenCompleto = ['detalle_pendientes' => []];
             $this->detalleBolson = [];
             $this->minutosDisponibles = 0;
             $this->minutosPendientes = 0;
             $this->bolsonesProximosVencer = 0;
         }
-
-        // Base query para solicitudes HE
-        $heQuery = TblSolicitudHe::query()
-            ->where('username', $username)
-            ->whereIn('id_estado', [6, 5]);
-
-        // Base query para compensaciones
-        $compQuery = TblSolicitudCompensa::query()
-            ->where('username', $username)
-            ->whereIn('id_estado', [10]);
-
-        // Filtrar por fiscalía si es JD
-        if ($rol == 2 && $codFiscalia) {
-            $heQuery->where('cod_fiscalia', $codFiscalia);
-            $compQuery->where('cod_fiscalia', $codFiscalia);
-        }
-
-        // Suma de minutos aprobados en HE
-        $minutosHeAprobados = (int) $heQuery->sum('total_min');
-
-        // Suma de minutos aprobados en compensaciones
-        $minutosCompensados = (int) $compQuery->sum('minutos_compensados');
-
-        // Total minutos extras (HE + compensaciones)
-        $this->totalMinutosMes = $minutosHeAprobados + $minutosCompensados;
-
-        $this->solicitudesPendientes = $heQuery->count();
-        $this->solicitudesAprobadas = $heQuery->where('id_estado', 2)->count();
-
-        // Últimos 10 ingresos de solicitudes
-        $this->ultimasSolicitudes = $heQuery->latest('created_at')->take(10)->get();
-
-        // Últimos 10 ingresos de compensaciones
-        $this->compensaciones = $compQuery->latest('created_at')->take(10)->get();
 
         // Consulta para la grilla de solicitudes (últimas 10 solicitudes con todos los campos necesarios)
         $this->grillaSolicitudes = TblSolicitudHe::query()

@@ -26,7 +26,7 @@
                  wire:click="$set('filtroEstado', '1')" title="Filtrar solo pendientes">
                 <div class="text-yellow-600 text-sm font-medium">⏳ Pendientes</div>
                 <div class="text-2xl font-bold font-mono text-yellow-700">{{ $estadisticas['pendientes'] }}</div>
-                <div class="text-xs font-mono text-gray-500">{{ number_format($estadisticas['minutos_pendientes_total']) }} min</div>
+                <!-- <div class="text-xs font-mono text-gray-500">{{ number_format($estadisticas['minutos_pendientes_total']) }} min</div> -->
             </div>
             <div class="bg-green-50 border border-green-200 rounded-lg p-4 cursor-pointer hover:bg-green-100 transition-colors"
                  wire:click="$set('filtroEstado', '3')" title="Filtrar solo aprobadas">
@@ -226,7 +226,7 @@
                                             wire:click="rechazarSolicitud({{ $solicitud->id }})"
                                             class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                                         >
-                                            Rechazar
+                                            Rechazarxxx
                                         </button>
                                     @endif
                                 </div>

@@ -10,6 +10,7 @@ use App\Models\TblSolicitudHe;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
+
 class AprobacionesMasivas extends Component
 {
     public $tipos_trabajo = [];
@@ -28,9 +29,15 @@ class AprobacionesMasivas extends Component
 
     public $modalEstadosVisible = false;
     public $estadosSolicitud = [];
+    
+ 
 
     public function mount()
     {
+        $user = Auth::user();
+        $rol = $user->id_rol;
+        $username = $user->username ?? $user->name;
+        $codFiscalia = $user->cod_fiscalia ?? null;
         $this->tipos_trabajo = TblTipoTrabajo::all();
         $this->estados = TblEstado::all();
         $this->actualizarEstadisticas();
@@ -43,20 +50,14 @@ class AprobacionesMasivas extends Component
      */
     protected function baseQuery()
     {
+        $inicioAnio = Carbon::now()->startOfYear();
+        $finAnio = Carbon::now()->endOfYear();
         return TblSolicitudHe::with(['tipoTrabajo', 'estado'])
-            ->where('id_tipo_compensacion', 1)
+            ->whereBetween('tbl_solicitud_hes.created_at', [$inicioAnio, $finAnio])
             ->orderBy('created_at', 'desc');
-    }
-
-    /**
-     * Query base para estadísticas (se puede sobreescribir en hijos).
-     * Limita a id_tipo_compensacion = 0.
-     */
-    protected function statsQuery()
-    {
-        return TblSolicitudHe::query()->where('id_tipo_compensacion', 1);
 
     }
+
 
     public function cargarSolicitudes()
     {
@@ -88,10 +89,11 @@ class AprobacionesMasivas extends Component
 
     public function actualizarEstadisticas()
     {
-        // usar statsQuery() que puede añadir filtros (ej: id_tipo_compensacion)
-        $query = $this->statsQuery();
+        
+       
+        $query = $this->baseQuery();
 
-        $pendientes = (clone $query)->where('id_estado', 1)->count();
+        
         $aprobadas = (clone $query)->where('id_estado', 3)->count();
         $rechazadas = (clone $query)->where('id_estado', 4)->count();
         $compensacionSolicitada = (clone $query)->where('id_estado', 5)->count();
@@ -103,7 +105,28 @@ class AprobacionesMasivas extends Component
 
         $totalSolicitudes = $pendientes + $aprobadas + $rechazadas + $compensacionSolicitada + $compensacionAprobada;
         $totalProcesadas = $aprobadas + $rechazadas;
+        
+        // switch ($rol) {
+        //     case 1:         
+        //         $pendientes = (clone $query)->where('id_estado', 1)->count();  
+        //         break;   
+        //     case 2:
 
+        //         $pendientes = (clone $query)->where('id_estado', 1)->count();
+                
+        //         break;
+        //     case 3:            
+        //         $pendientes = (clone $query)->where('id_estado', 2)->count();
+        //         break;
+
+        //     case 4:
+        //         $pendientes = (clone $query)->where('id_estado', 3)->count();
+        //         break;
+        //     case 5:              
+        //         $pendientes = (clone $query)->where('id_estado', 5)->count(); 
+        //         break;    
+        // }        
+        
         $this->estadisticas = [
             'total_solicitudes' => $totalSolicitudes,
             'pendientes' => $pendientes,

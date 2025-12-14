@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('nombre');
             $table->string('apellido');
             $table->string('username')->unique();
+            $table->string('rut',12)->nullable();
             $table->bigInteger('cod_fiscalia')->nullable();
             $table->foreign('cod_fiscalia')->references('cod_fiscalia')->on('tbl_fiscalias');
             $table->foreignId('id_escalafon')->nullable()->constrained('tbl_escalafons');

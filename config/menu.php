@@ -32,13 +32,14 @@ return [
                 'icon' => 'check-circle',
                 'route' => 'sistema.aprobaciones-unificadas',
                 'params' => ['tipo' => 1, 'rol' => 2, 'estado' => 1],
+                'titulo' => 'Aprobación Compensacion en Tiempo JD',
             ],
             [
                 'name' => 'Aprobar Pago JD',
                 'icon' => 'banknotes',
                 'route' => 'sistema.aprobaciones-unificadas',
                 'params' => ['tipo' => 2, 'rol' => 2, 'estado' => 1],
-                'titulo' => 'Aprobación de Horas Extra JD',
+                'titulo' => 'Aprobación Compensacion en Pago JD',
             ],
             [
                 'name' => 'Aprobar Compensaciones JD',
@@ -83,19 +84,19 @@ return [
             'current' => false,
             'target' => '_blank'
             ],
-            [
-                'name' => 'Aprobar HE UDP',
-                'icon' => 'check-circle',
-                'route' => 'sistema.aprobaciones-unificadas',
-                // UDP debe enviar rol=3 para indicar vista administrativa global
-                'params' => ['tipo' => 1, 'rol' => 3, 'estado' => 1],
-                'titulo' => 'Aprobación de Horas Extra UDP', // Este campo será pasado como parámetro en la ruta
-            ],
+            // [
+            //     'name' => 'Aprobar HE UDP',
+            //     'icon' => 'check-circle',
+            //     'route' => 'sistema.aprobaciones-unificadas',
+            //     // UDP debe enviar rol=3 para indicar vista administrativa global
+            //     'params' => ['tipo' => 1, 'rol' => 3, 'estado' => 1],
+            //     'titulo' => 'Aprobación de Horas Extra UDP', // Este campo será pasado como parámetro en la ruta
+            // ],
             [
                 'name' => 'Aprobar Pago UDP',
                 'icon' => 'banknotes',
                 'route' => 'sistema.aprobaciones-unificadas',
-                'params' => ['tipo' => 2, 'rol' => 2, 'estado' => 2],
+                'params' => ['tipo' => 2, 'rol' => 3, 'estado' => 2],
                 'titulo' => 'Aprobación Pago de Horas Extra UDP',
             ],
             [
