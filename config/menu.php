@@ -119,6 +119,11 @@ return [
                 'icon' => 'banknotes',
                 'route' => 'sistema.todas-compensaciones',
             ],
+            [
+                'name' => 'Pagos Concretados',
+                'icon' => 'document-text',
+                'route' => 'sistema.pagos-concretados',
+            ],
         ],
         // JUDP
         '4' => [

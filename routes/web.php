@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CompensacionController;
+use App\Http\Controllers\PagosConcretadosController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -104,6 +105,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('sistema/todas-compensaciones', \App\Livewire\Sistema\TodasCompensaciones::class)
         ->name('sistema.todas-compensaciones')
         ->middleware(['auth']);
+
+    // Rutas para Pagos Concretados
+    
+    Route::get('sistema/pagos-concretados', \App\Livewire\Sistema\PagosConcretados::class)
+        ->name('sistema.pagos-concretados')
+        ->middleware(['auth']);;
+
+       
+    
 });
 
 require __DIR__.'/auth.php';
