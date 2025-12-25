@@ -21,7 +21,8 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-            DB::statement('PRAGMA foreign_keys = OFF;');
+            // DB::statement('PRAGMA foreign_keys = OFF;');
+            // DB::statement('PRAGMA foreign_keys = ON;');
 
             DB::table('tbl_rol')->insert([
                            ['gls_rol' => 'USER']
@@ -41,7 +42,7 @@ class DatabaseSeeder extends Seeder
                     ]);
 
 
-        TblEscalafon::truncate();
+        // TblEscalafon::truncate();
         TblEscalafon::create([
             'gls_escalafon' => 'TECNICO',
         ]);
@@ -71,12 +72,12 @@ class DatabaseSeeder extends Seeder
             ['cod_fiscalia' => 515, 'gls_fiscalia' => 'Fiscalia de Casablanca'],
         ];
 
-        DB::table('tbl_fiscalias')->truncate();
+        DB::table('tbl_fiscalias')->delete();
         foreach ($fiscalias as $fiscalia) {
             TblFiscalia::create($fiscalia);
         }
 
-        TblPersona::truncate();
+        // TblPersona::truncate();
         // Las personas se crean en TblPersonaSeeder para mejor organización
         // Crear solo el usuario principal aquí
         $persona1 = TblPersona::create([
@@ -106,7 +107,7 @@ class DatabaseSeeder extends Seeder
         // ]);
 
 
-        TblTipoCompensacion::truncate();
+        // TblTipoCompensacion::truncate();
         TblTipoCompensacion::create([
             'id' => 1,
             'gls_tipo_compensacion' => 'Compensación en Hrs',
@@ -117,13 +118,14 @@ class DatabaseSeeder extends Seeder
         ]);
 
 
+        // DB::table('tbl_tipo_trabajo')->delete();
         TblTipoTrabajo::create([
-            'id' => 0,
+            // 'id' => 0,
             'gls_tipo_trabajo' => 'EIVG',
         ]);
 
         TblTipoTrabajo::create([
-            'id' => 1,
+            // 'id' => 1,
             'gls_tipo_trabajo' => 'Causas Rezagadas',
         ]);
 
@@ -153,9 +155,10 @@ class DatabaseSeeder extends Seeder
         }
 
         // Llamar a seeders específicos de flujos de trabajo
-        $this->call(TblEstadoSeeder::class);
         $this->call(TblFlujoSeeder::class);
+        $this->call(TblEstadoSeeder::class);
         $this->call(TblFlujoEstadoSeeder::class);
+        
 
         // $this->call(TblConfigHorasExtrasSeeder::class);
         // $this->call(TblTurnoSeeder::class);
@@ -171,7 +174,7 @@ class DatabaseSeeder extends Seeder
 
         // Crear solicitudes de compensación de prueba
         // $this->call(TblSolicitudCompensaSeeder::class);
-        DB::statement('PRAGMA foreign_keys = ON;');
+        // DB::statement('PRAGMA foreign_keys = ON;');
 
 
     }

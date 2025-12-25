@@ -18,8 +18,10 @@ return new class extends Migration
             $table->string('username');
             $table->bigInteger('cod_fiscalia');
             $table->foreign('cod_fiscalia')->references('cod_fiscalia')->on('tbl_fiscalias');
-            $table->bigInteger('id_tipo_trabajo');
-            $table->foreign('id_tipo_trabajo')->references('id')->on('tbl_tipo_trabajo')->onDelete('cascade');
+            $table->unsignedBigInteger('id_tipo_trabajo');
+            $table->foreign('id_tipo_trabajo')
+                ->references('id')
+                ->on('tbl_tipo_trabajo');
             $table->date('fecha');
             $table->time('hrs_inicial');
             $table->time('hrs_final');
