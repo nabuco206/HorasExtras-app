@@ -45,7 +45,7 @@ class FlujoEstadoService
             $codigo = trim((string)$estado->flujo);
 
             $flujo = TblFlujo::where('codigo', $codigo)
-                      ->orWhere('slug', $codigo)
+                    //   ->orWhere('slug', $codigo)
                       ->first();
 
             if ($flujo) {
@@ -855,7 +855,7 @@ class FlujoEstadoService
             // Si el estado no tiene flujo, intentar buscar un flujo con código/slug relacionado a PAGO
             if (!$flujoId) {
                 $flujo = TblFlujo::where('codigo', 'PAGO')
-                    ->orWhere('slug', 'pago')
+                    // ->orWhere('slug', 'pago')
                     ->first();
                 $flujoId = $flujo->id ?? null;
             }

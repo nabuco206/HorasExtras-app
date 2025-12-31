@@ -87,7 +87,8 @@ class Dashboard extends Component
         $minutosHeAprobados = (int) $heQuery->sum('total_min');
 
         // Suma de minutos aprobados en compensaciones
-        $minutosCompensados = (int) $compQuery->sum('minutos_compensados');
+        // $minutosCompensados = (int) $compQuery->sum('minutos_compensados');
+        $minutosCompensados = 0;
 
         // Total minutos extras (HE + compensaciones)
         $this->totalMinutosMes = $minutosHeAprobados + $minutosCompensados;
@@ -119,7 +120,7 @@ class Dashboard extends Component
                 'min_25',
                 'min_50',
                 'total_min',
-                'documento',
+                // 'documento',
             ]);
     }
 

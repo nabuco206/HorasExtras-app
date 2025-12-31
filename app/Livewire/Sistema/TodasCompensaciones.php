@@ -3,8 +3,11 @@
 namespace App\Livewire\Sistema;
 
 use Livewire\Component;
+use App\Services\BolsonService;
 use App\Models\TblSolicitudCompensa;
+use App\Models\TblEstado;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class TodasCompensaciones extends Component
 {
@@ -14,6 +17,13 @@ class TodasCompensaciones extends Component
     public $solicitudes = [];
     public $solicitudSeleccionada = null;
     public $observaciones = '';
+
+    protected $bolsonService;
+
+    public function boot(BolsonService $bolsonService)
+    {
+        $this->bolsonService = $bolsonService;
+    }
 
     public function mount()
     {
@@ -57,7 +67,7 @@ class TodasCompensaciones extends Component
         $this->solicitudes = $query->with(['estado', 'persona'])->get();
     }
 
-    public function rechazarSolicitud($solicitudId)
+     public function rechazarSolicitud($solicitudId)
     {
         // Buscar la solicitud seleccionada
         $this->solicitudSeleccionada = TblSolicitudCompensa::find($solicitudId);
@@ -74,11 +84,26 @@ class TodasCompensaciones extends Component
             'rechazada_por' => Auth::user()->username ?? 'Sistema',
         ]);
 
+        $minutos = (int) ($solicitud->minutos_aprobados ?? $solicitud->minutos ?? 0);
+        if ($minutos > 0) {
+            $res = $this->bolsonService->crearBolsonDevolución(
+                $solicitud->username,
+                $minutos,
+                'Devolución por rechazo de compensación',
+                $solicitud->id
+            );
+
+            if (empty($res['success'])) {
+                throw new \Exception($res['mensaje'] ?? 'Error al crear bolsón de devolución');
+            }
+        }
+
         session()->flash('success', 'La solicitud ha sido rechazada correctamente.');
 
         // Recargar las solicitudes
         $this->cargarSolicitudes();
     }
+
 
     public function render()
     {

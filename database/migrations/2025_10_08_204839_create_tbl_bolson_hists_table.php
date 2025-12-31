@@ -13,12 +13,20 @@ return new class extends Migration
     {
         Schema::create('tbl_bolson_hists', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('id_bolson_tiempo');
-            $table->foreign('id_bolson_tiempo')->references('id')->on('tbl_bolson_tiempos')->onDelete('cascade');
+            $table->unsignedBigInteger('id_bolson_tiempo');
+            $table->foreign('id_bolson_tiempo')
+                ->references('id')
+                ->on('tbl_bolson_tiempos');
+            
             $table->string('username');
             $table->foreign('username')->references('username')->on('tbl_personas')->onDelete('cascade');
-            $table->bigInteger('id_solicitud_compensa')->nullable();
-            $table->foreign('id_solicitud_compensa')->references('id')->on('tbl_solicitud_compensas')->onDelete('set null');
+            
+            $table->integer('id_solicitud_compensa')->nullable();
+
+            // $table->unsignedBigInteger('id_solicitud_compensa');
+            // $table->foreign('id_solicitud_compensa')
+            //     ->references('id')
+            //     ->on('tbl_solicitud_compensas');
 
             $table->string('accion'); // CREACION, USO, VENCIMIENTO, AJUSTE
             $table->integer('minutos_afectados');

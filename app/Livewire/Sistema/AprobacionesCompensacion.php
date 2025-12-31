@@ -82,9 +82,10 @@ class AprobacionesCompensacion extends Component
                 $query->whereHas('persona', function($q) use ($codFiscalia) {
                     $q->where(function($q2) use ($codFiscalia) {
                         $q2->where('cod_fiscalia', $codFiscalia)
-                           ->orWhere('codigo_fiscalia', $codFiscalia)
-                           ->orWhere('fiscalia_id', $codFiscalia)
-                           ->orWhere('id_fiscalia', $codFiscalia);
+                        //    ->orWhere('codigo_fiscalia', $codFiscalia)
+                        //    ->orWhere('fiscalia_id', $codFiscalia)
+                        //    ->orWhere('id_fiscalia', $codFiscalia)
+                        ;
                     });
                 });
             }

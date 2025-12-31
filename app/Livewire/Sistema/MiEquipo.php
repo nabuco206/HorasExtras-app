@@ -33,7 +33,7 @@ class MiEquipo extends Component
             $this->esLider = true;
             $this->fiscalia = ['cod_fiscalia' => $userCodFiscalia];
 
-            $this->personas = TblPersona::with('escalafon')
+            $this->personas =  TblPersona::select('id', 'Nombre', 'Apellido')
                 ->where('cod_fiscalia', $userCodFiscalia)
                 ->where('id_rol', 1)
                 ->where('flag_activo', true)
@@ -48,10 +48,10 @@ class MiEquipo extends Component
 
             $this->personas = $this->personas->sortByDesc('tiempo_disponible');
 
-            $this->escalafon = TblPersona::select('id', 'Nombre', 'Apellido', 'Escalafon')
+            $this->escalafon = TblPersona::select('id', 'Nombre', 'Apellido')
                 ->where('cod_fiscalia', $userCodFiscalia)
                 ->where('flag_activo', true)
-                ->orderBy('Escalafon')
+                // ->orderBy('Escalafon')
                 ->get();
 
             return;

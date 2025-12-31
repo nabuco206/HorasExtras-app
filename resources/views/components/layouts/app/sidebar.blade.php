@@ -1,5 +1,3 @@
-<div>
-   
     @php
         $user = auth()->user();
         $rol = $user->id_rol;
@@ -72,7 +70,7 @@
                 </flux:navlist> -->
 
                 <!-- Desktop User Menu -->
-                <span class="p-0 text-sm font-normal">Version 0.1 ::{{ auth()->user()->cod_fiscalia }}</span>
+                <span class="p-0 text-sm font-normal">Version 0.1</span>
                 <flux:dropdown position="bottom" align="start">
                     <flux:profile
                         :name="auth()->user()->name"

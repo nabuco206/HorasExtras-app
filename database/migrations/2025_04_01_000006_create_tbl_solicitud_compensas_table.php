@@ -26,8 +26,10 @@ return new class extends Migration
             $table->integer('minutos_solicitados');
             $table->integer('minutos_aprobados')->nullable();
 
-            $table->bigInteger('id_estado')->default(1); // 1=Pendiente, 2=Aprobado, 3=Rechazado
-            $table->foreign('id_estado')->references('id')->on('tbl_estados');
+            $table->unsignedBigInteger('id_estado');
+            $table->foreign('id_estado')
+                ->references('id')
+                ->on('tbl_estados');
 
             $table->text('observaciones')->nullable();
             $table->string('aprobado_por')->nullable();

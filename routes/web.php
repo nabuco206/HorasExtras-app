@@ -8,6 +8,22 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CompensacionController;
 
+Route::get('/ping', function () {
+    return 'pong';
+});
+
+Route::get('/debug-auth', function () {
+    return response()->json([
+        'auth_check' => Auth::check(),
+        'user' => Auth::user(),
+        'session_id' => session()->getId(),
+        'session' => session()->all(),
+    ]);
+});
+
+Route::get('/debug-session', function () {
+    return session()->all();
+});
 Route::get('/', function () {
     return view('welcome');
 })->name('home');
@@ -27,15 +43,15 @@ Route::get('dashboard', \App\Livewire\Sistema\Dashboard::class)
     ->name('dashboard');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    // Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    // Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::redirect('settings', 'settings/profile');
 
-    Volt::route('settings/profile', 'settings.profile')->name('settings.profile');
-    Volt::route('settings/password', 'settings.password')->name('settings.password');
-    Volt::route('settings/appearance', 'settings.appearance')->name('settings.appearance');
+    // Volt::route('settings/profile', 'settings.profile')->name('settings.profile');
+    // Volt::route('settings/password', 'settings.password')->name('settings.password');
+    // Volt::route('settings/appearance', 'settings.appearance')->name('settings.appearance');
 
     // Sistema routes usando Volt
     Volt::route('sistema/ingreso-he', 'sistema.ingreso-he')->name('sistema.ingreso-he');
