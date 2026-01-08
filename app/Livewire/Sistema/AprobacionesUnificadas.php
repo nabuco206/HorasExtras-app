@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Services\FlujoEstadoService;
 use App\Services\BolsonService;
 use Livewire\Livewire;
+use App\Services\DashboardService;
 
 class AprobacionesUnificadas extends Component
 {
@@ -42,7 +43,7 @@ class AprobacionesUnificadas extends Component
     public $observaciones = '';
     public $mostrarModal = false;
 
-    protected $bolsonService;
+    protected $bolsonService;   
 
     public function boot(BolsonService $bolsonService)
     {
@@ -53,6 +54,8 @@ class AprobacionesUnificadas extends Component
     {
         $this->tipo_compensacion = (int) $tipo;
         $this->rol = $rol;
+
+       
 
         // cargar catálogos usados por la vista
         $this->tipos_trabajo = TblTipoTrabajo::all();
@@ -254,7 +257,7 @@ class AprobacionesUnificadas extends Component
         }
 
         $svc = app(FlujoEstadoService::class);
-        $resultado = $svc->ejecutarTransicion($solicitud, 4, Auth::id(), $this->observaciones);
+        $resultado = $svc->ejecutarTransicion($solicitud, 7, Auth::id(), $this->observaciones);
 
         if ($resultado['exitoso']) {
             // Si es compensación (tipo 2), devolver minutos al bolson
@@ -306,10 +309,22 @@ class AprobacionesUnificadas extends Component
 
     public function actualizarEstadisticas()
     {
+        $user = Auth::user();
+        $dashboardService = new DashboardService();
+        $rol = $user->id_rol ?? $user->rol ?? null;
+        $username = $user->username ?? null;
+        $codFiscalia = $user->cod_fiscalia ?? null;
+        log::info($this->tipo_compensacion);
+        
+        $stats = $dashboardService->obtenerEstadisticasPendientes($rol, $username, $codFiscalia, $this->tipo_compensacion); 
+        $pendientes = $stats['pendientesComp'];
+        $totalPago = $stats['totalPago'];
+        $aprobadas = $stats['aprobadasHE'];
+        // $aprobadas = 0;
         $query = $this->statsQuery();
 
-        $pendientes = (clone $query)->where('id_estado', 1)->count();
-        $aprobadas = (clone $query)->where('id_estado', 3)->count();
+        // $pendientes = (clone $query)->where('id_estado', 1)->count();
+       
         $rechazadas = (clone $query)->where('id_estado', 4)->count();
         $compensacionSolicitada = (clone $query)->where('id_estado', 5)->count();
         $compensacionAprobada = (clone $query)->where('id_estado', 6)->count();
@@ -318,7 +333,7 @@ class AprobacionesUnificadas extends Component
         $minutosPendientes = (clone $query)->where('id_estado', 1)->sum('total_min');
         $minutosRechazados = (clone $query)->where('id_estado', 4)->sum('total_min');
 
-        $totalSolicitudes = $pendientes + $aprobadas + $rechazadas + $compensacionSolicitada + $compensacionAprobada;
+        $totalSolicitudes = $totalPago;
         $totalProcesadas = $aprobadas + $rechazadas;
 
         $this->estadisticas = [

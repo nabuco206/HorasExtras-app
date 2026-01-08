@@ -1,11 +1,11 @@
 
     <div x-data="{
-        notifications: [
+        <!-- notifications: [
             { id: 1, show: true, color: 'green', icon: 'check', message: 'Notificación : Sin Mensaje', detail: '' },
             {{-- { id: 2, show: true, color: 'blue', icon: 'info', message: 'Recordatorio', detail: 'No olvides revisar tus solicitudes pendientes.' } --}}
         ],
         showAll() { this.notifications.forEach(n => n.show = true) }
-    }">
+    }"> 
         <!-- Notificaciones -->
         <template x-for="(n, i) in notifications" :key="n.id">
             <div
@@ -58,46 +58,45 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                         </svg>
                     </button>
-                    {{ __('Bienvenido, ') . Auth::user()->name }}
+                    {{ __('Bienvenido, ') . Auth::user()->name }}:{{ Auth::user()->id_rol }}
                 </div>
             </div>
-
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 auto-rows-min gap-6">
-                <!-- Saldo Bolsón de Tiempo -->
-                <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 rounded-xl border border-emerald-200 dark:border-emerald-700 p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-emerald-900 dark:text-emerald-100">{{ __('Bolsón de Tiempo') }}</h3>
-                        <div class="bg-emerald-200 dark:bg-emerald-800 text-emerald-800 dark:text-emerald-200 px-2 py-1 rounded-full text-sm font-medium">
-                            {{ $minutosDisponibles }} min
-                        </div>
-                    </div>
-                    <p class="text-emerald-700 dark:text-emerald-300 text-sm mb-3">{{ __('Tiempo disponible para compensación') }}</p>
-
-                    <!-- Mostrar minutos pendientes si existen -->
-                    @if($minutosPendientes > 0)
-                        <div class="mb-3 flex items-center justify-between bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-3 border border-yellow-200 dark:border-yellow-800">
-                            <div class="flex items-center">
-                                <svg class="w-4 h-4 mr-2 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                <span class="text-sm text-yellow-800 dark:text-yellow-200 font-medium">{{ __('Por aprobar') }}</span>
+                @if($mostrarBolson)                    <!-- Saldo Bolsón de Tiempo -->
+                    <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 rounded-xl border border-emerald-200 dark:border-emerald-700 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-emerald-900 dark:text-emerald-100">{{ __('Bolsón de Tiempo') }}</h3>
+                            <div class="bg-emerald-200 dark:bg-emerald-800 text-emerald-800 dark:text-emerald-200 px-2 py-1 rounded-full text-sm font-medium">
+                                {{ $minutosDisponibles }} min
                             </div>
-                            <span class="bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 px-2 py-1 rounded-full text-xs font-medium">
-                                {{ $minutosPendientes }} min
-                            </span>
                         </div>
-                    @endif
+                        <p class="text-emerald-700 dark:text-emerald-300 text-sm mb-3">{{ __('Tiempo disponible para compensación') }}</p>
 
-                    @if($bolsonesProximosVencer > 0)
-                        <div class="mt-3 flex items-center text-amber-600 dark:text-amber-400">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-9 1.938A9.953 9.953 0 013 12c0-5.523 4.477-10 10-10s10 4.477 10 10a9.953 9.953 0 01-2.938 7.062M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <span class="text-xs">{{ $bolsonesProximosVencer }} próximo(s) a vencer</span>
-                        </div>
-                    @endif
-                </div>
+                        <!-- Mostrar minutos pendientes si existen -->
+                        @if($minutosPendientes > 0)
+                            <div class="mb-3 flex items-center justify-between bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-3 border border-yellow-200 dark:border-yellow-800">
+                                <div class="flex items-center">
+                                    <svg class="w-4 h-4 mr-2 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <span class="text-sm text-yellow-800 dark:text-yellow-200 font-medium">{{ __('Por aprobar') }}</span>
+                                </div>
+                                <span class="bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 px-2 py-1 rounded-full text-xs font-medium">
+                                    {{ $minutosPendientes }} min
+                                </span>
+                            </div>
+                        @endif
 
+                        @if($bolsonesProximosVencer > 0)
+                            <div class="mt-3 flex items-center text-amber-600 dark:text-amber-400">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-9 1.938A9.953 9.953 0 013 12c0-5.523 4.477-10 10-10s10 4.477 10 10a9.953 9.953 0 01-2.938 7.062M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span class="text-xs">{{ $bolsonesProximosVencer }} próximo(s) a vencer</span>
+                            </div>
+                        @endif
+                    </div>
+                @endif
                 <!-- Minutos por Aprobar -->
                 <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 rounded-xl border border-yellow-200 dark:border-yellow-700 p-6">
                     <div class="flex items-center justify-between mb-4">
@@ -138,6 +137,7 @@
                     </div>
                     <p class="text-gray-600 dark:text-gray-400 text-sm">{{ __('Solicitudes de horas extras aprobadas este mes') }}</p>
                 </div>
+                
 
                 <!-- Total Horas Extras -->
                 <div class="bg-white dark:bg-gray-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6">

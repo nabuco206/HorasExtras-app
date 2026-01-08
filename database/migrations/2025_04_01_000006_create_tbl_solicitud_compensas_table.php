@@ -16,9 +16,9 @@ return new class extends Migration
         Schema::create('tbl_solicitud_compensas', function (Blueprint $table) {
             $table->id();
             $table->string('username');
-            $table->foreign('username')->references('username')->on('tbl_personas')->onDelete('cascade');
+            // $table->foreign('username')->references('username')->on('tbl_personas')->onDelete('cascade');
             $table->bigInteger('cod_fiscalia');
-            $table->foreign('cod_fiscalia')->references('cod_fiscalia')->on('tbl_fiscalias');
+            // $table->foreign('cod_fiscalia')->references('cod_fiscalia')->on('tbl_fiscalias');
 
             $table->date('fecha_solicitud');
             $table->time('hrs_inicial');
@@ -26,10 +26,12 @@ return new class extends Migration
             $table->integer('minutos_solicitados');
             $table->integer('minutos_aprobados')->nullable();
 
-            $table->unsignedBigInteger('id_estado');
-            $table->foreign('id_estado')
-                ->references('id')
-                ->on('tbl_estados');
+            $table->integer('id_estado');
+
+            // $table->unsignedBigInteger('id_estado');
+            // $table->foreign('id_estado')
+            //     ->references('id')
+            //     ->on('tbl_estados');
 
             $table->text('observaciones')->nullable();
             $table->string('aprobado_por')->nullable();

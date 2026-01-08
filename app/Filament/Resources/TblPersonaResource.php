@@ -54,6 +54,11 @@ class TblPersonaResource extends Resource
                     ->maxLength(255)
                     ->unique(TblPersona::class, 'username', ignoreRecord: true)
                     ->helperText('El nombre de usuario debe ser único en el sistema'),
+                    Forms\Components\TextInput::make('rut')
+                    ->required()
+                    ->maxLength(12)
+                    ->unique(TblPersona::class, 'rut', ignoreRecord: true)
+                    ->helperText('El nombre de rut debe ser único en el sistema'),
                 Select::make('cod_fiscalia')
                     ->label('Fiscalía')
                     ->options(
@@ -100,6 +105,9 @@ class TblPersonaResource extends Resource
                 TextColumn::make('username')
                     ->sortable()
                     ->searchable(),
+                TextColumn::make('rut')
+                    ->sortable()
+                    ->searchable(),    
                 TextColumn::make('fiscalia.gls_fiscalia')
                     ->label('Fiscalía')
                     ->sortable()

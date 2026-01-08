@@ -11,6 +11,8 @@ use Livewire\Volt\Component;
 use Livewire\WithFileUploads;
 use App\Services\FlujoEstadoService;
 
+use Illuminate\Support\Facades\Log;
+
 new class extends Component {
     use WithFileUploads;
 
@@ -39,6 +41,7 @@ new class extends Component {
     public array $detalleBolson = [];
     public array $resumenCompleto = [];
     public int $bolsonesProximosVencer = 0;
+    public int $id_escalafon = 0;
 
 
     /**
@@ -46,7 +49,9 @@ new class extends Component {
      */
     public function mount(): void
     {
+        // log::info('IngresoHE - mount - Usuario: ' . Auth::user()->id_escalafon);
         $this->username = Auth::user()->name;
+        $this->id_escalafon = Auth::user()->id_escalafon;
         $this->tipos_trabajo = TblTipoTrabajo::all();
         $this->estados = TblEstado::all();
         $this->solicitudes = TblSolicitudHe::where('username', $this->username) // Filtrar por el usuario autenticado
@@ -254,9 +259,11 @@ new class extends Component {
                         <flux:input wire:model="fecha" :label="__('Fecha')" type="date" class="flex-1" required />
                         <flux:input wire:model="hrs_inicial" :label="__('Hora Ingreso')" type="time" class="flex-1" required />
                         <flux:input wire:model="hrs_final" :label="__('Hora Salida')" type="time" class="flex-1" required />
-                        <div class="flex items-end">
-                            <flux:checkbox wire:model="propone_pago" :label="__('Propone Pago')" />
-                        </div>
+                        @if($this->id_escalafon == 1)
+                            <div class="flex items-end">
+                                <flux:checkbox wire:model="propone_pago" :label="__('Propone Pago')" />
+                            </div>
+                        @endif
                     </div>
                      <!-- Campo de archivo actualizado -->
                     <div>

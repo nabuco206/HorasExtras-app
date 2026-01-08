@@ -35,6 +35,7 @@ class TblPersona extends Authenticatable
         'apellido',
         'username',
         'password',
+        'rut',
         'cod_fiscalia',
         'id_escalafon',
         'flag_lider',
