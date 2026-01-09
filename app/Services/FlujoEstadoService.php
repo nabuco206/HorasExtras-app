@@ -32,7 +32,7 @@ class FlujoEstadoService
     // NUEVO: resolver flujo_id a partir del registro TblEstado (soporta campo string 'flujo')
     private function resolveFlujoIdFromEstado($estado)
     {
-        Log::info("REsolver estado ESTADO rol usu",[$estado]);
+        // Log::info("REsolver estado ESTADO rol usu",[$estado]);
         if (!$estado) return null;
 
         // Si ya existe flujo_id explícito (por si alguna vez se agrega)
@@ -40,29 +40,40 @@ class FlujoEstadoService
             return $estado->flujo_id;
         }
 
-        // Si existe campo string 'flujo', buscar TblFlujo por codigo o slug
+        // Si el campo 'flujo' es numérico (p. ej. 1,2,3...) devolverlo si existe en tbl_flujos
+        if (!empty($estado->flujo) && is_numeric($estado->flujo)) {
+            $idPosible = (int)$estado->flujo;
+            if (TblFlujo::where('id', $idPosible)->exists()) {
+                return $idPosible;
+            }
+        }
+
+        // Si existe campo string 'flujo', buscar TblFlujo por codigo (o slug si aplica)
         if (!empty($estado->flujo)) {
             $codigo = trim((string)$estado->flujo);
 
-            $flujo = TblFlujo::where('codigo', $codigo)
-                    //   ->orWhere('slug', $codigo)
-                      ->first();
-
+            $flujo = TblFlujo::where('codigo', $codigo)->first();
             if ($flujo) {
                 return $flujo->id;
             }
 
-            // Mapas comunes (ajustar según seeders)
+            // Mapas comunes para valores legacy en tbl_estados.flujo
             $map = [
                 'COMPENSACION' => 'HE_COMPENSACION',
                 'DINERO' => 'HE_DINERO',
                 'TIEMPO' => 'HE_COMPENSACION',
-                'AMBOS' => null
+                'AMBOS' => 'AMBOS', // dejar como código para resolver más abajo
             ];
 
-            if (isset($map[$codigo]) && $map[$codigo]) {
-                $flujo = TblFlujo::where('codigo', $map[$codigo])->first();
-                if ($flujo) return $flujo->id;
+            if (isset($map[$codigo])) {
+                $target = $map[$codigo];
+                // Si el target es 'AMBOS' devolver su id si existe
+                if ($target === 'AMBOS') {
+                    $f = TblFlujo::where('codigo', 'AMBOS')->first();
+                    return $f->id ?? null;
+                }
+                $f = TblFlujo::where('codigo', $target)->first();
+                if ($f) return $f->id;
             }
         }
 
@@ -387,13 +398,13 @@ class FlujoEstadoService
 
             DB::commit();
 
-            Log::info("Transición ejecutada correctamente", [
-                'modelo_tipo' => $tipoModelo,
-                'modelo_id' => $modelo->id,
-                'estado_anterior' => $estadoAnterior,
-                'estado_nuevo' => $estadoDestinoId,
-                'usuario_id' => $usuarioId
-            ]);
+            // Log::info("Transición ejecutada correctamente", [
+            //     'modelo_tipo' => $tipoModelo,
+            //     'modelo_id' => $modelo->id,
+            //     'estado_anterior' => $estadoAnterior,
+            //     'estado_nuevo' => $estadoDestinoId,
+            //     'usuario_id' => $usuarioId
+            // ]);
 
             return [
                 'exitoso' => true,
@@ -586,11 +597,11 @@ class FlujoEstadoService
                 'updated_at' => now()
             ]);
 
-            Log::info("Seguimiento registrado correctamente", [
-                'solicitud_id' => $solicitud->id,
-                'username' => $usernameValido,
-                'estado_nuevo' => $estadoNuevo
-            ]);
+            // Log::info("Seguimiento registrado correctamente", [
+            //     'solicitud_id' => $solicitud->id,
+            //     'username' => $usernameValido,
+            //     'estado_nuevo' => $estadoNuevo
+            // ]);
 
         } catch (\Exception $e) {
             Log::error("Error al registrar seguimiento", [
@@ -698,7 +709,16 @@ class FlujoEstadoService
                 break;
 
             case 'PAGO':
-                // Procesar pago
+                // Procesar pago - solo para solicitudes HE tipo DINERO (id_tipo_compensacion == 2)
+                if ($solicitud instanceof \App\Models\TblSolicitudHe
+                    && isset($solicitud->id_tipo_compensacion)
+                    && (int)$solicitud->id_tipo_compensacion !== 2) {
+                    Log::info('ejecutarAccionesPostTransicion: acción PAGO omitida porque solicitud HE no es tipo DINERO', [
+                        'solicitud_id' => $solicitud->id ?? null,
+                        'id_tipo_compensacion' => $solicitud->id_tipo_compensacion ?? null
+                    ]);
+                    break;
+                }
                 $this->procesarPago($solicitud);
                 break;
 
@@ -757,7 +777,7 @@ class FlujoEstadoService
 
             // Si la solicitud es HE y es tipo DINERO (id_tipo_compensacion == 2), no tocar bolsones
             if ($solicitud instanceof \App\Models\TblSolicitudHe && isset($solicitud->id_tipo_compensacion) && (int)$solicitud->id_tipo_compensacion === 2) {
-                Log::info('agregarTiempoAlBolson: solicitud HE de tipo DINERO detectada, se omite creación/activación de bolsón', ['solicitud_id' => $solicitud->id]);
+                // Log::info('agregarTiempoAlBolson: solicitud HE de tipo DINERO detectada, se omite creación/activación de bolsón', ['solicitud_id' => $solicitud->id]);
                 return;
             }
 
@@ -991,6 +1011,7 @@ class FlujoEstadoService
 
             foreach ($solicitudes as $solicitud) {
                 try {
+                   
                     $estadoDestinoAUsar = $estadoDestinoId;
 
                     // Resolver rol del usuario: preferir auth user, si no usar $usuarioId
@@ -1023,8 +1044,20 @@ class FlujoEstadoService
                     // resolver flujoId preferente para ESTA solicitud a partir del estado
                     $estadoActual = \App\Models\TblEstado::find($solicitud->id_estado);
                     $flujoId = $this->resolveFlujoIdFromEstado($estadoActual);
-                    // Log::info("FLUJO ESTADO rol usu",[ $flujoId]);
-                    // Si el estado no define flujo, intentar inferirlo desde la solicitud (propone_pago / id_tipo_compensacion)
+                    
+                    // Si el estado está marcado como AMBOS (flujo que permite ambas ramas),
+                    // priorizar la inferencia desde la propia solicitud (id_tipo_compensacion / propone_pago)
+                    $flujoAmbosId = TblFlujo::where('codigo', 'AMBOS')->value('id');
+                    if ($flujoId && $flujoAmbosId && (int)$flujoId === (int)$flujoAmbosId) {
+                        // Log::info('Estado marcado como AMBOS — inferiendo flujo desde la solicitud', [
+                        //     'solicitud_id' => $solicitud->id,
+                        //     'estado_id' => $solicitud->id_estado,
+                        //     'flujo_ambos_id' => $flujoAmbosId
+                        // ]);
+                        $flujoId = null; // forzar inferencia abajo
+                    }
+
+                    // Si el estado no define flujo o fue AMBOS, intentar inferirlo desde la solicitud (propone_pago / id_tipo_compensacion)
                     if (!$flujoId) {
                         if (isset($solicitud->propone_pago)) {
                             $flujoId = $solicitud->propone_pago ? TblFlujo::where('codigo','HE_DINERO')->value('id') : TblFlujo::where('codigo','HE_COMPENSACION')->value('id');
@@ -1032,11 +1065,25 @@ class FlujoEstadoService
                             $flujoId = ($solicitud->id_tipo_compensacion == 2) ? TblFlujo::where('codigo','HE_DINERO')->value('id') : TblFlujo::where('codigo','HE_COMPENSACION')->value('id');
                         }
                     }
-
+                    // Log::info("*****::".$solicitud->id_estado.'****'. $rolUsuario.'****'. $flujoId);
                     if ($estadoDestinoAUsar === null) {
                         // 1) Intentar obtener transiciones filtrando por flujo resuelto (si lo tenemos)
+                        Log::info("Obteniendo transiciones para estado origen", [
+                            'estado_origen' => $solicitud->id_estado,
+                            'flujo_id' => $flujoId,
+                            'rol' => $rolUsuario
+                        ]);
                         $transiciones = $this->obtenerSiguientesTransicionesPorEstadoOrigen($solicitud->id_estado, $rolUsuario, $flujoId);
-
+                        // // Log::info("Transiciones obtenidas", [
+                        // //     'count' => $transiciones->count(),
+                        // //     // evitar concatenar el objeto directamente; convertir a array para logging
+                        // //     'transiciones' => $transiciones->map(function($t){ return [
+                        // //         'id' => $t->id ?? null,
+                        // //         'flujo_id' => $t->flujo_id ?? null,
+                        // //         'estado_destino_id' => $t->estado_destino_id ?? null,
+                        // //         'orden' => $t->orden ?? null
+                        // //     ]; })->toArray()
+                        // ]);
                         // 2) Si no se encontraron transiciones y teníamos un flujoId, intentar fallback sin filtrar por flujo
                         if ($transiciones->isEmpty() && $flujoId !== null) {
                             Log::info('FlujoEstadoService: no se encontraron transiciones con flujoId, intentando fallback sin filtrar por flujo', [
@@ -1059,12 +1106,12 @@ class FlujoEstadoService
 
                             if (!empty($validacion['valida'])) {
                                 $estadoDestinoAUsar = $transicion->estado_destino_id;
-                                Log::info('Transición seleccionada', [
-                                    'solicitud_id' => $solicitud->id,
-                                    'transicion_id' => $transicion->id,
-                                    'flujo_id' => $transicion->flujo_id,
-                                    'estado_destino' => $estadoDestinoAUsar
-                                ]);
+                                // Log::info('Transición seleccionada', [
+                                //     'solicitud_id' => $solicitud->id,
+                                //     'transicion_id' => $transicion->id,
+                                //     'flujo_id' => $transicion->flujo_id,
+                                //     'estado_destino' => $estadoDestinoAUsar
+                                // ]);
                                 break;
                             }
                         }

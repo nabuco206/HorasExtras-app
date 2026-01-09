@@ -32,14 +32,14 @@ return [
                 'icon' => 'check-circle',
                 'route' => 'sistema.aprobaciones-unificadas',
                 'params' => ['tipo' => 1, 'rol' => 2, 'estado' => 1],
-                'titulo' => 'Aprobación Compensacion en Tiempo JD',
+                'titulo' => '🕙  Aprobación de Horas Extra JD', // Este campo será pasado como parámetro en la ruta
             ],
             [
                 'name' => 'Aprobar Pago JD',
                 'icon' => 'banknotes',
                 'route' => 'sistema.aprobaciones-unificadas',
                 'params' => ['tipo' => 2, 'rol' => 2, 'estado' => 1],
-                'titulo' => 'Aprobación Compensacion en Pago JD',
+                'titulo' => '💰  Aprobación Pago de Horas Extra JD',
             ],
             [
                 'name' => 'Aprobar Compensaciones JD',
@@ -96,8 +96,8 @@ return [
                 'name' => 'Aprobar Pago UDP',
                 'icon' => 'banknotes',
                 'route' => 'sistema.aprobaciones-unificadas',
-                'params' => ['tipo' => 2, 'rol' => 3, 'estado' => 2],
-                'titulo' => 'Aprobación Pago de Horas Extra UDP',
+                'params' => ['tipo' => 2, 'rol' => 2, 'estado' => 2],
+                'titulo' => '💰 Aprobación Pago de Horas Extra UDP',
             ],
             [
                 'name' => 'Solicitudes a pago',
