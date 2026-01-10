@@ -1,191 +1,197 @@
 <?php
 
-return [
-    'roles' => [
-        // USUARIO NORMAL
-        '1' => [
-            [
-                'name' => 'Dashboard',
-                'icon' => 'home',
-                'route' => 'dashboard',
-            ],
-            [
-                'name' => 'Ingreso Horas Extraordinarias',
-                'icon' => 'inbox-arrow-down',
-                'route' => 'sistema.ingreso-he',
-            ],
-            [
-                'name' => 'Solicitud Compensación',
-                'icon' => 'cube-transparent',
-                'route' => 'sistema.ingreso-compensacion',
-            ],
+// Nombres de secciones (corregido "Unidad de de Personas" → "Unidad de Personas")
+$NameSeccion_FUN = 'Funcionario';
+$NameSeccion_JD = 'Jefe Directo';
+$NameSeccion_UDP = 'Unidad de Personas';
+$NameSeccion_JUDP = 'Jefe Unidad de Personas';
+$NameSeccion_DER = 'Dirección Ejecutiva';
+
+// === BLOQUES REUTILIZABLES ===
+$blocks = [
+
+    // Base: Funcionario
+    'funcionario_base' => [
+        [
+            'section' => $NameSeccion_FUN,
+            'name' => 'Dashboard',
+            'icon' => 'home',
+            'route' => 'dashboard',
         ],
-        // Jefe Directo
-        '2' => [
-              [
-                'name' => 'Dashboard',
-                'icon' => 'home',
-                'route' => 'dashboard',
-            ],
-            [
-                'name' => 'Aprobar HE JD',
-                'icon' => 'check-circle',
-                'route' => 'sistema.aprobaciones-unificadas',
-                'params' => ['tipo' => 1, 'rol' => 2, 'estado' => 1],
-                'titulo' => '🕙  Aprobación de Horas Extra JD', // Este campo será pasado como parámetro en la ruta
-            ],
-            [
-                'name' => 'Aprobar Pago JD',
-                'icon' => 'banknotes',
-                'route' => 'sistema.aprobaciones-unificadas',
-                'params' => ['tipo' => 2, 'rol' => 2, 'estado' => 1],
-                'titulo' => '💰  Aprobación Pago de Horas Extra JD',
-            ],
-            [
-                'name' => 'Aprobar Compensaciones JD',
-                'icon' => 'banknotes',
-                'route' => 'sistema.aprobaciones-compensacion',
-            ],
-            [
-                'name' => 'Mi Equipo',
-                'icon' => 'users',
-                'route' => 'sistema.mi-equipo',
-            ],
-            [
-                'name' => 'Calendario JD',
-                'icon' => 'calendar',
-                'route' => 'sistema.calendario-jd',
-            ],
-            [
-                'name' => 'Solicitudes a pago',
-                'icon' => 'banknotes',
-                'route' => 'sistema.solicitudes-pago',
-            ],
-             [
-                'name' => 'Todas las Compensaciones',
-                'icon' => 'banknotes',
-                'route' => 'sistema.todas-compensaciones', // Esta ruta coincide con la definida en web.php
-            ],
-           
-            
+        [
+            'section' => $NameSeccion_FUN,
+            'name' => 'Ingreso Horas Extraordinarias',
+            'icon' => 'inbox-arrow-down',
+            'route' => 'sistema.ingreso-he',
         ],
-        // UDP
-        '3' => [
-             [
-                'name' => 'Dashboard',
-                'icon' => 'home',
-                'route' => 'dashboard',
-            ],
-             [
-            'name' => 'Panel de Admin',
-            'icon' => 'shield-check',
-            'route' => null,
-            'url' => '/admin',
-            'current' => false,
-            'target' => '_blank'
-            ],
-            // [
-            //     'name' => 'Aprobar HE UDP',
-            //     'icon' => 'check-circle',
-            //     'route' => 'sistema.aprobaciones-unificadas',
-            //     // UDP debe enviar rol=3 para indicar vista administrativa global
-            //     'params' => ['tipo' => 1, 'rol' => 3, 'estado' => 1],
-            //     'titulo' => 'Aprobación de Horas Extra UDP', // Este campo será pasado como parámetro en la ruta
-            // ],
-            [
-                'name' => 'Aprobar Pago UDP',
-                'icon' => 'banknotes',
-                'route' => 'sistema.aprobaciones-unificadas',
-                'params' => ['tipo' => 2, 'rol' => 2, 'estado' => 2],
-                'titulo' => '💰 Aprobación Pago de Horas Extra UDP',
-            ],
-            [
-                'name' => 'Solicitudes a pago',
-                'icon' => 'banknotes',
-                'route' => 'sistema.solicitudes-pago',
-            ],
-            [
-                'name' => 'Monitoreo de Tiempo',
-                'icon' => 'chart-bar',
-                'route' => 'sistema.monitoreo-tiempo',
-            ],
-            [
-                'name' => 'Dashboard de Tiempo',
-                'icon' => 'presentation-chart-bar',
-                'route' => 'sistema.dashboard-tiempo',
-            ],
-            [
-                'name' => 'Todas las Compensaciones',
-                'icon' => 'banknotes',
-                'route' => 'sistema.todas-compensaciones',
-            ],
-        ],
-        // JUDP
-        '4' => [
-             [
-                'name' => 'Dashboard',
-                'icon' => 'home',
-                'route' => 'dashboard',
-            ],
-            [
-                'name' => 'Aprobaciones JUDP',
-                'icon' => 'clipboard-document-check',
-                'route' => 'sistema.aprobaciones-unificadas',
-                'titulo' => 'Aprobación Pago de Horas Extra JUDP',
-                'params' => ['tipo' => 2, 'rol' => 4, 'estado' => 3],
-            ],
-            [
-                'name' => 'Solicitudes a pago',
-                'icon' => 'banknotes',
-                'route' => 'sistema.solicitudes-pago',
-            ],
-            [
-                'name' => 'Monitoreo de Tiempo',
-                'icon' => 'chart-bar',
-                'route' => 'sistema.monitoreo-tiempo',
-            ],
-            [
-                'name' => 'Dashboard de Tiempo',
-                'icon' => 'presentation-chart-bar',
-                'route' => 'sistema.dashboard-tiempo',
-            ],
-        ],
-        // DER
-        '5' => [
-         
-            [
-                'name' => 'Dashboard',
-                'icon' => 'home',
-                'route' => 'dashboard',
-            ],
-            [
-                'name' => 'Aprobar Pago DER',
-                'icon' => 'banknotes',
-                'route' => 'sistema.aprobaciones-unificadas',
-                'params' => ['tipo' => 2, 'rol' => 5, 'estado' => 4],
-                'titulo' => 'Aprobar Pago DER',
-            ],
-            [
-                'name' => 'Solicitudes a pago',
-                'icon' => 'banknotes',
-                'route' => 'sistema.solicitudes-pago',
-            ],
-            [
-                'name' => 'Monitoreo de Tiempo',
-                'icon' => 'chart-bar',
-                'route' => 'sistema.monitoreo-tiempo',
-            ],
-            [
-                'name' => 'Dashboard de Tiempo',
-                'icon' => 'presentation-chart-bar',
-                'route' => 'sistema.dashboard-tiempo',
-            ],
-            [
-                'name' => 'Todas las Compensaciones',
-                'icon' => 'banknotes',
-                'route' => 'sistema.todas-compensaciones',
-            ],
+        [
+            'section' => $NameSeccion_FUN,
+            'name' => 'Solicitud Compensación',
+            'icon' => 'cube-transparent',
+            'route' => 'sistema.ingreso-compensacion',
         ],
     ],
-   
+
+    // Base: Jefe Directo (JD)
+    'jd_base' => [
+        [
+            'section' => $NameSeccion_JD,
+            'name' => 'Dashboard',
+            'icon' => 'home',
+            'route' => 'dashboard',
+        ],
+        [
+            'section' => $NameSeccion_JD,
+            'name' => 'Aprobar HE JD',
+            'icon' => 'check-circle',
+            'route' => 'sistema.aprobaciones-unificadas',
+            'params' => ['tipo' => 1, 'rol' => 2, 'estado' => 1],
+            'titulo' => '🕙 Aprobación de Horas Extra JD',
+        ],
+        [
+            'section' => $NameSeccion_JD,
+            'name' => 'Aprobar Pago JD',
+            'icon' => 'banknotes',
+            'route' => 'sistema.aprobaciones-unificadas',
+            'params' => ['tipo' => 2, 'rol' => 2, 'estado' => 1],
+            'titulo' => '💰 Aprobación Pago de Horas Extra JD',
+        ],
+        [
+            'section' => $NameSeccion_JD,
+            'name' => 'Aprobar Compensaciones JD',
+            'icon' => 'banknotes',
+            'route' => 'sistema.aprobaciones-compensacion',
+        ],
+        [
+            'section' => $NameSeccion_JD,
+            'name' => 'Mi Equipo',
+            'icon' => 'users',
+            'route' => 'sistema.mi-equipo',
+        ],
+        [
+            'section' => $NameSeccion_JD,
+            'name' => 'Calendario JD',
+            'icon' => 'calendar',
+            'route' => 'sistema.calendario-jd',
+        ],
+        [
+            'section' => $NameSeccion_JD,
+            'name' => 'Solicitudes a pago',
+            'icon' => 'banknotes',
+            'route' => 'sistema.solicitudes-pago',
+        ],
+        [
+            'section' => $NameSeccion_JD,
+            'name' => 'Todas las Compensaciones',
+            'icon' => 'banknotes',
+            'route' => 'sistema.todas-compensaciones',
+        ],
+    ],
+
+    // Extras: Unidad de Personas (UDP)
+    'udp_extras' => [
+        [
+            'section' => $NameSeccion_UDP,
+            'name' => 'Panel de Admin',
+            'icon' => 'shield-check',
+            'url' => '/admin',
+            'target' => '_blank',
+            'rel' => 'noopener noreferrer',
+        ],
+        [
+            'section' => $NameSeccion_UDP,
+            'name' => 'Aprobar Pago UDP',
+            'icon' => 'banknotes',
+            'route' => 'sistema.aprobaciones-unificadas',
+            'params' => ['tipo' => 2, 'rol' => 3, 'estado' => 2],
+            'titulo' => '💰 Aprobación Pago de Horas Extra UDP',
+        ],
+        [
+            'section' => $NameSeccion_UDP,
+            'name' => 'Monitoreo de Tiempo',
+            'icon' => 'chart-bar',
+            'route' => 'sistema.monitoreo-tiempo',
+        ],
+        [
+            'section' => $NameSeccion_UDP,
+            'name' => 'Dashboard de Tiempo',
+            'icon' => 'presentation-chart-bar',
+            'route' => 'sistema.dashboard-tiempo',
+        ],
+        // Nota: "Todas las Compensaciones" ya está en jd_base → no duplicar
+    ],
+
+    // Extras: Jefe UDP (JUDP)
+    'judp_extras' => [
+        [
+            'section' => $NameSeccion_JUDP,
+            'name' => 'Aprobar Pago JUDP',
+            'icon' => 'clipboard-document-check',
+            'route' => 'sistema.aprobaciones-unificadas',
+            'params' => ['tipo' => 2, 'rol' => 4, 'estado' => 3],
+            'titulo' => 'Aprobación Pago de Horas Extra JUDP',
+        ],
+        // El resto lo hereda de jd_base
+    ],
+
+    // Extras: Dirección Ejecutiva (DER)
+    'der_extras' => [
+        [
+            'section' => $NameSeccion_DER,
+            'name' => 'Aprobar Pago DER',
+            'icon' => 'banknotes',
+            'route' => 'sistema.aprobaciones-unificadas',
+            'params' => ['tipo' => 2, 'rol' => 5, 'estado' => 4],
+            'titulo' => 'Aprobar Pago DER',
+        ],
+        [
+            'section' => $NameSeccion_DER,
+            'name' => 'Dashboard de Tiempo',
+            'icon' => 'presentation-chart-bar',
+            'route' => 'sistema.dashboard-tiempo',
+        ],
+        [
+            'section' => $NameSeccion_DER,
+            'name' => 'Todas las Compensaciones',
+            'icon' => 'banknotes',
+            'route' => 'sistema.todas-compensaciones',
+        ],
+    ],
+];
+
+// === DEFINICIÓN DE ROLES POR COMPOSICIÓN ===
+return [
+    'blocks' => $blocks,
+
+    'roles' => [
+        // 1: Funcionario
+        '1' => $blocks['funcionario_base'],
+
+        // 2: Jefe Directo
+        '2' => $blocks['jd_base'],
+
+        // 3: UDP → es funcionario + extras UDP
+        '3' => array_merge(
+            $blocks['funcionario_base'],
+            $blocks['udp_extras']
+        ),
+
+        // 4: JUDP → es JD + extras JUDP
+        '4' => array_merge(
+            $blocks['jd_base'],
+            $blocks['judp_extras']
+        ),
+
+        // 5: DER → actualmente es JD + extras DER
+        '5' => array_merge(
+            $blocks['jd_base'],
+            $blocks['der_extras']
+        ),
+
+        // ✨ Futuro: si DER deja de ser JD, solo cambia a:
+        // '5' => array_merge(
+        //     $blocks['funcionario_base'], // o un nuevo 'der_base'
+        //     $blocks['der_extras']
+        // ),
+    ],
 ];

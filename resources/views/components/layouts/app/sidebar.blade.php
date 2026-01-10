@@ -1,4 +1,4 @@
-    @php
+@php
         $user = auth()->user();
         $rol = $user->id_rol;
         $cod_fiscalia = $user->cod_fiscalia;
@@ -22,13 +22,14 @@
         $menuActual = collect($menuConfig)->first(function($item) use ($currentRoute) {
             return isset($item['route']) && $item['route'] === $currentRoute;
         });
-        $titulo = $menuActual['titulo'] ?? $menuActual['name'] ?? 'HE V Reg.';
+
+     
     @endphp
 
     <!DOCTYPE html>
     <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
         <head>
-            @include('partials.head', ['title' => $titulo])
+            @include('partials.head', ['title' => ''])
         </head>
         <body class="min-h-screen bg-white dark:bg-zinc-800">
             <flux:sidebar sticky stashable class="border-r border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
@@ -38,21 +39,34 @@
                     <x-app-logo />
                 </a>
                 <flux:navlist variant="outline">
-                    @foreach ($menuConfig as $menuItem)
-                        @php
-                            $params = $menuItem['params'] ?? [];
-                            if (isset($menuItem['titulo'])) {
-                                $params['titulo'] = $menuItem['titulo'];
-                            }
-                        @endphp
-                        <flux:navlist.item
-                            :icon="$menuItem['icon']"
-                            :href="isset($menuItem['route']) && $menuItem['route'] ? route($menuItem['route'], $params) : ($menuItem['url'] ?? '#')"
-                            :current="isset($menuItem['route']) && $menuItem['route'] ? (request()->routeIs($menuItem['route']) || request()->is(trim(route($menuItem['route'], $params), '/'))) : false"
-                            target="{{ $menuItem['target'] ?? '_self' }}"
-                        >
-                            {{ $menuItem['name'] }}
-                        </flux:navlist.item>
+                    @php
+                        // Agrupar por 'section' (si no existe usar 'General')
+                        $grouped = collect($menuConfig)->groupBy(function($item){
+                            return $item['section'] ?? 'General';
+                        });
+                    @endphp
+
+                    @foreach ($grouped as $section => $items)
+                        {{-- Mostrar título de sección si no es 'General' o si quieres siempre --}}
+                        <div class="px-3 py-2 text-xs font-semibold text-zinc-500">{{ $section }}</div>
+
+                        @foreach ($items as $menuItem)
+                            @php
+                                $params = $menuItem['params'] ?? [];
+                                if (isset($menuItem['titulo'])) {
+                                    $params['titulo'] = $menuItem['titulo'];
+                                }
+                            @endphp
+
+                            <flux:navlist.item
+                                :icon="$menuItem['icon']"
+                                :href="isset($menuItem['route']) && $menuItem['route'] ? route($menuItem['route'], $params) : ($menuItem['url'] ?? '#')"
+                                :current="isset($menuItem['route']) && $menuItem['route'] ? (request()->routeIs($menuItem['route']) || request()->is(trim(route($menuItem['route'], $params), '/'))) : false"
+                                target="{{ $menuItem['target'] ?? '_self' }}"
+                            >
+                                {{ $menuItem['name'] }}
+                            </flux:navlist.item>
+                        @endforeach
                     @endforeach
                 </flux:navlist>
 
