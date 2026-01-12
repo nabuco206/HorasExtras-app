@@ -17,6 +17,8 @@ class Dashboard extends Component
 {
     // Control para mostrar el bolsón (solo rol 1)
     public bool $mostrarBolson = false;
+    public bool $mostrarMinPorAprobar = false;
+    public bool $mostrarSolicitudesPendientesHE = false;
 
     // Variables que usa la vista `resources/views/dashboard.blade.php`
     public int $minutosDisponibles = 0;
@@ -33,6 +35,11 @@ class Dashboard extends Component
     public $solicitudesBolson = [];
     public $grillaSolicitudes = []; // Nueva variable para la grilla
 
+    public int $sumaMinHe = 0;
+    public int $pendientesComp = 0;
+    public int $pendientesPago = 0;
+    public int $cantidadSolicitudesCompensa = 0;
+
     public function mount(): void
     {
         $user = Auth::user();
@@ -45,6 +52,8 @@ class Dashboard extends Component
 
         // Mostrar bolsón solo para rol 1 (Usuario Normal)
         $this->mostrarBolson = ($user->id_rol ?? null) == 1;
+        $this->mostrarMinPorAprobar = ($user->id_rol ?? null) == 1;
+        $this->mostrarSolicitudesPendientesHE = ($user->id_rol ?? null) == 2 || ($user->id_rol ?? null) == 3;
 
         // Base query para solicitudes HE
         // $heQuery = TblSolicitudHe::query()
@@ -52,65 +61,16 @@ class Dashboard extends Component
 
         $dashboardService = new DashboardService();
         $stats = $dashboardService->obtenerEstadisticasPendientes($rol, $username, $codFiscalia);
-        // log::info("Dashboard mount - EstadísticaspendientesComp: ".json_encode($stats));
-        $this->solicitudesPendientes = $stats['pendientesComp'];
-        // $this->solicitudesPendientes = $stats['pendientesComp'];
+        log::info("Dashboard mount - EstadísticaspendientesComp: ".json_encode($stats));
+        $this->pendientesComp = $stats['pendientesComp'];
+        $this->pendientesPago = $stats['pendientesPago'];
+        $this->sumaMinHe = $stats['sumaMinHe'] ?? 0;
+        $this->cantidadSolicitudesCompensa = $stats['cantidadSolicitudesCompensa'] ?? 0;
 
        
-        log::info("Dashboard mount - Estadísticas: ".json_encode($stats));
-        // $this->solicitudesAprobadas  = (int) $stats['pendientes_comp'];
-        
-        // if ($rol == 1) {
-        //     $heQuery->where('username', $username);
-
-        //     $this->solicitudesAprobadas  = (int)  $heQuery->where('username', $username)
-        //                                     ->whereIn('id_estado', [6, 5])
-        //                                     ->count();
-        //     Log::info("Dashboard mount - Usuario: {$username}");
-            
-        // } elseif ($rol == 2) {
-        //     Log::info("Dashboard mount - JD: {$username}, Fiscalía: {$codFiscalia}");
-        // } elseif ($rol == 3) {
-        //     Log::info("Dashboard mount - UDP: {$username}");
-        // } elseif ($rol == 4) {
-        //     Log::info("Dashboard mount - JDP: {$username}");
-        // } elseif ($rol == 5) {
-        //     Log::info("Dashboard mount - DER: {$username}");
-        // }
+       
 
         
-
-        // $compQuery = TblSolicitudCompensa::query()
-        //     ->where('username', $username)
-        //     ->whereIn('id_estado', [10]);
-
-        // // Filtrar por fiscalía si es JD
-        // if ($rol == 2 && $codFiscalia) {
-        //     $heQuery->where('cod_fiscalia', $codFiscalia);
-        //     $compQuery->where('cod_fiscalia', $codFiscalia);
-
-            
-        // }
-
-        // // Suma de minutos aprobados en HE
-        // $minutosHeAprobados = (int) $heQuery
-        //                             ->whereIn('id_estado', [6, 5])
-        //                             ->sum('total_min');
-
-        // // Suma de minutos aprobados en compensaciones
-        // $minutosCompensados = (int) $compQuery->sum('minutos_compensados');
-
-        // // Total minutos extras (HE + compensaciones)
-        // $this->totalMinutosMes = $minutosHeAprobados + $minutosCompensados;
-
-        
-
-        // Últimos 10 ingresos de solicitudes
-        // $this->ultimasSolicitudes = $heQuery->latest('created_at')->take(10)->get();
-
-        // // Últimos 10 ingresos de compensaciones
-        // $this->compensaciones = $compQuery->latest('created_at')->take(10)->get();
-
          // Cargar datos del bolsón solo si corresponde
         if ($this->mostrarBolson) {
             // $heQuery->where('username', $username);
@@ -176,7 +136,8 @@ class Dashboard extends Component
         // Consulta para la grilla de solicitudes (últimas 10 solicitudes con todos los campos necesarios)
         $this->grillaSolicitudes = TblSolicitudHe::query()
             ->where('username', $username)
-            ->with('idEstado') // Cargar la relación con tbl_estado
+            ->with('estado') // Cargar la relación con tbl_estado
+            // ->with('tipoCompensacion')
             ->latest('created_at')
             ->take(10)
             ->get([

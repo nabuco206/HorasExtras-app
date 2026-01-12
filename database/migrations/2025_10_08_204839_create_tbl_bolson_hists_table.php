@@ -14,12 +14,12 @@ return new class extends Migration
         Schema::create('tbl_bolson_hists', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('id_bolson_tiempo');
-            $table->foreign('id_bolson_tiempo')
-                ->references('id')
-                ->on('tbl_bolson_tiempos');
+            // $table->foreign('id_bolson_tiempo')
+            //     ->references('id')
+            //     ->on('tbl_bolson_tiempos');
             
             $table->string('username');
-            $table->foreign('username')->references('username')->on('tbl_personas')->onDelete('cascade');
+            // $table->foreign('username')->references('username')->on('tbl_personas')->onDelete('cascade');
             
             $table->integer('id_solicitud_compensa')->nullable();
 

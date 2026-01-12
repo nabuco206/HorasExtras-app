@@ -1,4 +1,3 @@
-use Illuminate\Support\Facades\Log;
 <?php
 
 namespace App\Http\Livewire\Sistema;
@@ -86,19 +85,8 @@ class IngresoCompensacion extends Component
         $username = auth()->user()->username;
         $resultado = $this->bolsonService->descontarMinutos($username, $this->minutos_solicitados, 'Compensación');
 
-        Log::info('[Compensacion] Intento de descuento de minutos', [
-            'username' => $username,
-            'minutos_solicitados' => $this->minutos_solicitados,
-            'resultado' => $resultado
-        ]);
-
         if (!$resultado['success']) {
             session()->flash('error', 'No fue posible descontar los minutos del bolsón: ' . ($resultado['mensaje'] ?? '')); 
-            Log::warning('[Compensacion] Descuento fallido', [
-                'username' => $username,
-                'minutos_solicitados' => $this->minutos_solicitados,
-                'mensaje' => $resultado['mensaje'] ?? ''
-            ]);
             return;
         }
 
@@ -111,12 +99,6 @@ class IngresoCompensacion extends Component
             'minutos_solicitados' => $this->minutos_solicitados,
             'username' => $username,
             'id_estado' => 9, // Estado 9: Pendiente
-        ]);
-
-        Log::info('[Compensacion] Solicitud creada exitosamente', [
-            'username' => $username,
-            'minutos_solicitados' => $this->minutos_solicitados,
-            'fecha_solicitud' => $this->fecha_solicitud
         ]);
 
         // Actualizar saldo disponible local

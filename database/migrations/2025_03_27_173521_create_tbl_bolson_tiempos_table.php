@@ -16,10 +16,10 @@ return new class extends Migration
         Schema::create('tbl_bolson_tiempos', function (Blueprint $table) {
                     $table->id();
                     $table->string('username');
-                    $table->foreign('username')
-                        ->references('username')
-                        ->on('tbl_personas')
-                        ->onDelete('cascade');
+                    // $table->foreign('username')
+                    //     ->references('username')
+                    //     ->on('tbl_personas')
+                    //     ->onDelete('cascade');
 
                     $table->bigInteger('id_solicitud_he')->nullable();
                     // $table->foreign('id_solicitud_he')

@@ -20,8 +20,5 @@ class TblFiscalia extends Model
 
     // Relación con otros modelos (si aplica)
     // Por ejemplo, si hay una relación con personas:
-    public function personas()
-    {
-        return $this->hasMany(tbl_Persona::class, 'cod_fiscalia', 'cod_fiscalia');
-    }
+  
 }

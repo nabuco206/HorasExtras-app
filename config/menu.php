@@ -43,6 +43,7 @@ $blocks = [
         [
             'section' => $NameSeccion_JD,
             'name' => 'Aprobar HE JD',
+            'codigo' => 'JD_aprobar_he',
             'icon' => 'check-circle',
             'route' => 'sistema.aprobaciones-unificadas',
             'params' => ['tipo' => 1, 'rol' => 2, 'estado' => 1],
@@ -51,6 +52,7 @@ $blocks = [
         [
             'section' => $NameSeccion_JD,
             'name' => 'Aprobar Pago JD',
+            'codigo' => 'JD_aprobar_pago',
             'icon' => 'banknotes',
             'route' => 'sistema.aprobaciones-unificadas',
             'params' => ['tipo' => 2, 'rol' => 2, 'estado' => 1],
@@ -58,7 +60,8 @@ $blocks = [
         ],
         [
             'section' => $NameSeccion_JD,
-            'name' => 'Aprobar Compensaciones JD',
+            'name' => 'Aprobar Comp. JD',
+            'codigo' => 'JD_aprobar_compensacion',
             'icon' => 'banknotes',
             'route' => 'sistema.aprobaciones-compensacion',
         ],
@@ -100,6 +103,8 @@ $blocks = [
         ],
         [
             'section' => $NameSeccion_UDP,
+            'codigo' => 'JD_aprobar_pago',
+            'icon' => 'banknotes',
             'name' => 'Aprobar Pago UDP',
             'icon' => 'banknotes',
             'route' => 'sistema.aprobaciones-unificadas',
@@ -126,6 +131,7 @@ $blocks = [
         [
             'section' => $NameSeccion_JUDP,
             'name' => 'Aprobar Pago JUDP',
+            'codigo' => 'JD_aprobar_pago',
             'icon' => 'clipboard-document-check',
             'route' => 'sistema.aprobaciones-unificadas',
             'params' => ['tipo' => 2, 'rol' => 4, 'estado' => 3],
@@ -186,6 +192,12 @@ return [
         '5' => array_merge(
             $blocks['jd_base'],
             $blocks['der_extras']
+        ),
+
+        // 6: Líder de fiscalía → es funcionario + extras de JD
+        '6' => array_merge(
+            $blocks['funcionario_base'],
+            $blocks['jd_base']
         ),
 
         // ✨ Futuro: si DER deja de ser JD, solo cambia a:

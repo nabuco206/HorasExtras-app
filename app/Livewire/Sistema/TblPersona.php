@@ -64,12 +64,5 @@ class TblPersona extends Authenticatable
     /**
      * Relación con fiscalía
      */
-    public function fiscalia()
-    {
-        return $this->belongsTo(TblFiscalia::class, 'cod_fiscalia', 'cod_fiscalia');
-    }
-       public function escalafon()
-    {
-        return $this->belongsTo(TblEscalafon::class, 'id_escalafon', 'id');
-    }
+   
 }

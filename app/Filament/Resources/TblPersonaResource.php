@@ -22,7 +22,7 @@ class TblPersonaResource extends Resource
 {
 
     protected static ?string $navigationLabel = 'Personas';
-    protected static ?string $navigationGroup = 'Gestión de usuarios'; // puedes poner otro nombre o quitarla si no la usas
+    protected static ?string $navigationGroup = 'Gestión de usuarios'; 
 
     public static function getModelLabel(): string
     {
@@ -114,8 +114,7 @@ class TblPersonaResource extends Resource
                     ->searchable(),
                 TextColumn::make('escalafon.gls_escalafon')
                     ->label('Escalafón')
-                    ->sortable()
-                    ->searchable(),
+                    ->sortable(),
                 Tables\Columns\IconColumn::make('flag_lider')
                     ->label('Líder')
                     ->boolean()

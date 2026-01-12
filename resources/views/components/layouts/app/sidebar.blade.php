@@ -1,31 +1,47 @@
-@php
-        $user = auth()->user();
-        $rol = $user->id_rol;
-        $cod_fiscalia = $user->cod_fiscalia;
+<?php
+use App\Services\DashboardService;
 
-        // Acceder a la fiscalía asociada
-        //$gls_fiscalia = $user->fiscalia->gls_fiscalia ?? 'Sin fiscalía';
-
-        // Obtener configuración de menú para el rol y deduplicar por route|url|name
-        $rawMenu = config('menu.roles.' . $rol, []);
-        $menuConfig = collect($rawMenu)->unique(function($item) {
-            // Combina los campos relevantes para deduplicar correctamente
-            return (
-                ($item['route'] ?? '') . '|' .
-                ($item['url'] ?? '') . '|' .
-                ($item['name'] ?? '')
-            );
-        })->values()->all();
-
-        // Detectar la ruta actual y buscar el menú activo
-        $currentRoute = \Route::currentRouteName();
-        $menuActual = collect($menuConfig)->first(function($item) use ($currentRoute) {
-            return isset($item['route']) && $item['route'] === $currentRoute;
-        });
-
+    $user = auth()->user();
+    $rol = $user->id_rol;
+    $cod_fiscalia = $user->cod_fiscalia;
+    $esLider = $user->flag_lider ?? false;
+    
+    if($esLider){
+        // Log::info('Es lider de fiscalia: ' . $cod_fiscalia);
+        $rol = 6;
+    }
+    $dashboardService = new DashboardService();
+    $stats = $dashboardService->obtenerEstadisticasPendientes($rol, $user, $cod_fiscalia);
+    $badges = [
+        'JD_aprobar_he' => $stats['pendientesComp'] ?? 0,
+        'JD_aprobar_pago' => $stats['pendientesPago'] ?? 0,
+        'JD_aprobar_compensacion' => $stats['cantidadSolicitudesCompensa'] ?? 0,
+        // Puedes agregar más códigos aquí si necesitas más badges
+    ];
      
-    @endphp
 
+    // Acceder a la fiscalía asociada
+    //$gls_fiscalia = $user->fiscalia->gls_fiscalia ?? 'Sin fiscalía';
+
+    // Obtener configuración de menú para el rol y deduplicar por route|url|name
+    $rawMenu = config('menu.roles.' . $rol, []);
+    $menuConfig = collect($rawMenu)->unique(function($item) {
+        // Combina los campos relevantes para deduplicar correctamente
+        return (
+            ($item['route'] ?? '') . '|' .
+            ($item['url'] ?? '') . '|' .
+            ($item['name'] ?? '')
+        );
+    })->values()->all();
+
+    // Detectar la ruta actual y buscar el menú activo
+    $currentRoute = \Route::currentRouteName();
+    $menuActual = collect($menuConfig)->first(function($item) use ($currentRoute) {
+        return isset($item['route']) && $item['route'] === $currentRoute;
+    });
+
+    
+?>
     <!DOCTYPE html>
     <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
         <head>
@@ -65,6 +81,12 @@
                                 target="{{ $menuItem['target'] ?? '_self' }}"
                             >
                                 {{ $menuItem['name'] }}
+                                @php $codigo = $menuItem['codigo'] ?? null; @endphp
+                                @if(isset($badges[$codigo]) && $badges[$codigo] > 0)
+                                    <span class="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                                        ({{ $badges[$codigo] }})
+                                    </span>
+                                @endif
                             </flux:navlist.item>
                         @endforeach
                     @endforeach
@@ -73,16 +95,7 @@
 
                 <flux:spacer />
 
-                <!-- <flux:navlist variant="outline">
-                    <flux:navlist.item icon="folder-git-2" href="https://github.com/laravel/livewire-starter-kit" target="_blank">
-                        {{ __('Repository') }}
-                    </flux:navlist.item>
-
-                    <flux:navlist.item icon="book-open-text" href="https://laravel.com/docs/starter-kits" target="_blank">
-                        {{ __('Documentation') }}
-                    </flux:navlist.item>
-                </flux:navlist> -->
-
+               
                 <!-- Desktop User Menu -->
                 <span class="p-0 text-sm font-normal">Version 0.1</span>
                 <flux:dropdown position="bottom" align="start">
@@ -193,15 +206,12 @@
 </div>
 
 @php
-    \Log::debug('DEBUG MENU CONFIG', [
+   //Log::debug('DEBUG MENU CONFIG', [
         //'user_id' => auth()->id(),
         //'rol' => $rol,
        // 'cod_fiscalia' => $cod_fiscalia,
        // 'gls_fiscalia' => $gls_fiscalia,
-        'attributes' => auth()->user()->toArray(),
-        
-        
-       
-    ]);
+    //    'attributes' => auth()->user()->toArray(),
+      //]);
 @endphp
 

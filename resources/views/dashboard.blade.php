@@ -98,6 +98,7 @@
                     </div>
                 @endif
                 <!-- Minutos por Aprobar -->
+                @if($mostrarMinPorAprobar)  
                 <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 rounded-xl border border-yellow-200 dark:border-yellow-700 p-6">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-lg font-semibold text-yellow-900 dark:text-yellow-100">{{ __('Por Aprobar') }}</h3>
@@ -115,17 +116,38 @@
                         </div>
                     @endif
                 </div>
+                @endif
 
                 <!-- Solicitudes Pendientes -->
+                @if($mostrarSolicitudesPendientesHE)  
                 <div class="bg-white dark:bg-gray-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('Solicitudes Pendientes') }}</h3>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('Solicitudes Pendientes HE') }}</h3>
                         <div class="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-2 py-1 rounded-full text-sm font-medium">
-                            {{ $solicitudesPendientes }}
+                            {{ $pendientesComp }}
+                        </div>
+                    </div>
+                    <p class="text-gray-00 dark:text-gray-00 text-sm">{{ __('Solicitudes de horas extras pendientes de aprobación') }}</p>
+                </div>
+                <div class="bg-white dark:bg-gray-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white ">{{ __('Solicitudes Pendientes Pago') }}</h3>
+                        <div class="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-2 py-1 rounded-full text-sm font-medium">
+                          {{ $pendientesPago}}
                         </div>
                     </div>
                     <p class="text-gray-600 dark:text-gray-400 text-sm">{{ __('Solicitudes de horas extras pendientes de aprobación') }}</p>
                 </div>
+                <div class="bg-white dark:bg-gray-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white ">{{ __('Solicitudes Compensacion') }}</h3>
+                        <div class="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-2 py-1 rounded-full text-sm font-medium">
+                          {{ $cantidadSolicitudesCompensa}}
+                        </div>
+                    </div>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">{{ __('Solicitudes de horas extras pendientes de aprobación') }}</p>
+                </div>
+                @endif
 
                 <!-- Solicitudes Aprobadas -->
                 <div class="bg-white dark:bg-gray-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6">
@@ -144,7 +166,7 @@
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('Total Minutos Extras') }}</h3>
                         <div class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full text-sm font-medium">
-                            {{ $totalMinutosMes }} min
+                            {{ $sumaMinHe }} min
                         </div>
                     </div>
                     <p class="text-gray-600 dark:text-gray-400 text-sm">{{ __('Total de minutos extras acumulados este mes') }}</p>
@@ -240,22 +262,66 @@
 
             <!-- Últimas 10 Solicitudes -->
             <div class="bg-white dark:bg-gray-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ __('Últimas 10 Solicitudes') }}</h3>
-                <ul class="list-disc pl-5 text-sm text-gray-600 dark:text-gray-400">
-                    @foreach($ultimasSolicitudes as $solicitud)
-                        <li>#{{ $solicitud->id }} - {{ $solicitud->descripcion }}</li>
-                    @endforeach
-                </ul>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ __('Últimas Solicitudes') }}</h3>
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-gray-200 dark:border-gray-700">
+                            <th class="text-left py-2 text-gray-600 dark:text-gray-400 font-medium">{{ __('Solicitud HE') }}</th>
+                            <th class="text-left py-2 text-gray-600 dark:text-gray-400 font-medium">{{ __('Tipo Compensacion') }}</th>
+                            <th class="text-left py-2 text-gray-600 dark:text-gray-400 font-medium">{{ __('Minutos') }}</th>
+                            <th class="text-left py-2 text-gray-600 dark:text-gray-400 font-medium">{{ __('Estado') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($grillaSolicitudes as $solicitud)
+                            <tr class="border-b border-gray-100 dark:border-gray-800 bg-yellow-50 dark:bg-yellow-900/10">
+                                <td class="py-3 text-gray-900 dark:text-gray-100">
+                                #{{ $solicitud->id }}
+                                </td>
+                                <td class="py-3 text-gray-700 dark:text-gray-300">
+                                    {{ $solicitud->tipoCompensacion->gls_tipo_compensacion ?? 'Sin tipo' }}
+                                </td>
+                                <td class="py-3 text-gray-700 dark:text-gray-300">
+                                    {{ $solicitud->total_minutos }} min
+                                </td>
+                                <td class="py-3 text-gray-700 dark:text-gray-300">
+                                    {{ $solicitud->estado->descripcion ?? 'Sin estado' }}
+                                </td>
+                               
+                            </tr>
+                        @endforeach		
+                    </tbody>
+                </table>						
+                
             </div>
 
-            <!-- Compensaciones -->
+            <!-- Últimas 10 Solicitudes de Compensación -->
             <div class="bg-white dark:bg-gray-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ __('Compensaciones') }}</h3>
-                <ul class="list-disc pl-5 text-sm text-gray-600 dark:text-gray-400">
-                    @foreach($compensaciones as $compensacion)
-                        <li>#{{ $compensacion->id }} - {{ $compensacion->descripcion }}</li>
-                    @endforeach
-                </ul>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ __('Mis Últimas 10 Solicitudes de Compensación') }}</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-200 dark:border-gray-700">
+                                <th class="text-left py-2 text-gray-600 dark:text-gray-400 font-medium">ID</th>
+                                <th class="text-left py-2 text-gray-600 dark:text-gray-400 font-medium">Fecha</th>
+                                <th class="text-left py-2 text-gray-600 dark:text-gray-400 font-medium">Minutos</th>
+                                <th class="text-left py-2 text-gray-600 dark:text-gray-400 font-medium">Estado</th>
+                                <th class="text-left py-2 text-gray-600 dark:text-gray-400 font-medium">Observaciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($compensaciones as $compensacion)
+                                <tr class="border-b border-gray-100 dark:border-gray-800">
+                                    <td class="py-3 text-gray-900 dark:text-gray-100">#{{ $compensacion->id }}</td>
+                                    <td class="py-3 text-gray-700 dark:text-gray-300">{{ \Carbon\Carbon::parse($compensacion->fecha_solicitud)->format('d/m/Y') }}</td>
+                                    <td class="py-3 text-gray-700 dark:text-gray-300">{{ $compensacion->minutos_solicitados }} min</td>
+                                    <td class="py-3 text-gray-700 dark:text-gray-300">{{ $compensacion->estado->descripcion ?? 'Sin estado' }}</td>
+                                    <td class="py-3 text-gray-700 dark:text-gray-300">{{ $compensacion->observaciones }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- Acciones Rápidas -->

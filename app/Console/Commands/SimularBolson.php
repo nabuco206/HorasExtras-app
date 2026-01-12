@@ -154,7 +154,7 @@ class SimularBolson extends Command
                 $rows[] = [
                     $mov['bolson_id'],
                     $mov['solicitud_he_id'],
-                    Carbon::parse($mov['fecha_creacion'])->format('d/m'),
+                    Carbon::parse($mov['fecha_crea'])->format('d/m'),
                     Carbon::parse($mov['fecha_vencimiento'])->format('d/m'),
                     $mov['saldo_anterior'] . ' min',
                     $mov['minutos_descontados'] . ' min',

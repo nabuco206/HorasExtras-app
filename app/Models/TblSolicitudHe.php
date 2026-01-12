@@ -112,7 +112,7 @@ class TblSolicitudHe extends Model
 
     public function tipoCompensacion(): BelongsTo
     {
-        return $this->belongsTo(TblTipo_Compensacion::class, 'id_tipo_compensacion');
+        return $this->belongsTo(TblTipoCompensacion::class, 'id_tipo_compensacion');
     }
 
     public function bolsonTiempo(): \Illuminate\Database\Eloquent\Relations\HasOne

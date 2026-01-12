@@ -16,6 +16,7 @@ class TblEscalafon extends Model
      */
     protected $table = 'tbl_escalafons';
     protected $fillable = [
+        'id_escalafon',
         'gls_escalafon',
     ];
 
@@ -27,4 +28,9 @@ class TblEscalafon extends Model
     protected $casts = [
         'id' => 'integer',
     ];
+
+      public function personas()
+    {
+        return $this->hasMany(tbl_Persona::class, 'id_escalafon', 'id_escalafon');
+    }
 }

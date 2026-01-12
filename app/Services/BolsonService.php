@@ -193,7 +193,7 @@ class BolsonService
             $bolsonesVigentes = TblBolsonTiempo::vigentes()
                 ->where('username', $username)
                 ->where('saldo_min', '>', 0)
-                ->orderBy('fecha_creacion', 'asc')
+                ->orderBy('fecha_crea', 'asc')
                 ->get();
 
             if ($bolsonesVigentes->isEmpty()) {

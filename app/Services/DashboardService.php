@@ -152,15 +152,29 @@ class DashboardService
         $pendientesPago = 0;
         $aprobadasHE = 0;
         $totalPago = 0;
-        // log::info($rol.'-'.$username.'-'.$codFiscalia);
+        $sumaMinHe = 0;
+        $cantidadSolicitudesCompensa = 0;
+        $esLider = $username->flag_lider ?? false;
+        if($esLider){
+            $rol = 6;
+        }
+        log::info('Y el ser'.$esLider);
         
         $inicioAnio = Carbon::now()->startOfYear();
         $finAnio = Carbon::now()->endOfYear();
         
-        $queryBase = DB::table('tbl_solicitud_hes') 
-                            ->whereBetween('tbl_solicitud_hes.created_at', [$inicioAnio, $finAnio]);
+        
+        $queryBase = DB::table('tbl_solicitud_hes') ;
+                            // ->whereBetween('tbl_solicitud_hes.created_at', [$inicioAnio, $finAnio]);
+        $queryBaseSolicitudCompensa = DB::table('tbl_solicitud_compensas') ;
+
 
             switch ($rol) {
+            case 3:     
+                $pendientesPago = (clone $queryBase)
+                    ->where('tbl_solicitud_hes.id_estado', 2)
+                    ->where('tbl_solicitud_hes.id_tipo_compensacion', 2)
+                    ->count();  
             case 1:         
                     $pendientesComp = (clone $queryBase)
                             ->where('tbl_solicitud_hes.username', $username)
@@ -171,54 +185,47 @@ class DashboardService
                             ->where('tbl_solicitud_hes.id_estado', 4)
                             ->count();           
                     break;   
-            case 2:{
-                if($tipoCompensa == 1){
-                        $pendientesComp = (clone $queryBase)
-                            ->where('tbl_solicitud_hes.cod_fiscalia', $codFiscalia)
-                            ->where('tbl_solicitud_hes.id_estado', 1)
-                            ->where('tbl_solicitud_hes.id_tipo_compensacion', 1)                              
-                            ->count();
+            case 2:            
+                $pendientesComp = (clone $queryBase)
+                        ->where('tbl_solicitud_hes.cod_fiscalia', $codFiscalia)
+                        ->where('tbl_solicitud_hes.id_estado', 1)
+                        ->where('tbl_solicitud_hes.id_tipo_compensacion', 1)
+                        ->count();
+                $pendientesPago = (clone $queryBase)
+                        ->where('tbl_solicitud_hes.cod_fiscalia', $codFiscalia)
+                        ->where('tbl_solicitud_hes.id_estado', 1)
+                        ->where('tbl_solicitud_hes.id_tipo_compensacion', 2)
+                        ->count();        
 
-                        $aprobadasHE  = (clone $queryBase)
-                            ->where('tbl_solicitud_hes.cod_fiscalia', $codFiscalia)
-                            ->where('tbl_solicitud_hes.id_estado', 6)
-                            ->where('tbl_solicitud_hes.id_tipo_compensacion', 1)                              
-                            ->count();
-
-                }elseif($tipoCompensa ==2){
-                        $pendientesComp = (clone $queryBase)
-                            ->where('tbl_solicitud_hes.cod_fiscalia', $codFiscalia)
-                            ->where('tbl_solicitud_hes.id_estado', 1)
-                            ->where('tbl_solicitud_hes.id_tipo_compensacion', 2)                              
-                            ->count(); 
-                }else{
-                        $pendientesComp = (clone $queryBase)
-                            ->where('tbl_solicitud_hes.cod_fiscalia', $codFiscalia)
-                            ->where('tbl_solicitud_hes.id_estado', 1)
-                            ->count();   
-                    }
+                $aprobadasHE  = (clone $queryBase)
+                    ->where('tbl_solicitud_hes.username', $username)
+                    ->where('tbl_solicitud_hes.id_estado', 6)
+                    ->where('tbl_solicitud_hes.id_tipo_compensacion', $tipoCompensa)                              
+                    ->count();
 
                 $totalPago = (clone $queryBase)
                     ->where('tbl_solicitud_hes.cod_fiscalia', $codFiscalia)
                     ->where('tbl_solicitud_hes.id_tipo_compensacion', 2)   
                     ->count();   
-                }          
+
+                
+                $sumaMinHe = (clone $queryBase)   
+                            ->where('tbl_solicitud_hes.cod_fiscalia', $codFiscalia)
+                            ->where('tbl_solicitud_hes.id_estado', 6)                            
+                            ->sum('total_min');   
+                         
                    
                 $totalPago = (clone $queryBase)
                             ->where('tbl_solicitud_hes.cod_fiscalia', $codFiscalia) 
                             ->where('tbl_solicitud_hes.id_tipo_compensacion', 2)   
                             ->count(); 
-                break;
-            case 3:            
-                $pendientesComp = (clone $queryBase)
-                            ->where('tbl_solicitud_hes.id_tipo_compensacion', 2)
-                            ->where('tbl_solicitud_hes.id_estado', 2)
-                            ->count();  
-                $totalPago = (clone $queryBase)
-                            ->where('tbl_solicitud_hes.id_tipo_compensacion', 2)   
-                            ->count();         
-                break;
+                $cantidadSolicitudesCompensa = (clone $queryBaseSolicitudCompensa)
+                            ->where('tbl_solicitud_compensas.cod_fiscalia', $codFiscalia) 
+                            ->where('tbl_solicitud_compensas.id_estado', 9)   
+                            ->count();
 
+
+                break;
             case 4:
                 $pendientesComp = (clone $queryBase)
                             ->where('tbl_solicitud_hes.id_tipo_compensacion', 2)
@@ -231,38 +238,45 @@ class DashboardService
             case 5:
               
                 $pendientesComp = (clone $queryBase)
-                            ->where('tbl_solicitud_hes.id_tipo_compensacion', 2)
-                            ->where('tbl_solicitud_hes.id_estado', 4)
-                            ->count();  
+                        ->where('tbl_solicitud_hes.id_tipo_compensacion', 2)
+                        ->where('tbl_solicitud_hes.id_estado', 4)
+                        ->count();  
                 $totalPago = (clone $queryBase)
-                            ->where('tbl_solicitud_hes.id_tipo_compensacion', 2)   
-                            ->count();                
-                break;    
+                        ->where('tbl_solicitud_hes.id_tipo_compensacion', 2)   
+                        ->count();                
+                break;   
+            case 6:
+                $pendientesComp = (clone $queryBase)
+                    ->where('tbl_solicitud_hes.cod_fiscalia', $codFiscalia)
+                    ->where('tbl_solicitud_hes.id_estado', 1)
+                    ->where('tbl_solicitud_hes.id_tipo_compensacion', 1)
+                    ->count();
+                $pendientesPago = (clone $queryBase)
+                    ->where('tbl_solicitud_hes.cod_fiscalia', $codFiscalia)
+                    ->where('tbl_solicitud_hes.id_estado', 1)
+                    ->where('tbl_solicitud_hes.id_tipo_compensacion', 2)
+                    ->count();     
+
+                $cantidadSolicitudesCompensa = (clone $queryBaseSolicitudCompensa)
+                            ->where('tbl_solicitud_compensas.cod_fiscalia', $codFiscalia) 
+                            ->where('tbl_solicitud_compensas.id_estado', 9)   
+                            ->count();    
+    
+    
+                    break;     
                 // return response()->json(['mensaje' => 'Opción no reconocida.'], 404);
         }
         
 
-        // Para roles superiores, agregar estados específicos
-        // if (in_array($rol, [3, 4, 5])) {
-        //     $queryRol = DB::table('tbl_solicitud_hes')
-        //         ->where('id_tipo_compensacion', 2)
-        //         ->whereBetween('created_at', [$inicioAnio, $finAnio]);
-
-        //     if ($rol == 3) {
-        //         $pendientesPagoRol3 = (clone $queryRol)->where('id_estado', 2)->count();
-        //     } elseif ($rol == 4) {
-        //         $pendientesPagoRol4 = (clone $queryRol)->where('id_estado', 3)->count();
-        //     } elseif ($rol == 5) {
-        //         $pendientesPagoRol5 = (clone $queryRol)->where('id_estado', 4)->count();
-        //     }
-        // }
-
+    
         return [
             'pendientesComp' => $pendientesComp,
-            'pendientes_pago' => $pendientesPago,
+            'pendientesPago' => $pendientesPago,
             'rechazadosComp' => $rechazadosComp,
             'aprobadasHE' => $aprobadasHE,
             'totalPago' => $totalPago,
+            'sumaMinHe' => $sumaMinHe,
+            'cantidadSolicitudesCompensa' => $cantidadSolicitudesCompensa,
         ];
     }
 }

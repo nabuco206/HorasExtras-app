@@ -70,21 +70,21 @@ class TodasCompensaciones extends Component
      public function rechazarSolicitud($solicitudId)
     {
         // Buscar la solicitud seleccionada
-        $this->solicitudSeleccionada = TblSolicitudCompensa::find($solicitudId);
+        $solicitud = TblSolicitudCompensa::find($solicitudId);
 
-        if (!$this->solicitudSeleccionada) {
+        if (!$solicitud) {
             session()->flash('error', 'La solicitud no fue encontrada.');
             return;
         }
 
         // Cambiar el estado de la solicitud a "Rechazada"
-        $this->solicitudSeleccionada->update([
+        $solicitud->update([
             'id_estado' => 11, // Estado "Rechazada"
             'observaciones' => $this->observaciones,
             'rechazada_por' => Auth::user()->username ?? 'Sistema',
         ]);
 
-        $minutos = (int) ($solicitud->minutos_aprobados ?? $solicitud->minutos ?? 0);
+        $minutos = (int) ($solicitud->minutos_aprobados ?? $solicitud->minutos_solicitados ?? 0);
         if ($minutos > 0) {
             $res = $this->bolsonService->crearBolsonDevolución(
                 $solicitud->username,

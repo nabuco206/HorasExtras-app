@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Livewire\Sistema;
+use Illuminate\Support\Facades\Log;
 
 use Livewire\Component;
 use App\Models\TblLider;
@@ -15,31 +16,36 @@ class MiEquipo extends Component
     public $personas = [];
     public $fiscalia = null;
     public $escalafon = [];
+    public $gls_fiscalia = null;
 
     public function mount()
     {
         $user = Auth::user();
-
+        $isJefeLider = $user->flag_lider ?? false;
+        $this->gls_fiscalia =  $user->fiscalia->gls_fiscalia ;
+       
         // detectar si el usuario es jefe directo (rol = 2)
-        $isJefe = (isset($user->rol) && $user->rol == 2)
-               || (isset($user->id_rol) && $user->id_rol == 2)
-               || (isset($user->role_id) && $user->role_id == 2);
-
+        $isJefe = (isset($user->id_rol) && in_array($user->id_rol, [2, 4, 5]));
+        // log::info('isJefe: ' . $user->username . ', esFiscalíaLider: ' . ($isJefe ? 'SI' : 'NO'));
+        
         // intentar varios nombres posibles del campo cod_fiscalia en User
-        $userCodFiscalia = $user->cod_fiscalia ?? $user->codigo_fiscalia ?? $user->codfiscalia ?? $user->codFiscalia ?? $user->fiscalia_id ?? $user->id_fiscalia ?? null;
-
-        if ($isJefe && $userCodFiscalia) {
-            // vista para jefes: mostrar personas de la fiscalía del usuario
+        $userCodFiscalia = $user->cod_fiscalia ??  null;
+       
+        if (($isJefe || $isJefeLider) && $userCodFiscalia) {
+            // vista para jefes: mostrar personas de 
+         
             $this->esLider = true;
             $this->fiscalia = ['cod_fiscalia' => $userCodFiscalia];
 
-            $this->personas =  TblPersona::select('id', 'Nombre', 'Apellido')
+            $this->personas =  TblPersona::select('id', 'nombre', 'apellido','username','id_escalafon', 'flag_activo')
+                ->with('escalafon')
                 ->where('cod_fiscalia', $userCodFiscalia)
-                ->where('id_rol', 1)
+                ->wherein('id_rol', [1, 3])
                 ->where('flag_activo', true)
                 ->orderBy('Nombre')
                 ->orderBy('Apellido')
                 ->get();
+            
 
             foreach ($this->personas as $p) {
                 $saldo = TblBolsonTiempo::vigentes()->where('username', $p->username)->sum('saldo_min');
@@ -58,38 +64,8 @@ class MiEquipo extends Component
         }
 
         // Si no es jefe directo, usar la lógica de líder existente
-        $this->lider = TblLider::with(['persona', 'fiscalia'])
-            ->whereHas('persona', function($query) use ($user) {
-                $query->where('username', $user->username);
-            })
-            ->where('flag_activo', true)
-            ->first();
-
-        if ($this->lider) {
-            $this->esLider = true;
-            $this->fiscalia = $this->lider->fiscalia;
-
-            $this->personas = TblPersona::with('escalafon')
-                ->where('cod_fiscalia', $this->lider->cod_fiscalia)
-                ->where('flag_activo', true)
-                ->where('id', '!=', $this->lider->persona_id)
-                ->orderBy('Nombre')
-                ->orderBy('Apellido')
-                ->get();
-
-            foreach ($this->personas as $p) {
-                $saldo = TblBolsonTiempo::vigentes()->where('username', $p->username)->sum('saldo_min');
-                $p->tiempo_disponible = (int) $saldo;
-            }
-
-            $this->personas = $this->personas->sortByDesc('tiempo_disponible');
-
-            $this->escalafon = TblPersona::select('id', 'Nombre', 'Apellido', 'Escalafon')
-                ->where('cod_fiscalia', $this->lider->cod_fiscalia)
-                ->where('flag_activo', true)
-                ->orderBy('Escalafon')
-                ->get();
-        }
+   
+        
     }
 
     public function render()
