@@ -22,7 +22,7 @@ class TblPersonaResource extends Resource
 {
 
     protected static ?string $navigationLabel = 'Personas';
-    protected static ?string $navigationGroup = 'Gestión de usuarios'; 
+    protected static ?string $navigationGroup = 'Gestión de usuarios';
 
     public static function getModelLabel(): string
     {
@@ -45,16 +45,19 @@ class TblPersonaResource extends Resource
             ->schema([
                 Forms\Components\TextInput::make('nombre')
                     ->required()
-                    ->maxLength(255),
+                    ->maxLength(255)
+                    ->afterStateUpdated(fn ($state, callable $set) => $set('nombre', mb_strtoupper($state))),
                 Forms\Components\TextInput::make('apellido')
                     ->required()
-                    ->maxLength(255),
+                    ->maxLength(255)
+                    ->afterStateUpdated(fn ($state, callable $set) => $set('apellido', mb_strtoupper($state))),
                 Forms\Components\TextInput::make('username')
                     ->required()
                     ->maxLength(255)
                     ->unique(TblPersona::class, 'username', ignoreRecord: true)
-                    ->helperText('El nombre de usuario debe ser único en el sistema'),
-                    Forms\Components\TextInput::make('rut')
+                    ->helperText('El nombre de usuario debe ser único en el sistema')
+                    ->afterStateUpdated(fn ($state, callable $set) => $set('username', mb_strtolower($state))),
+                Forms\Components\TextInput::make('rut')
                     ->required()
                     ->maxLength(12)
                     ->unique(TblPersona::class, 'rut', ignoreRecord: true)
@@ -107,7 +110,7 @@ class TblPersonaResource extends Resource
                     ->searchable(),
                 TextColumn::make('rut')
                     ->sortable()
-                    ->searchable(),    
+                    ->searchable(),
                 TextColumn::make('fiscalia.gls_fiscalia')
                     ->label('Fiscalía')
                     ->sortable()

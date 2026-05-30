@@ -8,6 +8,7 @@ use App\Services\BolsonService;
 use App\Services\CompensacionService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+
 use Carbon\Carbon;
 
 class IngresoCompensacion extends Component
@@ -184,6 +185,32 @@ class IngresoCompensacion extends Component
                         'minutos_descontados' => $this->minutos_solicitados,
                         'estado' => 'COMPENSACION_SOLICITADA'
                     ]);
+
+                     // Enviar correo al usuario al guardar la solicitud de compensación
+
+                    $mailService = app(\App\Services\MailService::class);
+                    // $correoUsuario = $this->username . '@minpublico.cl';
+                    $correoUsuario ='crojasm@minpublico.cl';
+                    $mailService->sendSolicitudIngresada([
+                        'id' => $solicitud->id, // Ejemplo de ID único
+                        'usuario_email' => $correoUsuario,
+                        'fecha' => $this->fecha_solicitud,
+                        'descripcion' => 'Solicitud de compensación enviada',
+                    ]);
+
+                    // // Enviar correos a los líderes
+                    $userService = app(\App\Services\UserService::class);
+                    $lideres = $userService->getLideresByUsername($this->username);
+                    foreach ($lideres as $lider) {
+                        // $correoLider = $lider->username . '@minpublico.cl';
+                        $correoLider = 'crojasm@minpublico.cl';
+                        $mailService->sendSolicitudIngresada([
+                            'id' => $solicitud->id,
+                            'usuario_email' => $correoLider,
+                            'fecha' => $this->fecha_solicitud,
+                            'descripcion' => 'Nueva solicitud de compensación para revisión',
+                            ]);
+                    }
 
                     session()->flash('mensaje',
                         "✅ Solicitud creada y minutos descontados del bolsón. " .

@@ -286,16 +286,16 @@ class SolicitudHeService
      */
     private function logResultado($fecha, $horaInicio, $horaFin, array $resultado)
     {
-        Log::info('Cálculo de horas extras realizado', [
-            'fecha' => $fecha,
-            'hora_inicio' => $horaInicio,
-            'hora_fin' => $horaFin,
-            'min_reales' => $resultado['min_reales'],
-            'min_25' => $resultado['min_25'],
-            'min_50' => $resultado['min_50'],
-            'total_min' => $resultado['total_min'],
-            'contexto' => $resultado['contexto']['es_feriado'] ? 'feriado' :
-                ($resultado['contexto']['es_fin_semana'] ? 'fin_semana' : 'laboral')
-        ]);
+        // Log::info('Cálculo de horas extras realizado', [
+        //     'fecha' => $fecha,
+        //     'hora_inicio' => $horaInicio,
+        //     'hora_fin' => $horaFin,
+        //     'min_reales' => $resultado['min_reales'],
+        //     'min_25' => $resultado['min_25'],
+        //     'min_50' => $resultado['min_50'],
+        //     'total_min' => $resultado['total_min'],
+        //     'contexto' => $resultado['contexto']['es_feriado'] ? 'feriado' :
+        //         ($resultado['contexto']['es_fin_semana'] ? 'fin_semana' : 'laboral')
+        // ]);
     }
 }

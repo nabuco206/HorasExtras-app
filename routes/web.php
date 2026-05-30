@@ -7,23 +7,21 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CompensacionController;
+use App\Http\Controllers\PowerBiController;
 
-Route::get('/ping', function () {
-    return 'pong';
+use App\Mail\TestEmail;
+use Illuminate\Support\Facades\Mail;
+use App\Events\SolicitudEstadoCambiado;
+
+Route::get('/send-test-email', function () {
+    try {
+        Mail::to('crojasm@minpublico.cl')->send(new TestEmail());
+        return 'Correo enviado correctamente.';
+    } catch (\Exception $e) {
+        return 'Error al enviar el correo: ' . $e->getMessage();
+    }
 });
 
-Route::get('/debug-auth', function () {
-    return response()->json([
-        'auth_check' => Auth::check(),
-        'user' => Auth::user(),
-        'session_id' => session()->getId(),
-        'session' => session()->all(),
-    ]);
-});
-
-Route::get('/debug-session', function () {
-    return session()->all();
-});
 Route::get('/', function () {
     return view('welcome');
 })->name('home');
@@ -120,6 +118,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('sistema/todas-compensaciones', \App\Livewire\Sistema\TodasCompensaciones::class)
         ->name('sistema.todas-compensaciones')
         ->middleware(['auth']);
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/powerbi/dashboard', [PowerBiController::class, 'dashboard'])->name('powerbi.dashboard');
+});
+
+// Ejemplo de disparo del evento
+Route::get('/test-event', function () {
+    $solicitud = [
+        'id' => 1,
+        'usuario_email' => 'crojasm@minpublico.cl',
+        'fecha' => now(),
+        'descripcion' => 'Descripción de prueba',
+        'aprobador_email' => 'crojasm@minpublico.cl',
+        'rechazador_email' => 'crojasm@minpublico.cl',
+    ];
+
+    event(new SolicitudEstadoCambiado($solicitud, 'INGRESADO'));
+
+    return 'Evento disparado';
 });
 
 require __DIR__.'/auth.php';

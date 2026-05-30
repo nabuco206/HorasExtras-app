@@ -18,9 +18,9 @@
         <meta name="csrf-token" content="{{ csrf_token() }}" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-        @if ($favicon = filament()->getFavicon())
+        {{-- @if ($favicon = filament()->getFavicon())
             <link rel="icon" href="{{ $favicon }}" />
-        @endif
+        @endif --}}
 
         @php
             $title = trim(strip_tags(($livewire ?? null)?->getTitle() ?? ''));

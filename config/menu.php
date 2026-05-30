@@ -1,10 +1,9 @@
 <?php
 
-// Nombres de secciones (corregido "Unidad de de Personas" → "Unidad de Personas")
 $NameSeccion_FUN = 'Funcionario';
 $NameSeccion_JD = 'Jefe Directo';
 $NameSeccion_UDP = 'Unidad de Personas';
-$NameSeccion_JUDP = 'Jefe Unidad de Personas';
+$NameSeccion_JUDP = 'Jefe Unidad de Personasssss';
 $NameSeccion_DER = 'Dirección Ejecutiva';
 
 // === BLOQUES REUTILIZABLES ===
@@ -137,7 +136,13 @@ $blocks = [
             'params' => ['tipo' => 2, 'rol' => 4, 'estado' => 3],
             'titulo' => 'Aprobación Pago de Horas Extra JUDP',
         ],
-        // El resto lo hereda de jd_base
+         [
+            'name' => 'Gasto en HE',
+            'route' => 'powerbi.dashboard',
+            'icon' => 'chart-pie',
+            'section' => 'Informes',
+            'codigo' => null,
+        ],
     ],
 
     // Extras: Dirección Ejecutiva (DER)
@@ -162,11 +167,26 @@ $blocks = [
             'icon' => 'banknotes',
             'route' => 'sistema.todas-compensaciones',
         ],
+          [
+            'name' => 'Gasto en HE',
+            'route' => 'powerbi.dashboard',
+            'icon' => 'chart-pie',
+            'section' => 'Informes',
+            'codigo' => null,
+        ],
+         [
+            'name' => 'Gasto en HE (nueva pestaña)',
+            'route' => 'powerbi.dashboard',
+            'icon' => 'arrow-top-right-on-square',
+            'section' => 'Informes',
+            'codigo' => null,
+            'target' => '_blank', // marca para que el renderer añada target="_blank"
+        ],
     ],
 ];
-
 // === DEFINICIÓN DE ROLES POR COMPOSICIÓN ===
 return [
+
     'blocks' => $blocks,
 
     'roles' => [
@@ -205,5 +225,15 @@ return [
         //     $blocks['funcionario_base'], // o un nuevo 'der_base'
         //     $blocks['der_extras']
         // ),
+
+        // 6 => [
+        //     [
+        //         'name' => 'Power BI',
+        //         'route' => 'powerbi.dashboard',
+        //         'icon' => 'chart-pie',
+        //         'section' => 'Informes',
+        //         'codigo' => null,
+        //     ],
+        // ],
     ],
 ];

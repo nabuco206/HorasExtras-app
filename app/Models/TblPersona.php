@@ -10,7 +10,7 @@ class TblPersona extends Authenticatable
     use HasFactory;
 
     protected $table = 'tbl_personas';
-   
+
     public function initials(): string
 {
     // Ajusta el campo que contiene el nombre si tu modelo usa otro (p. ej. 'nombre', 'nombres', 'name')
@@ -71,5 +71,9 @@ class TblPersona extends Authenticatable
        public function escalafon()
     {
         return $this->belongsTo(TblEscalafon::class, 'id_escalafon', 'id');
+    }
+    public function solicitudes()
+    {
+        return $this->hasMany(TblSolicitudHe::class, 'cod_fiscalia', 'cod_fiscalia');
     }
 }

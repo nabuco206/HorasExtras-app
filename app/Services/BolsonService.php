@@ -61,12 +61,12 @@ class BolsonService
             );
 
             DB::commit();
-            Log::info("Bolsón pendiente creado exitosamente", [
-                'bolson_id' => $bolson->id,
-                'solicitud_id' => $solicitud->id,
-                'minutos' => $minutosCalculados,
-                'estado' => 'PENDIENTE'
-            ]);
+            // Log::info("Bolsón pendiente creado exitosamente", [
+            //     'bolson_id' => $bolson->id,
+            //     'solicitud_id' => $solicitud->id,
+            //     'minutos' => $minutosCalculados,
+            //     'estado' => 'PENDIENTE'
+            // ]);
 
             return $bolson;
 

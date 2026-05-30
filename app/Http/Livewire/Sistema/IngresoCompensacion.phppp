@@ -93,7 +93,7 @@ class IngresoCompensacion extends Component
         ]);
 
         if (!$resultado['success']) {
-            session()->flash('error', 'No fue posible descontar los minutos del bolsón: ' . ($resultado['mensaje'] ?? '')); 
+            session()->flash('error', 'No fue posible descontar los minutos del bolsón: ' . ($resultado['mensaje'] ?? ''));
             Log::warning('[Compensacion] Descuento fallido', [
                 'username' => $username,
                 'minutos_solicitados' => $this->minutos_solicitados,
@@ -102,8 +102,8 @@ class IngresoCompensacion extends Component
             return;
         }
 
-        // Guardar la solicitud de compensación solo si el descuento fue exitoso
-        TblSolicitudCompensa::create([
+        // Guardar la solicitud de compensación y obtener el ID generado
+        $nuevaSolicitud = TblSolicitudCompensa::create([
             'fecha_solicitud' => $this->fecha_solicitud,
             'observaciones' => $this->observaciones,
             'hrs_inicial' => $this->hrs_inicial,
@@ -113,11 +113,37 @@ class IngresoCompensacion extends Component
             'id_estado' => 9, // Estado 9: Pendiente
         ]);
 
+        $idGenerado = $nuevaSolicitud->id; // Obtener el ID generado
+
         Log::info('[Compensacion] Solicitud creada exitosamente', [
+            'ID' => $idGenerado,
             'username' => $username,
             'minutos_solicitados' => $this->minutos_solicitados,
             'fecha_solicitud' => $this->fecha_solicitud
         ]);
+
+        // Enviar correo al usuario al guardar la solicitud de compensación
+        $mailService = app(\App\Services\MailService::class);
+        $correoUsuario = $username . '@minpublico.cl';
+        $mailService->sendSolicitudCompensacion([
+            'id' => $idGenerado, // Ejemplo de ID único
+            'usuario_email' => $correoUsuario,
+            'fecha' => $this->fecha_solicitud,
+            'descripcion' => 'Solicitud de compensación enviada',
+        ]);
+
+        // Enviar correos a los líderes
+        $userService = app(\App\Services\UserService::class);
+        $lideres = $userService->getLideresByUsername($username);
+        foreach ($lideres as $lider) {
+            $correoLider = $lider->username . '@minpublico.cl';
+            $mailService->sendSolicitudCompensacion([
+                'id' => $idGenerado,
+                'usuario_email' => $correoLider,
+                'fecha' => $this->fecha_solicitud,
+                'descripcion' => 'Nueva solicitud de compensación para revisión',
+            ]);
+        }
 
         // Actualizar saldo disponible local
         $this->saldoDisponible -= $this->minutos_solicitados;

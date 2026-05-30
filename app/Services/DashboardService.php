@@ -158,8 +158,7 @@ class DashboardService
         if($esLider){
             $rol = 6;
         }
-        log::info('Y el ser'.$esLider);
-        
+
         $inicioAnio = Carbon::now()->startOfYear();
         $finAnio = Carbon::now()->endOfYear();
         
