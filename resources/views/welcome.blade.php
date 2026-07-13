@@ -86,7 +86,7 @@
                         <div class="text-center mb-6">
 
                             {{-- <img src="{{ asset('images/logoHE.png') }}" alt="Logo HE" class="w-20 h-20 mx-auto mb-4"> --}}
-                            <h2 class="text-lg font-medium text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Iniciar Sesión</h2>
+                            <h2 class="text-lg font-medium text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Iniciar Sesión (prod)</h2>
                             <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Ingresa tus credenciales</p>
                         </div>
 
@@ -106,7 +106,7 @@
                                     autofocus
                                     autocomplete="username"
                                     placeholder="Nombre de usuario"
-                                    value="persona01"
+                                    value=""
                                     class="w-full px-3 py-2 border border-[#e3e3e0] dark:border-[#3E3E3A] rounded-sm bg-white dark:bg-[#161615] text-[#1b1b18] dark:text-[#EDEDEC] text-sm focus:outline-none focus:ring-2 focus:ring-[#F53003] focus:border-transparent"
                                     style="position: relative; z-index: 5; pointer-events: auto;"
                                 />

@@ -164,4 +164,6 @@ class IngresoCompensacion extends Component
 
         return view('livewire.sistema.ingreso-compensacion', compact('solicitudes'));
     }
+
+
 }

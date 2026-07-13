@@ -10,7 +10,7 @@ use Illuminate\Validation\Rule;
 use Livewire\Volt\Component;
 use Livewire\WithFileUploads;
 use App\Services\FlujoEstadoService;
-
+use App\Services\MailService;
 use Illuminate\Support\Facades\Log;
 
 new class extends Component {
@@ -42,6 +42,10 @@ new class extends Component {
     public array $resumenCompleto = [];
     public int $bolsonesProximosVencer = 0;
     public int $id_escalafon = 0;
+
+    // Propiedades para mensajes
+    public string $mensaje = '';
+    public string $tipoMensaje = 'success'; // Puede ser 'success' o 'error'
 
 
     /**
@@ -85,6 +89,33 @@ new class extends Component {
             ->where('fecha_vence', '>=', \Carbon\Carbon::now())
             ->count();
     }
+    /**
+     * Solapamiento en solicitudes de horas extras
+     */
+    public function validarSolapamiento($username, $fecha, $horaInicio, $horaFin)
+    {
+        $solapamiento = TblSolicitudHe::where('username', $username)
+            ->where('fecha', $fecha)
+            ->where(function ($query) use ($horaInicio, $horaFin) {
+                $query->whereBetween('hrs_inicial', [$horaInicio, $horaFin])
+                      ->orWhereBetween('hrs_final', [$horaInicio, $horaFin])
+                      ->orWhere(function ($query) use ($horaInicio, $horaFin) {
+                          $query->where('hrs_inicial', '<=', $horaInicio)
+                                ->where('hrs_final', '>=', $horaFin);
+                      });
+            })
+            ->exists();
+
+        if ($solapamiento) {
+            $this->tipoMensaje = 'error';
+            $this->mensaje = 'Ya existe una solicitud de horas extras registrada para este día y horario. Por favor, revise las solicitudes existentes.';
+            $this->dispatch('error');
+            return false;
+        }
+
+        return true;
+    }
+
 
     /**
      * Muestra el historial de estados de una solicitud usando el Service
@@ -101,105 +132,155 @@ new class extends Component {
      */
     public function saveSolicitud(): void
     {
-        $validated = $this->validate([
-            'id_tipo_trabajo' => ['required', 'integer', 'exists:tbl_tipo_trabajo,id'],
-            'fecha' => ['required', 'date', 'before_or_equal:today'],
-            'hrs_inicial' => ['required', 'date_format:H:i'],
-            'hrs_final' => ['required', 'date_format:H:i', 'after:hrs_inicial'],
-            'propone_pago' => ['boolean'],
-            'archivo_adjunto' => ['nullable', 'file', 'mimes:jpeg,jpg,png,pdf,doc,docx', 'max:5120'], // 5MB máximo
-        ]);
-
-        if ($this->hrs_final <= $this->hrs_inicial) {
-            session()->flash('error', 'La hora de salida debe ser mayor que la hora de ingreso y no puede cruzar las 00:00 hrs.');
-            return;
-        }
-
-        // normalizar: 1 = Compensación, 2 = Pago
-        $validated['id_tipo_compensacion'] = $this->propone_pago ? 2 : 1;
-        $validated['username'] = Auth::user()->name;
-        $validated['cod_fiscalia'] = Auth::user()->cod_fiscalia;
-
         try {
-            $solicitudHeService = app(\App\Services\SolicitudHeService::class);
-            $resultado = $solicitudHeService->calculaPorcentaje(
+            $validated = $this->validate([
+                'id_tipo_trabajo' => ['required', 'integer', 'exists:tbl_tipo_trabajo,id'],
+                'fecha' => ['required', 'date', 'before_or_equal:today'],
+                'hrs_inicial' => ['required', 'date_format:H:i'],
+                'hrs_final' => ['required', 'date_format:H:i', 'after:hrs_inicial'],
+                'propone_pago' => ['boolean'],
+                'archivo_adjunto' => ['nullable', 'file', 'mimes:jpeg,jpg,png,pdf,doc,docx', 'max:5120'], // 5MB máximo
+            ]);
+
+            if (!$this->validarSolapamiento(
+                Auth::user()->name,
                 $this->fecha,
                 $this->hrs_inicial,
                 $this->hrs_final
+            )) {
+                $this->tipoMensaje = 'error'; // Asegurar que el tipo de mensaje sea 'error'
+                $this->dispatch('profile-updated'); // Disparar el evento correcto para mostrar el mensaje
+                return;
+            }
+
+            if ($this->hrs_final <= $this->hrs_inicial) {
+                $this->tipoMensaje = 'error';
+                $this->mensaje = 'La hora de salida debe ser mayor que la hora de ingreso y no puede cruzar las 00:00 hrs.';
+                $this->dispatch('error');
+                return;
+            }
+
+            // normalizar: 1 = Compensación, 2 = Pago
+            $validated['id_tipo_compensacion'] = $this->propone_pago ? 2 : 1;
+            $validated['username'] = Auth::user()->name;
+            $validated['cod_fiscalia'] = Auth::user()->cod_fiscalia;
+
+            try {
+                $solicitudHeService = app(\App\Services\SolicitudHeService::class);
+                $resultado = $solicitudHeService->calculaPorcentaje(
+                    $this->fecha,
+                    $this->hrs_inicial,
+                    $this->hrs_final
+                );
+
+                $validated['fecha_evento'] = $this->fecha;
+                $validated['hrs_inicio'] = $this->hrs_inicial;
+                $validated['hrs_fin'] = $this->hrs_final;
+                $validated['min_reales'] = $resultado['min_reales'];
+                $validated['min_25'] = $resultado['min_25'];
+                $validated['min_50'] = $resultado['min_50'];
+                $validated['total_min'] = $resultado['total_min'];
+
+                // Intentar obtener el estado inicial desde el flujo de compensación HE
+                // Preparar estado pendiente por defecto (se usa como fallback y en el log)
+                $estadoPendiente = \App\Models\TblEstado::where('codigo', 'INGRESADO')->first();
+
+                // Seleccionar flujo según si el usuario propone pago (dinero) o compensación (tiempo)
+                $codigoFlujo = $this->propone_pago ? 'HE_DINERO' : 'HE_COMPENSACION';
+                $flujo = \App\Models\TblFlujo::where('codigo', $codigoFlujo)->first();
+                $estadoInicial = $flujo ? $flujo->estadoInicial : null;
+
+                if ($estadoInicial && isset($estadoInicial->id)) {
+                    $validated['id_estado'] = $estadoInicial->id;
+                } else {
+                    // Fallback al estado INGRESADO por compatibilidad
+                    $validated['id_estado'] = $estadoPendiente ? $estadoPendiente->id : 1;
+                }
+
+                // Procesar archivo adjunto
+                if ($this->archivo_adjunto) {
+                    $extension = $this->archivo_adjunto->getClientOriginalExtension();
+                    $fechaCompleta = date('Y-m-d');
+                    $nombreArchivo = $fechaCompleta . '_' . time() . '_' . $this->username . '.' . $extension;
+
+                    // Guardar el archivo
+                    $rutaArchivo = $this->archivo_adjunto->storeAs('solicitudes-he', $nombreArchivo, 'public');
+
+                    $validated['archivo_adjunto'] = $nombreArchivo;
+                    $validated['nombre_archivo_original'] = $this->archivo_adjunto->getClientOriginalName();
+                }
+
+            } catch (\Exception $e) {
+                $validated['fecha_evento'] = $this->fecha;
+                $validated['hrs_inicio'] = $this->hrs_inicial;
+                $validated['hrs_fin'] = $this->hrs_final;
+                $validated['min_reales'] = 0;
+                $validated['min_25'] = 0;
+                $validated['min_50'] = 0;
+                $validated['total_min'] = 0;
+            }
+
+
+            $nuevaSolicitud = \App\Models\TblSolicitudHe::create($validated);
+
+            // Registrar seguimiento usando el logger
+            \App\Services\SeguimientoSolicitudLogger::log(
+                $nuevaSolicitud->id,
+                $this->username,
+                $nuevaSolicitud->id_estado ?: $estadoPendiente->id
             );
 
-            $validated['fecha_evento'] = $this->fecha;
-            $validated['hrs_inicio'] = $this->hrs_inicial;
-            $validated['hrs_fin'] = $this->hrs_final;
-            $validated['min_reales'] = $resultado['min_reales'];
-            $validated['min_25'] = $resultado['min_25'];
-            $validated['min_50'] = $resultado['min_50'];
-            $validated['total_min'] = $resultado['total_min'];
+            // === Enviar correos ===
+            $mailService = app(\App\Services\MailService::class);
+            $userService = app(\App\Services\UserService::class);
 
-            // Intentar obtener el estado inicial desde el flujo de compensación HE
-            // Preparar estado pendiente por defecto (se usa como fallback y en el log)
-            $estadoPendiente = \App\Models\TblEstado::where('codigo', 'INGRESADO')->first();
+            // Correo al usuario que ingresa
+            // $correoUsuario = $this->username . '@minpublico.cl';
+            $correoUsuario = 'crojasm@minpublico.cl';
+            $anioSolicitud = date('Y', strtotime($nuevaSolicitud->fecha));
+            $mailService->sendSolicitudIngresada([
+                'id' => $nuevaSolicitud->id . '/' . $anioSolicitud,
+                'usuario_email' => $correoUsuario,
+                'fecha' => $nuevaSolicitud->fecha,
+                'descripcion' => 'Solicitud de horas extras ingresada'.$this->username,
+            ]);
 
-            // Seleccionar flujo según si el usuario propone pago (dinero) o compensación (tiempo)
-            $codigoFlujo = $this->propone_pago ? 'HE_DINERO' : 'HE_COMPENSACION';
-            $flujo = \App\Models\TblFlujo::where('codigo', $codigoFlujo)->first();
-            $estadoInicial = $flujo ? $flujo->estadoInicial : null;
-
-            if ($estadoInicial && isset($estadoInicial->id)) {
-                $validated['id_estado'] = $estadoInicial->id;
-            } else {
-                // Fallback al estado INGRESADO por compatibilidad
-                $validated['id_estado'] = $estadoPendiente ? $estadoPendiente->id : 1;
+            // Correos a los líderes
+            $lideres = $userService->getLideresByUsername($this->username);
+            foreach ($lideres as $lider) {
+                // $correoLider = $lider->username . '@minpublico.cl';
+                $correoLider = 'crojasm@minpublico.cl';
+                $mailService->sendSolicitudIngresada([
+                    'id' => $nuevaSolicitud->id . '/' . $anioSolicitud,
+                    'usuario_email' => $correoLider,
+                    'fecha' => $nuevaSolicitud->fecha,
+                    'descripcion' => 'Nueva solicitud de horas extras para revisión'.$lider->username,
+                ]);
             }
 
-            // Procesar archivo adjunto
-            if ($this->archivo_adjunto) {
-                $extension = $this->archivo_adjunto->getClientOriginalExtension();
-                $fechaCompleta = date('Y-m-d');
-                $nombreArchivo = $fechaCompleta . '_' . time() . '_' . $this->username . '.' . $extension;
 
-                // Guardar el archivo
-                $rutaArchivo = $this->archivo_adjunto->storeAs('solicitudes-he', $nombreArchivo, 'public');
-
-                $validated['archivo_adjunto'] = $nombreArchivo;
-                $validated['nombre_archivo_original'] = $this->archivo_adjunto->getClientOriginalName();
+            // === CREAR BOLSON PENDIENTE PARA HE DE COMPENSACION ===
+            if ($nuevaSolicitud->id_tipo_compensacion == 1 && $nuevaSolicitud->total_min > 0) {
+                $flujoService = app(\App\Services\FlujoEstadoService::class);
+                $flujoService->crearBolsonPendienteParaSolicitud($nuevaSolicitud);
             }
 
+
+            $this->solicitudes = \App\Models\TblSolicitudHe::where('username', $this->username)
+            ->orderByDesc('id')
+            ->get();
+
+            // Recargar datos del bolsón después de guardar
+            $this->cargarDatosBolson();
+
+            $this->tipoMensaje = 'success';
+            $this->mensaje = 'Guardado correctamente.';
+            $this->dispatch('profile-updated');
         } catch (\Exception $e) {
-            $validated['fecha_evento'] = $this->fecha;
-            $validated['hrs_inicio'] = $this->hrs_inicial;
-            $validated['hrs_fin'] = $this->hrs_final;
-            $validated['min_reales'] = 0;
-            $validated['min_25'] = 0;
-            $validated['min_50'] = 0;
-            $validated['total_min'] = 0;
+            $this->tipoMensaje = 'error';
+            $this->mensaje = $e->getMessage();
+            $this->dispatch('error');
         }
-
-
-        $nuevaSolicitud = \App\Models\TblSolicitudHe::create($validated);
-
-        // Registrar seguimiento usando el logger
-        \App\Services\SeguimientoSolicitudLogger::log(
-            $nuevaSolicitud->id,
-            $this->username,
-            $nuevaSolicitud->id_estado ?: $estadoPendiente->id
-        );
-
-        // === CREAR BOLSON PENDIENTE PARA HE DE COMPENSACION ===
-        if ($nuevaSolicitud->id_tipo_compensacion == 1 && $nuevaSolicitud->total_min > 0) {
-            $flujoService = app(\App\Services\FlujoEstadoService::class);
-            $flujoService->crearBolsonPendienteParaSolicitud($nuevaSolicitud);
-        }
-
-        
-        $this->solicitudes = \App\Models\TblSolicitudHe::where('username', $this->username)
-        ->orderByDesc('id')
-        ->get();
-
-        // Recargar datos del bolsón después de guardar
-        $this->cargarDatosBolson();
-
-        $this->dispatch('profile-updated', name: $this->username);
     }
 
     public function verDocumento($solicitudId)
@@ -287,8 +368,8 @@ new class extends Component {
                     </div>
                     <div class="flex items-center justify-center gap-4">
                         <flux:button variant="primary" type="submit" class="px-8">{{ __('Ingresar') }}</flux:button>
-                        <x-action-message class="me-3" on="profile-updated">
-                            {{ __('Guardado !!!.') }}
+                        <x-action-message class="me-3" :class="$tipoMensaje === 'error' ? 'text-red-500' : 'text-green-500'" on="profile-updated">
+                            {{ $mensaje }}
                         </x-action-message>
                     </div>
                 </form>

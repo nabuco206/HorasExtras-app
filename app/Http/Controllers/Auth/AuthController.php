@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\ValidationException;
+use App\Models\TblPersona; // Aseg�rate de importar el modelo correcto
 
 class AuthController extends Controller
 {
@@ -16,6 +17,10 @@ class AuthController extends Controller
             'username' => ['required', 'string'],
             'password' => ['required', 'string'],
         ]);
+
+        $username = $credentials['username'];
+        $password = $credentials['password'];
+
 
         $remember = $request->boolean('remember');
 
@@ -28,5 +33,47 @@ class AuthController extends Controller
         throw ValidationException::withMessages([
             'username' => ['Las credenciales proporcionadas no coinciden con nuestros registros.'],
         ]);
+
+        // Configuraci�n del servidor LDAP
+        // $ldapHost = env('LDAP_HOST', '172.18.1.7');
+        // $ldapDomain = env('LDAP_DOMAIN', 'minpublico.cl');
+        // $ldapDn = env('LDAP_BASE_DN', 'dc=minpublico,dc=cl');
+
+        // // Conexi�n al servidor LDAP
+        // $ldapConnection = @ldap_connect($ldapHost);
+        // ldap_set_option($ldapConnection, LDAP_OPT_PROTOCOL_VERSION, 3);
+        // ldap_set_option($ldapConnection, LDAP_OPT_REFERRALS, 0);
+
+        // if (!$ldapConnection) {
+        //     throw ValidationException::withMessages([
+        //         'username' => ['No se pudo conectar al servidor LDAP.'],
+        //     ]);
+        // }
+
+        // // Intentar autenticaci�n con el servidor LDAP
+        // $ldapBind = @ldap_bind($ldapConnection, $username . "@" . $ldapDomain, $password);
+
+        // if (!$ldapBind) {
+        //     throw ValidationException::withMessages([
+        //         'username' => ['Credenciales invalidas.'],
+        //     ]);
+        // }
+
+        // // Si la autenticaci�n es exitosa, buscar el usuario en la tabla tbl_personas
+        // $persona = TblPersona::where('username', $username)->first();
+
+        // if (!$persona) {
+        //     throw ValidationException::withMessages([
+        //         'username' => ['El usuario no est� registrado en el sistema.'],
+        //     ]);
+        // }
+
+        // // Crear sesi�n para el usuario
+        // $request->session()->regenerate();
+
+        // // Autenticar al usuario manualmente
+        // Auth::login($persona);
+
+        // return redirect()->intended(route('dashboard'));
     }
 }

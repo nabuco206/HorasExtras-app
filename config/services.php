@@ -35,4 +35,7 @@ return [
         ],
     ],
 
+    'powerbi' => [
+        'embed_url' => env('POWERBI_EMBED_URL'),
+    ],
 ];

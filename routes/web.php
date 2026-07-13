@@ -7,10 +7,24 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CompensacionController;
+use App\Http\Controllers\PowerBiController;
 
-Route::get('/ping', function () {
-    return 'pong';
-});
+
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Mail\Mailable;
+
+Route::get('/test-email', function () {
+    try {
+        Mail::raw('Prueba final SMTP interno sin TLS', function ($message) {
+            $message->to('crojasm@minpublico.cl')
+                    ->subject('¡Funcionó desde Laravel!');
+        });
+        return 'Correo enviado. Revisa tu bandeja.';
+    } catch (\Exception $e) {
+        return '<pre>' . htmlspecialchars($e->getMessage()) . '</pre>';
+    }
+})->withoutMiddleware([]);
+
 
 Route::get('/debug-auth', function () {
     return response()->json([
@@ -120,6 +134,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('sistema/todas-compensaciones', \App\Livewire\Sistema\TodasCompensaciones::class)
         ->name('sistema.todas-compensaciones')
         ->middleware(['auth']);
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/powerbi/dashboard', [PowerBiController::class, 'dashboard'])->name('powerbi.dashboard');
 });
 
 require __DIR__.'/auth.php';

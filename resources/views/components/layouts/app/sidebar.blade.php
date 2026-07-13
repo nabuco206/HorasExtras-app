@@ -3,13 +3,14 @@ use App\Services\DashboardService;
 
     $user = auth()->user();
     $rol = $user->id_rol;
+    // var_dump($rol);
     $cod_fiscalia = $user->cod_fiscalia;
     $esLider = $user->flag_lider ?? false;
-    
-    if($esLider){
-        // Log::info('Es lider de fiscalia: ' . $cod_fiscalia);
-        $rol = 6;
-    }
+
+    // if($esLider){
+    //     // Log::info('Es lider de fiscalia: ' . $cod_fiscalia);
+    //     $rol = 6;
+    // }
     $dashboardService = new DashboardService();
     $stats = $dashboardService->obtenerEstadisticasPendientes($rol, $user, $cod_fiscalia);
     $badges = [
@@ -25,6 +26,8 @@ use App\Services\DashboardService;
 
     // Obtener configuración de menú para el rol y deduplicar por route|url|name
     $rawMenu = config('menu.roles.' . $rol, []);
+
+    // var_dump($rawMenu);
     $menuConfig = collect($rawMenu)->unique(function($item) {
         // Combina los campos relevantes para deduplicar correctamente
         return (

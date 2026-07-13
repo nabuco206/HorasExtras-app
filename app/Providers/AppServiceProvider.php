@@ -4,6 +4,9 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Http\Request;
+use App\Models\TblSolicitudCompensa;
+use App\Models\TblSolicitudHe;
+use App\Observers\SolicitudEstadoObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,5 +27,9 @@ class AppServiceProvider extends ServiceProvider
         Request::macro('wantsJson', function () {
             return $this->expectsJson();
         });
+
+        TblSolicitudCompensa::observe(SolicitudEstadoObserver::class);
+        TblSolicitudHe::observe(SolicitudEstadoObserver::class);
+
     }
 }

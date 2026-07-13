@@ -61,7 +61,7 @@ class Dashboard extends Component
 
         $dashboardService = new DashboardService();
         $stats = $dashboardService->obtenerEstadisticasPendientes($rol, $username, $codFiscalia);
-        log::info("Dashboard mount - EstadísticaspendientesComp: ".json_encode($stats));
+        // log::info("Dashboard mount - EstadísticaspendientesComp: ".json_encode($stats));
         $this->pendientesComp = $stats['pendientesComp'];
         $this->pendientesPago = $stats['pendientesPago'];
         $this->sumaMinHe = $stats['sumaMinHe'] ?? 0;
@@ -89,7 +89,7 @@ class Dashboard extends Component
                 ->where('fecha_vence', '<=', Carbon::now()->addDays(30))
                 ->where('fecha_vence', '>=', Carbon::now())
                 ->count();
-        } 
+        }
         else {
             $this->resumenCompleto = ['detalle_pendientes' => []];
             $this->detalleBolson = [];
@@ -159,7 +159,7 @@ class Dashboard extends Component
     public function render()
     {
         // La vista existente `resources/views/dashboard.blade.php` usa las variables públicas arriba
-    
+
         return view('dashboard');
     }
 }

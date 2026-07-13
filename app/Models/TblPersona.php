@@ -72,4 +72,8 @@ class TblPersona extends Authenticatable
     {
         return $this->belongsTo(TblEscalafon::class, 'id_escalafon', 'id');
     }
+    public function solicitudes()
+    {
+        return $this->hasMany(TblSolicitudHe::class, 'cod_fiscalia', 'cod_fiscalia');
+    }
 }
